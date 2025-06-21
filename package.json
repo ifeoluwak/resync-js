@@ -1,0 +1,12 @@
+{
+  "name": "banana-js",
+  "version": "1.0.0",
+  "description": "Javascript client library for Bananas config",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "type": "module",
+  "author": "ifeoluwa",
+  "license": "MIT"
+}
