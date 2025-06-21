@@ -54,7 +54,7 @@ export class FunctionTracker {
       arguments: JSON.stringify(args),
       result: error ? null : JSON.stringify(result),
       error: error ? error.message : null,
-      durationMs: dur,
+      durationMs: parseFloat(dur.toFixed(3)), // Duration in milliseconds
       // fetchCount: this.currentFetchCount,
     };
 
@@ -112,7 +112,7 @@ export class FunctionTracker {
    */
   sendLogToBackend(logEntry) {
     // console.log("jjjjj", this.key, this.appId, this.appUrl);
-    fetch(`${this.appUrl}${this.appId}/${logEntry.functionId}/logsxxx`, {
+    fetch(`${this.appUrl}${this.appId}/${logEntry.functionId}/log`, {
       method: "POST",
       headers: {
             "x-api-key": this.key,
@@ -126,7 +126,7 @@ export class FunctionTracker {
           this.saveLogForLaterUpload([logEntry]);
           return
         }
-        console.log("Log entry sent successfully:", logEntry);
+        console.log("Log entry sent successfully 11111:", logEntry);
       })
       .catch((error) => {
         console.error("Logging failed:", error);
@@ -142,13 +142,11 @@ export class FunctionTracker {
    * If unsuccessful, it will save the log entries for later upload.
    */
   sendLogsToBackend(batchEntries) {
-    console.log("Log entry sent successfully:", JSON.stringify(batchEntries, null, 2));
-    this.saveLogForLaterUpload(batchEntries);
-    return
-    fetch(`${BananaConfig.apiUrl}${BananaConfig.appId}${batchEntries[0].functionId}/log/batch`, {
+    console.log("Log entry sent successfully 2222:", JSON.stringify(batchEntries, null, 2));
+    fetch(`${this.appUrl}${this.appId}/${batchEntries[0].functionId}/log/batch`, {
       method: "POST",
       headers: {
-            "x-api-key": key,
+            "x-api-key": this.key,
             "Content-Type": "application/json",
           },
       body: JSON.stringify(batchEntries),
@@ -157,7 +155,7 @@ export class FunctionTracker {
         if (!response.ok) {
           return
         }
-        console.log("Log entry sent successfully:", batchEntries.count);
+        console.log("Log entry sent successfully 33333:", batchEntries.count);
         this.executionLogs = this.executionLogs.filter(
           (log) => !batchEntries.some((entry) => entry.id === log.id)
         );
