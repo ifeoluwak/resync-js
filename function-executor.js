@@ -43,6 +43,8 @@ export class FunctionExecutor extends FunctionTracker {
 
     this.currentFetchCount = 0;
 
+    this.calledBy = null;
+
     this.initializeFunctionAndStatsMap();
   }
 
@@ -129,6 +131,7 @@ export class FunctionExecutor extends FunctionTracker {
     let executionSuccessful = false;
     let result;
     let error = null;
+    let timestamp = new Date().toISOString()
 
     this.fetchCount = 0;
 
@@ -155,7 +158,9 @@ export class FunctionExecutor extends FunctionTracker {
         },
       };
 
-      const parameters = [...fnDef.parameters, ...Object.keys(env)];
+      const paramNames = fnDef.parameters.map((p) => p.name);
+
+      const parameters = [...paramNames, ...Object.keys(env)];
       const values = [...args, ...Object.values(env)];
 
       const AsyncFunction = async function () {}.constructor;
@@ -165,8 +170,9 @@ export class FunctionExecutor extends FunctionTracker {
 
       executionSuccessful = true;
 
-      if (fnDef.child) {
-        return await this.executeFunction(fnDef.child, result);
+      if (fnDef.calls) {
+        this.calledBy = fnDef.name;
+        return await this.executeFunction(fnDef.calls, result);
       }
 
       console.log(`Function ${fnDef.name} executed successfully`, {result, args});
@@ -182,13 +188,18 @@ export class FunctionExecutor extends FunctionTracker {
       const duration = performance.now() - executionStart;
 
       // Log the execution
-      this.logExecution(
-        fnDef.id,
-        args,
-        executionSuccessful ? result : null,
-        error,
-        duration
-      );
+      this.logExecution({
+        timestamp,
+        functionId: fnDef.id,
+        version: fnDef.version,
+        calledBy: this.calledBy,
+        arguments: JSON.stringify(args),
+        result: error ? null : JSON.stringify(result),
+        error: error ? error.message : null,
+        durationMs: parseFloat(duration.toFixed(3)), // Duration in milliseconds
+      });
+
+      this.calledBy = null;
     }
   }
 

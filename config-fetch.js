@@ -33,7 +33,6 @@ export class ConfigFetch {
       try {
         const data = await fetchData();
         if (data) {
-          console.log(JSON.stringify(data, null, 2));
         //   // make sure the appId is the same as data.appConfig.appId
         //   if (data.appConfig?.appId !== appId) {
         //     throw new Error(ID_ERROR);

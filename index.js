@@ -142,9 +142,7 @@ export class BananaConfig {
   }
 
   subscribe(callback) {
-    console.log("subscribing to BananaConfig updates", callback);
     if (typeof callback === "function") {
-      console.log("11111");
       this.subscribers.add(callback);
     } else {
       throw new Error("Callback must be a function");
@@ -166,7 +164,6 @@ export class BananaConfig {
     if (BananaConfig.#storage) {
       BananaConfig.#storage.setItem(STORAGE_KEY, JSON.stringify(this.#cache));
     } else {
-      console.warn("No storage available to save cache.");
     }
   }
   #loadFromStorage() {

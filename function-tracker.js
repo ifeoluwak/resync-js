@@ -46,20 +46,10 @@ export class FunctionTracker {
    * @description This method creates a log entry with the function name, arguments, result, error (if any), duration, and fetch count.
    * It then sends this log entry to the backend API for storage.
    */
-  async logExecution(fnId, args, result, error = null, dur) {
-    const logEntry = {
-      // id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-      functionId: fnId,
-      arguments: JSON.stringify(args),
-      result: error ? null : JSON.stringify(result),
-      error: error ? error.message : null,
-      durationMs: parseFloat(dur.toFixed(3)), // Duration in milliseconds
-      // fetchCount: this.currentFetchCount,
-    };
+  async logExecution(entry) {
 
     // In production: Send to your backend API
-    this.sendLogToBackend(logEntry);
+    this.sendLogToBackend(entry);
   }
 
   /**
