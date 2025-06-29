@@ -1,4 +1,5 @@
 import { FunctionTracker } from "./function-tracker.js";
+import { BananaConfig } from "./index.js";
 
   /**
    * Loads the application configuration from the Banana API.
@@ -61,16 +62,16 @@ export class FunctionExecutor extends FunctionTracker {
   get safeFetch() {
     return async (url, options = {}) => {
       // Safety checks
-      if (++this.fetchCount > this.config.maxFetchCount) {
-        throw new Error(`Fetch limit exceeded (max ${this.config.maxFetchCount})`);
-      }
+      // if (++this.fetchCount > this.settings.maxFetchCount) {
+      //   throw new Error(`Fetch limit exceeded (max ${this.settings.maxFetchCount})`);
+      // }
 
       if (options.method && options.method !== "GET") {
         throw new Error("Only GET requests are allowed");
       }
 
       if (
-        !this.config.allowedExternalApiDomains.some((domain) => url.startsWith(domain))
+        !this.settings.allowedExternalApiDomains.some((domain) => url.startsWith(domain))
       ) {
         throw new Error(`Domain not whitelisted: ${new URL(url).hostname}`);
       }
@@ -110,9 +111,14 @@ export class FunctionExecutor extends FunctionTracker {
       //   /console\.(log|warn|error|info)/ // No console access
     ];
 
-    (this.config.bannedKeywords || bannedPatterns).forEach((pattern) => {
-      if (pattern.test(code)) {
-        throw new Error(`Unsafe code pattern detected: ${pattern.source}`);
+    (this.settings.bannedKeywords).forEach((keyword) => {
+      if (code.includes(keyword)) {
+        throw new Error(`Unsafe code keyword detected: ${keyword}`);
+      }
+    });
+    (this.settings.bannedPatterns).forEach((pattern) => {
+      if (new RegExp(pattern).test(code)) {
+        throw new Error(`Unsafe code pattern detected: ${pattern}`);
       }
     });
   }
@@ -122,8 +128,8 @@ export class FunctionExecutor extends FunctionTracker {
     let timeoutId;
     const timeoutPromise = new Promise((_, reject) => {
       timeoutId = setTimeout(
-        () => reject(new Error(`Timeout after ${this.config.maxExecutionDurationMs}ms`)),
-        this.config.maxExecutionDurationMs
+        () => reject(new Error(`Timeout after ${this.settings.maxExecutionDurationMs}ms`)),
+        this.settings.maxExecutionDurationMs
       );
     });
 
@@ -139,16 +145,14 @@ export class FunctionExecutor extends FunctionTracker {
       this.validateCode(fnDef.code);
 
       // Create limited config subset
-      const limitedConfig = fnDef.constants?.reduce((acc, key) => {
-        if (this.config[key] === undefined)
-          throw new Error(`Invalid config key: ${key}`);
-        return { ...acc, [key]: Config[key] };
-      }, {});
+      const limitedConfig = JSON.stringify(this.config, fnDef.constants)
 
       // Secure environment
       const env = {
-        Config: Object.freeze(limitedConfig),
-        fetch: this.safeFetch,
+        BananasConfig: Object.freeze(JSON.parse(limitedConfig)),
+        fetch: this.settings.allowFetch ? this.safeFetch : () => {
+          throw new Error("Fetch not allowed");
+        },
         // console: { log: () => {} }, // Neutralized console
         setTimeout: () => {
           throw new Error("setTimeout not allowed");
@@ -171,7 +175,7 @@ export class FunctionExecutor extends FunctionTracker {
       executionSuccessful = true;
 
       if (fnDef.calls) {
-        this.calledBy = fnDef.name;
+        this.calledBy = fnDef.id;
         return await this.executeFunction(fnDef.calls, result);
       }
 
@@ -192,11 +196,13 @@ export class FunctionExecutor extends FunctionTracker {
         timestamp,
         functionId: fnDef.id,
         version: fnDef.version,
-        calledBy: this.calledBy,
+        calledById: this.calledBy,
         arguments: JSON.stringify(args),
         result: error ? null : JSON.stringify(result),
         error: error ? error.message : null,
         durationMs: parseFloat(duration.toFixed(3)), // Duration in milliseconds
+        client: BananaConfig.client,
+        attributes: BananaConfig.attributes,
       });
 
       this.calledBy = null;

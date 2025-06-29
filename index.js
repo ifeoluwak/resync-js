@@ -46,6 +46,10 @@ export class BananaConfig {
 
   static #appId = null;
 
+  static client = null;
+
+  static attributes = null;
+
   /**
    * Initializes the BananaConfig class.
    * Api key is required to use the Banana API.
@@ -92,6 +96,20 @@ export class BananaConfig {
       BananaConfig.instance.subscribe(callback);
     }
     return BananaConfig.instance;
+  }
+
+  static setClient(client) {
+    if (typeof client !== "string") {
+      throw new Error("Client must be a string");
+    }
+    BananaConfig.client = client;
+  }
+
+  static setAttributes(attributes) {
+    if (typeof attributes !== "object") {
+      throw new Error("Attributes must be an object");
+    }
+    BananaConfig.attributes = JSON.stringify(attributes);
   }
 
   /**
