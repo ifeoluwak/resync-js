@@ -46,6 +46,8 @@ export class BananaConfig {
 
   static #appId = null;
 
+  static sessionId = null;
+
   static client = null;
 
   static attributes = null;
@@ -75,6 +77,8 @@ export class BananaConfig {
     BananaConfig.#apiKey = key;
     BananaConfig.#appId = appId;
     BananaConfig.#ttl = ttl;
+    BananaConfig.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+    console.log("sessionId is", BananaConfig.sessionId);
     // storage must have a getItem, setItem, removeItem and clear methods
     const allowedStorageMethods = ["getItem", "setItem", "removeItem", "clear"];
     if (

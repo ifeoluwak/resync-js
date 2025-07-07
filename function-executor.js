@@ -203,6 +203,7 @@ export class FunctionExecutor extends FunctionTracker {
         durationMs: parseFloat(duration.toFixed(3)), // Duration in milliseconds
         client: BananaConfig.client,
         attributes: BananaConfig.attributes,
+        sessionId: BananaConfig.sessionId,
       });
 
       this.calledBy = null;
