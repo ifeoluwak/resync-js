@@ -1,3 +1,4 @@
+import { AbTest } from "./ab-test.js";
 import BananaCache from "./cache.js";
 import { ConfigFetch } from "./config-fetch.js";
 import { FunctionExecutor } from "./function-executor.js";
@@ -39,6 +40,7 @@ export class BananaConfig {
   static instance = null;
 
   static exec = null;
+  static abTest = null;
 
   static ready = false;
 
@@ -102,6 +104,18 @@ export class BananaConfig {
     return BananaConfig.instance;
   }
 
+  static getApiKey() {
+    return BananaConfig.#apiKey;
+  }
+
+  static getAppId() {
+    return BananaConfig.#appId;
+  }
+
+  static getApiUrl() {
+    return BananaConfig.#apiUrl;
+  }
+
   static setClient(client) {
     if (typeof client !== "string") {
       throw new Error("Client must be a string");
@@ -149,6 +163,7 @@ export class BananaConfig {
       this.#cache.configs = config.appConfig || {};
       this.#cache.functions = config.functions || [];
       this.#cache.functionSettings = config.functionSettings || {};
+      this.#cache.experiments = config.experiments || [];
       this.#cache.lastFetchTimestamp = Date.now();
 
       BananaConfig.exec = new FunctionExecutor(this.#cache, {
@@ -156,6 +171,7 @@ export class BananaConfig {
         appUrl: BananaConfig.#apiUrl,
         appId: BananaConfig.#appId,
       });
+      BananaConfig.abTest = new AbTest(this.#cache.experiments);
       // save cache to storage
       this.#saveToStorage();
       this.#notifySubscribers(this.#cache);

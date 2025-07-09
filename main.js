@@ -8,15 +8,21 @@ import { BananaConfig } from "./index.js";
 function fireAway() {
   BananaConfig.init({
   key: "your-api-key-here",
-  appId: 6,
+  appId: 7,
   ttl: 60 * 60 * 1000,
   callback: async (data) => {
     // console.log("BananaConfig now ready", JSON.stringify(data, null, 2));
     // console.log("BananaConfig exec", BananaConfig.exec);
     // console.log("BananaConfig instance", BananaConfig.instance);
     // const res = await BananaConfig.exec.functionMapper('stripNonAsciiAndGetLength', 'stripNonAsciiAndGetLength.     ');
-    const res = await BananaConfig.exec.functionMapper('loadJsonResource', 'todos', 3);
-    console.log("BananaConfig exec result", res, BananaConfig.exec.executionLogs);
+    // const res = await BananaConfig.exec.functionMapper('loadJsonResource', 'todos', 3);
+    // console.log("BananaConfig exec result", res, BananaConfig.exec.executionLogs);
+    // console.log("BananaConfig abtest", BananaConfig.abTest);
+    const variant = await BananaConfig.abTest.getVariant("Test 1", 7);
+    console.log("BananaConfig abTest variant", variant);
+    // if (await BananaConfig.abTest.getVariant("Test 1", 500) === "world") {
+    //   console.log("Test 1 variant is world");
+    // } 
   },
   storage: null
 })

@@ -46,10 +46,10 @@ export class FunctionExecutor extends FunctionTracker {
 
     this.calledBy = null;
 
-    this.initializeFunctionAndStatsMap();
+    this.#initializeFunctionAndStatsMap();
   }
 
-  initializeFunctionAndStatsMap() {
+  #initializeFunctionAndStatsMap() {
     if (!this.functionMap.size) {
       // Initialize with your functions
       this.functions.forEach((fn) => {
@@ -208,6 +208,13 @@ export class FunctionExecutor extends FunctionTracker {
 
       this.calledBy = null;
     }
+  }
+
+  // Load external functions into the executor
+  loadFunctions(fns) {
+    fns.forEach((fn) => {
+        this.functionMap.set(fn.name, fn);
+      })
   }
 
   // Function mapper

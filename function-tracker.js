@@ -102,7 +102,7 @@ export class FunctionTracker {
    */
   sendLogToBackend(logEntry) {
     // console.log("jjjjj", this.key, this.appId, this.appUrl);
-    fetch(`${this.appUrl}${this.appId}/${logEntry.functionId}/log`, {
+    fetch(`${this.appUrl}${this.appId}/${logEntry.functionId}/log-function`, {
       method: "POST",
       headers: {
             "x-api-key": this.key,
@@ -133,7 +133,7 @@ export class FunctionTracker {
    */
   sendLogsToBackend(batchEntries) {
     console.log("Log entry sent successfully 2222:", JSON.stringify(batchEntries, null, 2));
-    fetch(`${this.appUrl}${this.appId}/${batchEntries[0].functionId}/log/batch`, {
+    fetch(`${this.appUrl}${this.appId}/log-function/batch`, {
       method: "POST",
       headers: {
             "x-api-key": this.key,
