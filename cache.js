@@ -45,28 +45,105 @@
  * @property {Map<string, FunctionSetting>} functionSettings - A map of function setting IDs to their respective function settings.
  */
 
+
+const STORAGE_KEY = "bananaConfigCache";
+
+
 /**
  * @type {BananaCache}
-*/
+ */
 export default class BananaCache {
-    constructor() {
-        /**
-         * @type {Config}
-         */
-        this.configs = {};
-        /**
-         * @type {Function[]}
-         */
-        this.functions = [];
-        /**
-         * @type {FunctionSetting[]}
-         */
-        this.functionSettings = {};
-        /**
-         * @type {null | Date}
-         */
-        this.lastFetchTimestamp = null;
+//   constructor(storage) {
+//     BananaCache.storage = storage;
+//     /**
+//      * @type {Config}
+//      */
+//     this.configs = {};
+//     /**
+//      * @type {Function[]}
+//      */
+//     this.functions = [];
+//     /**
+//      * @type {FunctionSetting[]}
+//      */
+//     this.functionSettings = {};
+//     /**
+//      * @type {null | Date}
+//      */
+//     this.lastFetchTimestamp = null;
+//   }
+
+  static storage;
+  static cache = {};
+
+  static userVariants = new Map();
+
+  static init(storage) {
+    BananaCache.cache = new BananaCache();
+    if (storage) {
+      BananaCache.storage = storage;
+      BananaCache.loadFromStorage();
     }
+  }
+
+  static getCache() {
+    if (!BananaCache.cache) {
+      BananaCache.cache = new BananaCache();
+    }
+    return BananaCache.cache;
+  }
+
+  static getKeyValue(key) {
+    if (BananaCache.storage) {
+      const cache = BananaCache.getCache();
+      return cache[key] || null;
+    } else {
+      console.warn("No storage available to get key-value pair.");
+      return BananaCache.cache[key] || null; // Fallback to in-memory cache
+    }
+  }
+
+  static saveToStorage() {
+    if (BananaCache.storage) {
+      BananaCache.storage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(BananaCache.getCache())
+      );
+    } else {
+      console.warn("No storage available to save cache.");
+    }
+  }
+
+  static saveKeyValue(key, value) {
+    if (BananaCache.storage) {
+      const cache = BananaCache.getCache();
+      cache[key] = value;
+      BananaCache.storage.setItem(STORAGE_KEY, JSON.stringify(cache));
+      BananaCache.cache = cache; // Update the static cache
+    } else {
+      // console.log("Saving to in-memory cache instead:", BananaCache.cache);
+      if (!BananaCache.cache) {
+        BananaCache.cache = new BananaCache();
+      }
+      BananaCache.cache[key] = value; // Update the in-memory cache
+    }
+  }
+
+  static loadFromStorage() {
+    if (BananaCache.storage) {
+      const data = BananaCache.storage.getItem(STORAGE_KEY);
+      if (data) {
+        const parsedData = JSON.parse(data);
+        // Restore the cache state from the parsed data
+        BananaCache.cache = Object.assign(
+          BananaCache.getCache(),
+          parsedData
+        );
+      }
+    } else {
+      console.warn("No storage available to load cache.");
+      // BananaCache.cache = new BananaCache(); // Initialize a new cache if no storage is available
+    }
+    // console.warn("No storage available to load cache.", BananaCache);
+  }
 }
-
-

@@ -1,7 +1,22 @@
 import { BananaConfig } from "./index.js";
+import BananaCache from "./cache.js";
 
 const FLUSH_INTERVAL = 5000; // 5 seconds
+const LogType = {
+  IMPRESSION: "IMPRESSION",
+  CONVERSION: "CONVERSION"
+};
 
+/**
+ * AbTest class for managing A/B testing experiments.
+ * It allows for variant assignment based on experiments and logs exposures.
+ * @class
+ * @param {Array} experiments - The list of experiments to manage.
+ * @description This class provides methods to get variant values for experiments,
+ * log experiment exposures, and handle logging functionality.
+ * It uses the BananaConfig for configuration and logging.
+ * It also handles retry logic for fetching data and logging.
+ */
 export class AbTest {
   constructor(experiments) {
     this.experiments = experiments || [];
@@ -16,20 +31,71 @@ export class AbTest {
     this.timeoutId = setInterval(() => this.flushLogs(), FLUSH_INTERVAL); // Every 5s
   }
 
+  /**
+   * Return the variant value and logs the execution of an experiment
+   * @param {string} experimentName - The name of the experiment.
+   * @param {...*} payload - The payload to use for variant assignment.
+   * @returns {Promise<string|null>} - The variant value or null if the experiment is not found.
+   * @description This method returns the variant value for the given experiment and logs the execution.
+   * It uses the experiment's assignment function if available, otherwise it uses a random assignment based on the input string.
+   */
   async getVariant(experimentName, ...payload) {
     const experiment = this.experiments.find(
       (exp) => exp.name === experimentName
     );
-    if (!experiment) return null;
+    if (!experiment) {
+      throw new Error(`Experiment "${experimentName}" not found.`);
+    }
 
-    const { variants } = experiment;
-    const weights = variants
-      .map((v) => v.weight)
-      .filter((w) => w != null && !isNaN(w) && w > 0);
-    if (!variants || variants.length === 0) return null;
+    // check if user already has a variant for this experiment
+    const cachedVariants = BananaCache.getKeyValue("userVariants") || new Map();
+    
+    if (cachedVariants.has(experiment.id)) {
+      const userVariant = cachedVariants.get(experiment.id);
+      console.log("11111 Cached variants:", userVariant);
+      // No need to log again, just return the variant value
+      return userVariant.variant.value;
+    }
+
+    // check if the function is a system template
+    if (experiment.type === "system") {
+      const backendTemplates = ['bandit-epsilon-greedy', 'round-robin'];
+      // that should be executed in the backend
+      if (backendTemplates.includes(experiment.systemFunctionId)) {
+        try {
+          const response = await fetch(`${BananaConfig.getApiUrl()}${BananaConfig.getAppId()}/get-system-variant`, {
+          method: "POST",
+          headers: {
+            "x-api-key": BananaConfig.getApiKey(),
+            "Content-Type": "application/json",
+          },
+          data: JSON.stringify({
+            experimentId: experiment.id,
+            userId: BananaConfig.userId,
+            sessionId: BananaConfig.sessionId,
+            client: BananaConfig.client,
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          return data;
+        }
+        } catch (error) {
+          // If the backend call fails, choose a random variant
+          console.error("Failed to fetch system variant from backend:", error);
+          const randomIndex = Math.floor(
+            this.#hashString(BananaConfig.userId + experiment.id) % experiment.variants.length
+          );
+          const variant = experiment.variants[randomIndex];
+          this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
+          return variant.value;
+        }
+      }
+    }
 
     // Does the experiment have custom logic for variant assignment?
     if (experiment.assignmentFunction) {
+      // Call the custom function via the functionMapper
       const variantValue = await BananaConfig.exec.functionMapper(
         experiment.assignmentFunction.name,
         ...payload
@@ -37,37 +103,22 @@ export class AbTest {
       const variant = experiment.variants.find(
         (v) => v.value === variantValue
       );
-      this.logExperiment(experiment.id, variant, "IMPRESSION");
+      this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
       return variantValue;
     }
-    // random assignment if no custom logic
-    let idx = 0;
-    if (payload.length > 0) {
-      const hash = this.#hashString(payload.join("") + experimentName);
-      console.log("Hash for experiment", experimentName, ":", hash);
-      if (weights && weights.length === variants.length) {
-        console.log("Using weighted assignment for experiment", weights);
-        // Weighted assignment
-        let sum = 0;
-        const r = (hash % 10000) / 10000;
-        for (let i = 0; i < weights.length; i++) {
-          sum += weights[i];
-          if (r < sum) {
-            idx = i;
-            break;
-          }
-        }
-      } else {
-        console.log("No weights or mismatched length, using simple hash");
-        idx = hash % variants.length;
-      }
-    } else {
-      // Fallback: random
-      idx = Math.floor(Math.random() * variants.length);
-    }
-    return variants[idx].value;
   }
 
+  /**
+   * Hashes a string using the djb2 algorithm.
+   * @param {string} str - The string to hash.
+   * @returns {number} - The hash value.
+   * @description This method hashes a string using the djb2 algorithm.
+   * It is used to ensure consistent variant assignment based on the input string.
+   * @example
+   * // Hash a string
+   * const hashValue = hashString("example string");
+   * console.log("Hash value:", hashValue);
+   */
   #hashString(str) {
     let hash = 5381;
     for (let i = 0; i < str.length; i++) {
@@ -76,6 +127,19 @@ export class AbTest {
     return Math.abs(hash);
   }
 
+  /**
+   * Logs an experiment exposure.
+   * @param {string} experimentId - The ID of the experiment.
+   * @param {Object} variant - The variant that was exposed.
+   * @param {string} type - The type of exposure (e.g., "IMPRESSION", "CONVERSION").
+   * @returns {void}
+   * @description This method logs the exposure of an experiment variant.
+   * It sends the log entry to the backend API for storage.
+   * If the backend API is unreachable or returns an error, it saves the log for later upload.
+   * @example
+   * // Log an experiment exposure
+   * logExperiment("exp123", { value: "variantA" }, "IMPRESSION");
+   */
   logExperiment(experimentId, variant, type) {
     const apiKey = BananaConfig.getApiKey();
     const appId = BananaConfig.getAppId();
@@ -90,13 +154,23 @@ export class AbTest {
       type,
       experimentId,
       variant,
-      sessionId: BananaConfig.sessionId,
+      sessionId: BananaCache.getKeyValue("sessionId") || BananaConfig.sessionId,
+      userId: BananaCache.getKeyValue("userId") || BananaConfig.userId,
       timestamp: new Date().toISOString(),
       client: BananaConfig.client,
       metadata: BananaConfig.attributes,
     };
-    console.log("Logging experiment entry:", logEntry);
-    // return
+    // console.log("Logging experiment entry:", logEntry);
+    if (type === LogType.IMPRESSION) {
+      // also log to userVariants
+      // BananaConfig.userVariants.set(experimentId, logEntry);
+      const variantCaches = BananaCache.getKeyValue("userVariants") || new Map();
+      variantCaches.set(experimentId, logEntry);
+      BananaCache.saveKeyValue("userVariants", variantCaches);
+      console.log("Saved user variant to cache:", variantCaches);
+    }
+    return;
+    // Send the log entry to the backend API
     fetch(`${appUrl}${appId}/${experimentId}/log-experiment`, {
       method: "POST",
       headers: {
@@ -119,6 +193,11 @@ export class AbTest {
       });
   }
 
+  /** * Saves log entries for later upload.
+   * @param {Array} logEntrys - The log entries to save.
+   * @returns {void}
+   * @description This method saves log entries for later upload if the backend API is unreachable or returns an error.
+   */
   saveLogForLaterUpload(logEntrys) {
     // Add to logs (circular buffer for memory safety)
     this.logs.unshift(...logEntrys);
@@ -131,6 +210,13 @@ export class AbTest {
     }
   }
 
+  /**
+   * Flushes the logs to the backend API.
+   * @returns {Promise<void>}
+   * @throws {Error} If the backend API is unreachable or returns an error.
+   * @description This method sends the logs to the backend API for storage.
+   * If unsuccessful, it will save the logs for later upload.
+   */
   async flushLogs() {
     if (this.logs.length === 0) {
       console.log(
@@ -158,6 +244,14 @@ export class AbTest {
     this.sendLogsToBackend(batch);
   }
 
+  /**
+   * Sends a batch of log entries to the backend API.
+   * @param {Array} batchEntries - The batch of log entries to send.
+   * @returns {void}
+   * @throws {Error} If the backend API is unreachable or returns an error.
+   * @description This method sends a batch of log entries to the backend API for storage.
+   * If unsuccessful, it will save the log entries for later upload.
+   */
   sendLogsToBackend(batchEntries) {
     const apiKey = BananaConfig.getApiKey();
     const appId = BananaConfig.getAppId();

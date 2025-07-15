@@ -10,13 +10,11 @@ export class BananaConfig {
     /**
      * @type {BananaCache}
      */
-    this.#cache = this.#loadFromStorage();
-    this.fetcher = new ConfigFetch();
+    BananaConfig.#fetcher = new ConfigFetch();
     this.#loadAppConfig()
       .then((data) => {
         // console.log("BananaConfig initialized with data:", JSON.stringify(data, null, 2));
         BananaConfig.ready = true;
-        // this.#notifySubscribers(data);
       })
       .catch((error) => {
         console.error("Error initializing BananaConfig:", error);
@@ -25,6 +23,7 @@ export class BananaConfig {
   }
 
   #cache = null;
+  static #fetcher = null;
 
   /**
    * The API key for Banana API.
@@ -44,15 +43,17 @@ export class BananaConfig {
 
   static ready = false;
 
-  static #storage = null;
-
   static #appId = null;
+
+  static userId = null;
 
   static sessionId = null;
 
   static client = null;
 
   static attributes = null;
+
+  static userVariants = new Map();
 
   /**
    * Initializes the BananaConfig class.
@@ -79,8 +80,6 @@ export class BananaConfig {
     BananaConfig.#apiKey = key;
     BananaConfig.#appId = appId;
     BananaConfig.#ttl = ttl;
-    BananaConfig.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
-    console.log("sessionId is", BananaConfig.sessionId);
     // storage must have a getItem, setItem, removeItem and clear methods
     const allowedStorageMethods = ["getItem", "setItem", "removeItem", "clear"];
     if (
@@ -89,11 +88,12 @@ export class BananaConfig {
         (method) => typeof storage[method] === "function"
       )
     ) {
-      BananaConfig.#storage = storage;
+      // BananaCache.storage = storage;
+      BananaCache.init(storage);
       console.log("BananaConfig using custom storage");
     } else {
-      // BananaConfig.storage = localStorage; // Default to localStorage if no valid storage is provided
       // console.warn("BananaConfig using default localStorage");
+      BananaCache.init();
     }
     if (!BananaConfig.instance) {
       BananaConfig.instance = new BananaConfig(key);
@@ -114,6 +114,14 @@ export class BananaConfig {
 
   static getApiUrl() {
     return BananaConfig.#apiUrl;
+  }
+
+  static setUserId(userId) {
+    BananaConfig.userId = `${userId}`;
+    if (BananaCache.cache) {
+      BananaCache.saveKeyValue("userId", `${userId}`);
+    }
+    // // BananaConfig.instance.getUserVariants();
   }
 
   static setClient(client) {
@@ -144,38 +152,48 @@ export class BananaConfig {
       );
     }
 
+    const cache = BananaCache.getCache();
+
     if (
-      this.#cache.lastFetchTimestamp &&
-      Date.now() - this.#cache.lastFetchTimestamp < BananaConfig.#ttl
+      cache?.lastFetchTimestamp &&
+      Date.now() - cache?.lastFetchTimestamp < BananaConfig.#ttl
     ) {
-      this.#notifySubscribers(this.#cache);
-      BananaConfig.#appId = this.#cache.configs.appId;
-      return this.#cache;
+      this.#notifySubscribers(cache);
+      BananaConfig.#appId = cache.configs.appId;
+      BananaConfig.sessionId = cache.sessionId;
+      // always fetch user variants
+      this.getUserVariants();
+      return cache;
     }
 
-    const config = await this.fetcher.fetchAppConfig(
-      BananaConfig.#apiKey,
-      BananaConfig.#appId,
-      BananaConfig.#apiUrl
-    )
+    const config = await BananaConfig.#fetcher.fetchAppConfig();
+    const lastFetchTimestamp = new Date().toISOString();
 
     if (config) {
-      this.#cache.configs = config.appConfig || {};
-      this.#cache.functions = config.functions || [];
-      this.#cache.functionSettings = config.functionSettings || {};
-      this.#cache.experiments = config.experiments || [];
-      this.#cache.lastFetchTimestamp = Date.now();
+      BananaCache.saveKeyValue("configs", config.appConfig || {});
+      BananaCache.saveKeyValue("functions", config.functions || []);
+      BananaCache.saveKeyValue(
+        "functionSettings",
+        config.functionSettings || {}
+      );
+      BananaCache.saveKeyValue("experiments", config.experiments || []);
+      BananaCache.saveKeyValue(
+        "lastFetchTimestamp",
+        lastFetchTimestamp
+      );
+      const sessionId =
+        BananaCache.getKeyValue("sessionId") ||
+        `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+      BananaCache.saveKeyValue("sessionId", sessionId);
+      BananaConfig.sessionId = sessionId;
+      BananaCache.saveKeyValue("userId", BananaConfig.userId);
 
-      BananaConfig.exec = new FunctionExecutor(this.#cache, {
-        key: BananaConfig.#apiKey,
-        appUrl: BananaConfig.#apiUrl,
-        appId: BananaConfig.#appId,
-      });
-      BananaConfig.abTest = new AbTest(this.#cache.experiments);
-      // save cache to storage
-      this.#saveToStorage();
-      this.#notifySubscribers(this.#cache);
-      return this.#cache;
+      BananaConfig.exec = new FunctionExecutor(cache);
+      BananaConfig.abTest = new AbTest(cache.experiments);
+      this.#notifySubscribers(cache);
+      this.getUserVariants();
+      // console.log("BananaConfig initialized with cache:", cache);
+      return cache;
     }
   }
 
@@ -198,20 +216,27 @@ export class BananaConfig {
     this.subscribers.forEach((callback) => callback(data));
   }
 
-  #saveToStorage() {
-    if (BananaConfig.#storage) {
-      BananaConfig.#storage.setItem(STORAGE_KEY, JSON.stringify(this.#cache));
-    } else {
-    }
-  }
-  #loadFromStorage() {
-    if (BananaConfig.#storage) {
-      const data = BananaConfig.#storage.getItem(STORAGE_KEY);
-      if (data) {
-        return JSON.parse(data);
-      }
-    }
-    console.warn("No storage available to load cache.", BananaConfig);
-    return new BananaCache();
+  getUserVariants() {
+    const userVariants = new Map();
+    BananaConfig.#fetcher
+      .fetchUserVariants()
+      .then((variants) => {
+        console.log("Fetched user variants =======x:", variants);
+        if (variants && Array.isArray(variants)) {
+          // variants.forEach((variant) => {
+          //   userVariants.set(variant.experimentId, variant);
+          // });
+          // BananaConfig.userVariants = userVariants;
+          // BananaCache.saveKeyValue("userVariants", Array.from(userVariants.entries()));
+          // console.log("User variants fetched and saved:", userVariants);
+
+
+          // variants.forEach((variant) => {
+          //   userVariants.set(variant.experimentId, variant);
+          // });
+          // cache.userVariants = userVariants;
+          // BananaCache.saveKeyValue("userVariants", userVariants);
+          }
+      });
   }
 }

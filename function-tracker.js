@@ -3,7 +3,7 @@ import { BananaConfig } from "./index.js";
 const FLUSH_INTERVAL = 5000; // 5 seconds
 export class FunctionTracker {
   timeoutId = null;
-  constructor({ key, appUrl, appId }) {
+  constructor() {
     this.executionLogs = [];
     this.retryCount = 0;
     /**
@@ -11,9 +11,6 @@ export class FunctionTracker {
      * @type {null | NodeJS.Timeout}
      */
     this.timeoutId = setInterval(() => this.flushLogs(), FLUSH_INTERVAL); // Every 5s
-    this.key = key;
-    this.appUrl = appUrl;
-    this.appId = appId;
   }
 
   /**
@@ -101,11 +98,10 @@ export class FunctionTracker {
    * If unsuccessful, it will save the log entry for later upload.
    */
   sendLogToBackend(logEntry) {
-    // console.log("jjjjj", this.key, this.appId, this.appUrl);
-    fetch(`${this.appUrl}${this.appId}/${logEntry.functionId}/log-function`, {
+    fetch(`${BananaConfig.getApiUrl()}${BananaConfig.getAppId()}/${logEntry.functionId}/log-function`, {
       method: "POST",
       headers: {
-            "x-api-key": this.key,
+            "x-api-key": BananaConfig.getApiKey(),
             "Content-Type": "application/json",
           },
       body: JSON.stringify(logEntry),
@@ -133,10 +129,10 @@ export class FunctionTracker {
    */
   sendLogsToBackend(batchEntries) {
     console.log("Log entry sent successfully 2222:", JSON.stringify(batchEntries, null, 2));
-    fetch(`${this.appUrl}${this.appId}/log-function/batch`, {
+    fetch(`${BananaConfig.getApiUrl()}${BananaConfig.getAppId()}/log-function/batch`, {
       method: "POST",
       headers: {
-            "x-api-key": this.key,
+            "x-api-key": BananaConfig.getApiKey(),
             "Content-Type": "application/json",
           },
       body: JSON.stringify(batchEntries),

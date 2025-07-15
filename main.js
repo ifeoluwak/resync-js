@@ -20,14 +20,17 @@ function fireAway() {
     // console.log("BananaConfig abtest", BananaConfig.abTest);
     const variant = await BananaConfig.abTest.getVariant("Test 1", 7);
     console.log("BananaConfig abTest variant", variant);
+    await BananaConfig.abTest.getVariant("Test 1", 7);
+    // console.log("BananaConfig abTest variant", variant);
     // if (await BananaConfig.abTest.getVariant("Test 1", 500) === "world") {
     //   console.log("Test 1 variant is world");
-    // } 
+    // }
+    // console.log("BananaConfig", BananaConfig);
   },
   storage: null
 })
 }
-
+BananaConfig.setUserId("user123");
 BananaConfig.setClient("test-client");
 BananaConfig.setAttributes({ user: {
   id: "user123",
