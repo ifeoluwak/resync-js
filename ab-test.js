@@ -1,7 +1,9 @@
 import { BananaConfig } from "./index.js";
 import BananaCache from "./cache.js";
+import { featureFlagRolloutTemplate, getTimeVariant, weightedRandom, weightedRolloutTemplate } from "./system-templates.js";
 
 const FLUSH_INTERVAL = 5000; // 5 seconds
+
 const LogType = {
   IMPRESSION: "IMPRESSION",
   CONVERSION: "CONVERSION"
@@ -59,9 +61,8 @@ export class AbTest {
 
     // check if the function is a system template
     if (experiment.type === "system") {
-      const backendTemplates = ['bandit-epsilon-greedy', 'round-robin'];
       // that should be executed in the backend
-      if (backendTemplates.includes(experiment.systemFunctionId)) {
+      if (backendSystemTemplatesIds.includes(experiment.systemFunctionId)) {
         try {
           const response = await fetch(`${BananaConfig.getApiUrl()}${BananaConfig.getAppId()}/get-system-variant`, {
           method: "POST",
@@ -90,6 +91,8 @@ export class AbTest {
           this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
           return variant.value;
         }
+      } else {
+        return this.handleSystemFunction(experiment.systemFunctionId);
       }
     }
 
@@ -286,5 +289,20 @@ export class AbTest {
         console.error("A/B Logging failed:", error);
         this.saveLogForLaterUpload(batchEntries);
       });
+  }
+
+  handleSystemFunction(experiment) {
+    switch (experiment.systemFunctionId) {
+      case "weighted-rollout":
+        return weightedRolloutTemplate(experiment);
+      case "feature-flag-rollout":
+        return featureFlagRolloutTemplate(experiment);
+      case "weighted-random":
+        return weightedRandom(experiment);
+      case "time-based":
+        return getTimeVariant(experiment);
+      default:
+        throw new Error(`Unknown system function ID: ${experiment.systemFunctionId}`);
+    }
   }
 }
