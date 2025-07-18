@@ -78,8 +78,6 @@ export class ConfigFetch {
 
   async fetchUserVariants() {
     const experiments = BananaCache.getKeyValue("experiments") || [];
-    const userId_ = BananaCache.getKeyValue("userId")
-    console.log("Fetched experiments:", userId_);
     const experimentIds = experiments.map((experiment) => experiment.id);
     if (!experimentIds || !Array.isArray(experimentIds) || experimentIds.length === 0) {
       console.warn("No experiments found or experiment IDs are invalid.");
@@ -88,7 +86,8 @@ export class ConfigFetch {
     }
     this.validateEnv();
     // if userId is not set, use sessionId
-    const userId = BananaCache.getKeyValue("userId") || BananaCache.getKeyValue("sessionId");
+    const userId = BananaCache.getKeyValue("userId")
+    const sessionId = BananaCache.getKeyValue("sessionId");
     let path = `${BananaConfig.getAppId()}/user-variants`;
 
     const fetchData = async () => {
@@ -101,6 +100,7 @@ export class ConfigFetch {
           },
           body: JSON.stringify({
             userId,
+            sessionId,
             experimentIds,
             appId: BananaConfig.getAppId(),
           }),
@@ -111,9 +111,9 @@ export class ConfigFetch {
         }
 
         const data = await response.json();
-        console.log("Fetched user variants:", data);
         return data;
       } catch (error) {
+        console.error("Error ------:", error?.message);
         throw error; // Re-throw the error to handle it in the retry logic
       }
     }
@@ -123,7 +123,7 @@ export class ConfigFetch {
           return data;
         }
       } catch (error) {
-        console.error("Error fetching user variants:", error);
+        console.error("Error fetching user variants:", JSON.stringify(error));
         throw error; // Re-throw the error to handle it in the retry logic
       }
   }

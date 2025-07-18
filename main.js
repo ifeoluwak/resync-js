@@ -1,7 +1,7 @@
 import { BananaConfig } from "./index.js";
 
 // make function available globally
-// window.BananaConfig = BananaConfig;
+window.BananaConfig = BananaConfig;
 
 
 
@@ -18,9 +18,10 @@ function fireAway() {
     // const res = await BananaConfig.exec.functionMapper('loadJsonResource', 'todos', 3);
     // console.log("BananaConfig exec result", res, BananaConfig.exec.executionLogs);
     // console.log("BananaConfig abtest", BananaConfig.abTest);
-    const variant = await BananaConfig.abTest.getVariant("Test 1", 7);
-    console.log("BananaConfig abTest variant", variant);
-    await BananaConfig.abTest.getVariant("Test 1", 7);
+    // const variant = await BananaConfig.abTest.getVariant("Test 1", 7);
+    // console.log("BananaConfig abTest variant", variant);
+    await BananaConfig.getVariant("Test 1", 44);
+    // await BananaConfig.recordConversion("Test 1", {name: 'yellow'});
     // console.log("BananaConfig abTest variant", variant);
     // if (await BananaConfig.abTest.getVariant("Test 1", 500) === "world") {
     //   console.log("Test 1 variant is world");

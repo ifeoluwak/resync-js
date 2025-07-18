@@ -54,7 +54,6 @@ export class AbTest {
     
     if (cachedVariants.has(experiment.id)) {
       const userVariant = cachedVariants.get(experiment.id);
-      console.log("11111 Cached variants:", userVariant);
       // No need to log again, just return the variant value
       return userVariant.variant.value;
     }
@@ -143,7 +142,7 @@ export class AbTest {
    * // Log an experiment exposure
    * logExperiment("exp123", { value: "variantA" }, "IMPRESSION");
    */
-  logExperiment(experimentId, variant, type) {
+  logExperiment(experimentId, variant, type, metadata = {}) {
     const apiKey = BananaConfig.getApiKey();
     const appId = BananaConfig.getAppId();
     const appUrl = BananaConfig.getApiUrl();
@@ -161,7 +160,7 @@ export class AbTest {
       userId: BananaCache.getKeyValue("userId") || BananaConfig.userId,
       timestamp: new Date().toISOString(),
       client: BananaConfig.client,
-      metadata: BananaConfig.attributes,
+      metadata: metadata || BananaConfig.attributes,
     };
     // console.log("Logging experiment entry:", logEntry);
     if (type === LogType.IMPRESSION) {
@@ -170,7 +169,6 @@ export class AbTest {
       const variantCaches = BananaCache.getKeyValue("userVariants") || new Map();
       variantCaches.set(experimentId, logEntry);
       BananaCache.saveKeyValue("userVariants", variantCaches);
-      console.log("Saved user variant to cache:", variantCaches);
     }
     return;
     // Send the log entry to the backend API
@@ -194,6 +192,28 @@ export class AbTest {
         console.error("A/B Logging failed:", error);
         this.saveLogForLaterUpload([logEntry]);
       });
+  }
+
+  recordConversion(experimentName, metadata = {}) {
+    // get the variant from userVariants
+    const userVariants = BananaCache.getKeyValue("userVariants")
+    const experimentId = this.experiments.find(
+      (exp) => exp.name === experimentName
+    )?.id;
+    if (!experimentId) {
+      throw new Error(`Experiment "${experimentName}" not found.`);
+    }
+    if (!userVariants) {
+      throw new Error(`No impression logged for experiment "${experimentName}".`);
+    }
+    const variant = userVariants.get(experimentId);
+    console.log("Recording conversion for userVariants:", userVariants);
+    if (!variant) {
+      throw new Error(`No variant found for experiment ID "${experimentId}".`);
+    }
+    console.log("found conversion for variant:", variant);
+    // // Log the conversion
+    // this.logExperiment(experimentId, variant, LogType.CONVERSION, metadata);
   }
 
   /** * Saves log entries for later upload.
