@@ -1,5 +1,5 @@
-import { BananaConfig } from "./index.js";
-import BananaCache from "./cache.js";
+import { ResyncBase } from "./index.js";
+import ResyncCache from "./cache.js";
 import { featureFlagRolloutTemplate, getTimeVariant, weightedRandom, weightedRolloutTemplate } from "./system-templates.js";
 
 const FLUSH_INTERVAL = 5000; // 5 seconds
@@ -16,7 +16,7 @@ const LogType = {
  * @param {Array} experiments - The list of experiments to manage.
  * @description This class provides methods to get variant values for experiments,
  * log experiment exposures, and handle logging functionality.
- * It uses the BananaConfig for configuration and logging.
+ * It uses the ResyncBase for configuration and logging.
  * It also handles retry logic for fetching data and logging.
  */
 export class AbTest {
@@ -28,7 +28,7 @@ export class AbTest {
       .map((exp) => exp.assignmentFunction)
       .filter((fn) => fn);
     if (fns.length > 0) {
-      BananaConfig.exec.loadFunctions(fns);
+      ResyncBase.exec.loadFunctions(fns);
     }
     this.timeoutId = setInterval(() => this.flushLogs(), FLUSH_INTERVAL); // Every 5s
   }
@@ -50,8 +50,8 @@ export class AbTest {
     }
 
     // check if user already has a variant for this experiment
-    const cachedVariants = BananaCache.getKeyValue("userVariants") || new Map();
-    
+    const cachedVariants = ResyncCache.getKeyValue("userVariants") || new Map();
+
     if (cachedVariants.has(experiment.id)) {
       const userVariant = cachedVariants.get(experiment.id);
       // No need to log again, just return the variant value
@@ -63,17 +63,17 @@ export class AbTest {
       // that should be executed in the backend
       if (backendSystemTemplatesIds.includes(experiment.systemFunctionId)) {
         try {
-          const response = await fetch(`${BananaConfig.getApiUrl()}${BananaConfig.getAppId()}/get-system-variant`, {
+          const response = await fetch(`${ResyncBase.getApiUrl()}${ResyncBase.getAppId()}/get-system-variant`, {
           method: "POST",
           headers: {
-            "x-api-key": BananaConfig.getApiKey(),
+            "x-api-key": ResyncBase.getApiKey(),
             "Content-Type": "application/json",
           },
           data: JSON.stringify({
             experimentId: experiment.id,
-            userId: BananaConfig.userId,
-            sessionId: BananaConfig.sessionId,
-            client: BananaConfig.client,
+            userId: ResyncBase.userId,
+            sessionId: ResyncBase.sessionId,
+            client: ResyncBase.client,
           }),
         });
         if (response.ok) {
@@ -82,9 +82,8 @@ export class AbTest {
         }
         } catch (error) {
           // If the backend call fails, choose a random variant
-          console.error("Failed to fetch system variant from backend:", error);
           const randomIndex = Math.floor(
-            this.#hashString(BananaConfig.userId + experiment.id) % experiment.variants.length
+            this.#hashString(ResyncBase.userId + experiment.id) % experiment.variants.length
           );
           const variant = experiment.variants[randomIndex];
           this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
@@ -98,7 +97,7 @@ export class AbTest {
     // Does the experiment have custom logic for variant assignment?
     if (experiment.assignmentFunction) {
       // Call the custom function via the functionMapper
-      const variantValue = await BananaConfig.exec.functionMapper(
+      const variantValue = await ResyncBase.exec.functionMapper(
         experiment.assignmentFunction.name,
         ...payload
       );
@@ -143,9 +142,9 @@ export class AbTest {
    * logExperiment("exp123", { value: "variantA" }, "IMPRESSION");
    */
   logExperiment(experimentId, variant, type, metadata = {}) {
-    const apiKey = BananaConfig.getApiKey();
-    const appId = BananaConfig.getAppId();
-    const appUrl = BananaConfig.getApiUrl();
+    const apiKey = ResyncBase.getApiKey();
+    const appId = ResyncBase.getAppId();
+    const appUrl = ResyncBase.getApiUrl();
     if (!apiKey || !appId || !appUrl) {
       console.warn(
         "API key, App ID, or App URL not set. Skipping log exposure."
@@ -156,19 +155,18 @@ export class AbTest {
       type,
       experimentId,
       variant,
-      sessionId: BananaCache.getKeyValue("sessionId") || BananaConfig.sessionId,
-      userId: BananaCache.getKeyValue("userId") || BananaConfig.userId,
+      sessionId: ResyncCache.getKeyValue("sessionId") || ResyncBase.sessionId,
+      userId: ResyncCache.getKeyValue("userId") || ResyncBase.userId,
       timestamp: new Date().toISOString(),
-      client: BananaConfig.client,
-      metadata: metadata || BananaConfig.attributes,
+      client: ResyncBase.client,
+      metadata: metadata || ResyncBase.attributes,
     };
-    // console.log("Logging experiment entry:", logEntry);
     if (type === LogType.IMPRESSION) {
       // also log to userVariants
-      // BananaConfig.userVariants.set(experimentId, logEntry);
-      const variantCaches = BananaCache.getKeyValue("userVariants") || new Map();
+      // ResyncBase.userVariants.set(experimentId, logEntry);
+      const variantCaches = ResyncCache.getKeyValue("userVariants") || new Map();
       variantCaches.set(experimentId, logEntry);
-      BananaCache.saveKeyValue("userVariants", variantCaches);
+      ResyncCache.saveKeyValue("userVariants", variantCaches);
     }
     return;
     // Send the log entry to the backend API
@@ -186,7 +184,7 @@ export class AbTest {
           this.saveLogForLaterUpload([logEntry]);
           return;
         }
-        console.log("A/B Log entry sent successfully 11111:", logEntry);
+        console.log("A/B Log entry sent successfully:", logEntry);
       })
       .catch((error) => {
         console.error("A/B Logging failed:", error);
@@ -196,7 +194,7 @@ export class AbTest {
 
   recordConversion(experimentName, metadata = {}) {
     // get the variant from userVariants
-    const userVariants = BananaCache.getKeyValue("userVariants")
+    const userVariants = ResyncCache.getKeyValue("userVariants")
     const experimentId = this.experiments.find(
       (exp) => exp.name === experimentName
     )?.id;
@@ -276,9 +274,9 @@ export class AbTest {
    * If unsuccessful, it will save the log entries for later upload.
    */
   sendLogsToBackend(batchEntries) {
-    const apiKey = BananaConfig.getApiKey();
-    const appId = BananaConfig.getAppId();
-    const appUrl = BananaConfig.getApiUrl();
+    const apiKey = ResyncBase.getApiKey();
+    const appId = ResyncBase.getAppId();
+    const appUrl = ResyncBase.getApiUrl();
     if (!apiKey || !appId || !appUrl) {
       console.warn(
         "API key, App ID, or App URL not set. Skipping log exposure."

@@ -1,7 +1,7 @@
 {
-  "name": "banana-js",
+  "name": "resyncbase",
   "version": "1.0.0",
-  "description": "Javascript client library for Bananas config",
+  "description": "Javascript client library for Resyncbase config",
   "main": "index.js",
   "scripts": {
     "test": "npm test"

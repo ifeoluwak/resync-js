@@ -38,7 +38,7 @@
 
 /**
  * Cache object for storing Banana application configurations.
- * @typedef BananaCache
+ * @typedef ResyncCache
  * @type {object}
  * @property {Map<string, Config>} configs - A map of configuration IDs to their respective configurations.
  * @property {Map<string, Function>} functions - A map of function names to their respective function objects.
@@ -46,15 +46,15 @@
  */
 
 
-const STORAGE_KEY = "bananaConfigCache";
+const STORAGE_KEY = "resyncConfigCache";
 
 
 /**
- * @type {BananaCache}
+ * @type {ResyncCache}
  */
-export default class BananaCache {
+export default class ResyncCache {
 //   constructor(storage) {
-//     BananaCache.storage = storage;
+//     ResyncCache.storage = storage;
 //     /**
 //      * @type {Config}
 //      */
@@ -79,35 +79,35 @@ export default class BananaCache {
   static userVariants = new Map();
 
   static init(storage) {
-    BananaCache.cache = new BananaCache();
+    ResyncCache.cache = new ResyncCache();
     if (storage) {
-      BananaCache.storage = storage;
-      BananaCache.loadFromStorage();
+      ResyncCache.storage = storage;
+      ResyncCache.loadFromStorage();
     }
   }
 
   static getCache() {
-    if (!BananaCache.cache) {
-      BananaCache.cache = new BananaCache();
+    if (!ResyncCache.cache) {
+      ResyncCache.cache = new ResyncCache();
     }
-    return BananaCache.cache;
+    return ResyncCache.cache;
   }
 
   static getKeyValue(key) {
-    if (BananaCache.storage) {
-      const cache = BananaCache.getCache();
+    if (ResyncCache.storage) {
+      const cache = ResyncCache.getCache();
       return cache[key] || null;
     } else {
       console.warn("No storage available to get key-value pair.");
-      return BananaCache.cache[key] || null; // Fallback to in-memory cache
+      return ResyncCache.cache[key] || null; // Fallback to in-memory cache
     }
   }
 
   static saveToStorage() {
-    if (BananaCache.storage) {
-      BananaCache.storage.setItem(
+    if (ResyncCache.storage) {
+      ResyncCache.storage.setItem(
         STORAGE_KEY,
-        JSON.stringify(BananaCache.getCache())
+        JSON.stringify(ResyncCache.getCache())
       );
     } else {
       console.warn("No storage available to save cache.");
@@ -115,35 +115,35 @@ export default class BananaCache {
   }
 
   static saveKeyValue(key, value) {
-    if (BananaCache.storage) {
-      const cache = BananaCache.getCache();
+    if (ResyncCache.storage) {
+      const cache = ResyncCache.getCache();
       cache[key] = value;
-      BananaCache.storage.setItem(STORAGE_KEY, JSON.stringify(cache));
-      BananaCache.cache = cache; // Update the static cache
+      ResyncCache.storage.setItem(STORAGE_KEY, JSON.stringify(cache));
+      ResyncCache.cache = cache; // Update the static cache
     } else {
-      // console.log("Saving to in-memory cache instead:", BananaCache.cache);
-      if (!BananaCache.cache) {
-        BananaCache.cache = new BananaCache();
+      // console.log("Saving to in-memory cache instead:", ResyncCache.cache);
+      if (!ResyncCache.cache) {
+        ResyncCache.cache = new ResyncCache();
       }
-      BananaCache.cache[key] = value; // Update the in-memory cache
+      ResyncCache.cache[key] = value; // Update the in-memory cache
     }
   }
 
   static loadFromStorage() {
-    if (BananaCache.storage) {
-      const data = BananaCache.storage.getItem(STORAGE_KEY);
+    if (ResyncCache.storage) {
+      const data = ResyncCache.storage.getItem(STORAGE_KEY);
       if (data) {
         const parsedData = JSON.parse(data);
         // Restore the cache state from the parsed data
-        BananaCache.cache = Object.assign(
-          BananaCache.getCache(),
+        ResyncCache.cache = Object.assign(
+          ResyncCache.getCache(),
           parsedData
         );
       }
     } else {
       console.warn("No storage available to load cache.");
-      // BananaCache.cache = new BananaCache(); // Initialize a new cache if no storage is available
+      // ResyncCache.cache = new ResyncCache(); // Initialize a new cache if no storage is available
     }
-    // console.warn("No storage available to load cache.", BananaCache);
+    // console.warn("No storage available to load cache.", ResyncCache);
   }
 }

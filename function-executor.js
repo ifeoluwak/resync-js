@@ -1,15 +1,15 @@
 import { FunctionTracker } from "./function-tracker.js";
-import { BananaConfig } from "./index.js";
+import { ResyncBase } from "./index.js";
 
 /**
- * Loads the application configuration from the Banana API.
+ * Loads the application configuration from the Resync API.
  * @returns {FunctionExecutor} - Returns an instance of FunctionExecutor with the loaded configuration.
  * @throws {Error} If the API key is not set or if the fetch fails.
  */
 export class FunctionExecutor extends FunctionTracker {
   /**
    * Creates an instance of FunctionExecutor.
-   * @param {BananaCache} cache - The cache instance containing functions and settings.
+   * @param {ResyncCache} cache - The cache instance containing functions and settings.
    * @throws {Error} If the cache instance is not provided.
    */
   constructor(cache) {
@@ -168,7 +168,7 @@ export class FunctionExecutor extends FunctionTracker {
 
       // Secure environment
       const env = {
-        BananasConfig: Object.freeze(JSON.parse(limitedConfig)),
+        ResyncConfig: Object.freeze(JSON.parse(limitedConfig)),
         fetch: this.settings.allowFetch
           ? this.safeFetch
           : () => {
@@ -225,9 +225,9 @@ export class FunctionExecutor extends FunctionTracker {
         result: error ? null : JSON.stringify(result),
         error: error ? error.message : null,
         durationMs: parseFloat(duration.toFixed(3)), // Duration in milliseconds
-        client: BananaConfig.client,
-        attributes: BananaConfig.attributes,
-        sessionId: BananaConfig.sessionId,
+        client: ResyncBase.client,
+        attributes: ResyncBase.attributes,
+        sessionId: ResyncBase.sessionId,
       });
 
       this.calledBy = null;
@@ -256,7 +256,7 @@ export class FunctionExecutor extends FunctionTracker {
   functionMapper(fnName, ...args) {
     const fnDef = this.functionMap.get(fnName);
     if (!fnDef) throw new Error(`Function ${fnName} not found`);
-
+    console.log(`Executing function: ${fnName} with args:`, args);
     return this.executeFunction(fnDef, ...args);
   }
 }

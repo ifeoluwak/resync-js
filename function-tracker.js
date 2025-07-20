@@ -1,4 +1,4 @@
-import { BananaConfig } from "./index.js";
+import { ResyncBase } from "./index.js";
 
 const FLUSH_INTERVAL = 5000; // 5 seconds
 export class FunctionTracker {
@@ -98,10 +98,10 @@ export class FunctionTracker {
    * If unsuccessful, it will save the log entry for later upload.
    */
   sendLogToBackend(logEntry) {
-    fetch(`${BananaConfig.getApiUrl()}${BananaConfig.getAppId()}/${logEntry.functionId}/log-function`, {
+    fetch(`${ResyncBase.getApiUrl()}${ResyncBase.getAppId()}/${logEntry.functionId}/log-function`, {
       method: "POST",
       headers: {
-            "x-api-key": BananaConfig.getApiKey(),
+            "x-api-key": ResyncBase.getApiKey(),
             "Content-Type": "application/json",
           },
       body: JSON.stringify(logEntry),
@@ -129,10 +129,10 @@ export class FunctionTracker {
    */
   sendLogsToBackend(batchEntries) {
     console.log("Log entry sent successfully 2222:", JSON.stringify(batchEntries, null, 2));
-    fetch(`${BananaConfig.getApiUrl()}${BananaConfig.getAppId()}/log-function/batch`, {
+    fetch(`${ResyncBase.getApiUrl()}${ResyncBase.getAppId()}/log-function/batch`, {
       method: "POST",
       headers: {
-            "x-api-key": BananaConfig.getApiKey(),
+            "x-api-key": ResyncBase.getApiKey(),
             "Content-Type": "application/json",
           },
       body: JSON.stringify(batchEntries),

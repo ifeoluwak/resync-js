@@ -1,57 +1,59 @@
-import { BananaConfig } from "./index.js";
+import { ResyncBase } from "./index.js";
 
-// make function available globally
-window.BananaConfig = BananaConfig;
+if (typeof window !== "undefined") {
+  // make function available globally
+  window.ResyncBase = ResyncBase;
+}
 
 
 
 function fireAway() {
-  BananaConfig.init({
+  ResyncBase.init({
   key: "your-api-key-here",
   appId: 7,
   ttl: 60 * 60 * 1000,
   callback: async (data) => {
-    // console.log("BananaConfig now ready", JSON.stringify(data, null, 2));
-    // console.log("BananaConfig exec", BananaConfig.exec);
-    // console.log("BananaConfig instance", BananaConfig.instance);
-    // const res = await BananaConfig.exec.functionMapper('stripNonAsciiAndGetLength', 'stripNonAsciiAndGetLength.     ');
-    // const res = await BananaConfig.exec.functionMapper('loadJsonResource', 'todos', 3);
-    // console.log("BananaConfig exec result", res, BananaConfig.exec.executionLogs);
-    // console.log("BananaConfig abtest", BananaConfig.abTest);
-    // const variant = await BananaConfig.abTest.getVariant("Test 1", 7);
-    // console.log("BananaConfig abTest variant", variant);
-    await BananaConfig.getVariant("Test 1", 44);
-    // await BananaConfig.recordConversion("Test 1", {name: 'yellow'});
-    // console.log("BananaConfig abTest variant", variant);
-    // if (await BananaConfig.abTest.getVariant("Test 1", 500) === "world") {
+    // console.log("ResyncBase now ready", JSON.stringify(data, null, 2));
+    // console.log("ResyncBase exec", ResyncBase.exec);
+    // console.log("ResyncBase instance", ResyncBase.instance);
+    // const res = await ResyncBase.exec.functionMapper('stripNonAsciiAndGetLength', 'stripNonAsciiAndGetLength.     ');
+    // const res = await ResyncBase.exec.functionMapper('loadJsonResource', 'todos', 3);
+    // console.log("ResyncBase exec result", res, ResyncBase.exec.executionLogs);
+    // console.log("ResyncBase abtest", ResyncBase.abTest);
+    // const variant = await ResyncBase.abTest.getVariant("Test 1", 7);
+    // console.log("ResyncBase abTest variant", variant);
+    await ResyncBase.getVariant("Test 1", 44);
+    // await ResyncBase.recordConversion("Test 1", {name: 'yellow'});
+    // console.log("ResyncBase abTest variant", variant);
+    // if (await ResyncBase.abTest.getVariant("Test 1", 500) === "world") {
     //   console.log("Test 1 variant is world");
     // }
-    // console.log("BananaConfig", BananaConfig);
+    // console.log("ResyncBase", ResyncBase);
   },
-  storage: null
+  storage: null, // or Window.localStorage
 })
 }
-BananaConfig.setUserId("user123");
-BananaConfig.setClient("test-client");
-BananaConfig.setAttributes({ user: {
+ResyncBase.setUserId("user123");
+ResyncBase.setClient("test-client");
+ResyncBase.setAttributes({ user: {
   id: "user123",
   name: "John Doe",
 } });
 
 // setTimeout(() => {
 
-// BananaConfig.instance.subscribe = (callback) => {
-//     console.log("Subscribed to BananaConfig updates");
+// ResyncBase.instance.subscribe = (callback) => {
+//     console.log("Subscribed to ResyncBase updates");
 // }
 // }
 // , 500);
 
 fireAway();
-// console.log("BananaConfig instance", BananaConfig.instance);
+// console.log("ResyncBase instance", ResyncBase.instance);
 // setTimeout(() => {
-// BananaConfig.instance.subscribe((callback) => {
-//     console.log("Outside subcription to BananaConfig updates", BananaConfig.instance);
+// ResyncBase.instance.subscribe((callback) => {
+//     console.log("Outside subcription to ResyncBase updates", ResyncBase.instance);
 // })
 // }
 // , 500);
-// console.log("BananaConfig instance", BananaConfig.instance);
+// console.log("ResyncBase instance", ResyncBase.instance);

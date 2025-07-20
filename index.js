@@ -1,22 +1,22 @@
 import { AbTest } from "./ab-test.js";
-import BananaCache from "./cache.js";
+import ResyncCache from "./cache.js";
 import { ConfigFetch } from "./config-fetch.js";
 import { FunctionExecutor } from "./function-executor.js";
 
-const STORAGE_KEY = "bananaConfigCache";
+const STORAGE_KEY = "ResyncBaseCache";
 
-export class BananaConfig {
+export class ResyncBase {
   constructor() {
     /**
-     * @type {BananaCache}
+     * @type {ResyncCache}
      */
-    BananaConfig.#fetcher = new ConfigFetch();
+    ResyncBase.#fetcher = new ConfigFetch();
     this.#loadAppConfig()
       .then((data) => {
-        BananaConfig.ready = true;
+        ResyncBase.ready = true;
       })
       .catch((error) => {
-        console.error("Error initializing BananaConfig:", error);
+        console.error("Error initializing ResyncBase:", error);
       });
     this.subscribers = new Set();
   }
@@ -54,7 +54,7 @@ export class BananaConfig {
   static userVariants = new Map();
 
   /**
-   * Initializes the BananaConfig class.
+   * Initializes the ResyncBase class.
    * Api key is required to use the Banana API.
    * @param {string} apiKey - The API key for Banana API.
    * @param {number} [ttl=3600000] - The time-to-live for the cache in milliseconds. Default is 1 hour (3600000 ms).
@@ -63,10 +63,10 @@ export class BananaConfig {
    * @throws {Error} - Throws an error if the API key is not provided.
    * @throws {Error} - Throws an error if the callback is not a function.
    * @throws {Error} - Throws an error if the storage is not a valid Storage object.
-   * @description This method initializes the BananaConfig class with the provided API key and optional parameters.
+   * @description This method initializes the ResyncBase class with the provided API key and optional parameters.
    * It sets the API key, time-to-live for the cache, and subscribes to updates if a callback is provided.
-   * It also creates an instance of BananaConfig if it does not already exist.
-   * @returns {BananaConfig} - Returns the instance of BananaConfig.
+   * It also creates an instance of ResyncBase if it does not already exist.
+   * @returns {ResyncBase} - Returns the instance of ResyncBase.
    */
   static init({ key, appId, ttl = 60 * 60 * 1000, callback, storage }) {
     if (!key) {
@@ -75,9 +75,9 @@ export class BananaConfig {
     if (!appId) {
       throw new Error("App ID is required to use Banana API.");
     }
-    BananaConfig.#apiKey = key;
-    BananaConfig.#appId = appId;
-    BananaConfig.#ttl = ttl;
+    ResyncBase.#apiKey = key;
+    ResyncBase.#appId = appId;
+    ResyncBase.#ttl = ttl;
     // storage must have a getItem, setItem, removeItem and clear methods
     const allowedStorageMethods = ["getItem", "setItem", "removeItem", "clear"];
     if (
@@ -86,75 +86,75 @@ export class BananaConfig {
         (method) => typeof storage[method] === "function"
       )
     ) {
-      // BananaCache.storage = storage;
-      BananaCache.init(storage);
-      console.log("BananaConfig using custom storage");
+      // ResyncCache.storage = storage;
+      ResyncCache.init(storage);
+      console.log("ResyncBase using custom storage", storage);
     } else {
-      // console.warn("BananaConfig using default localStorage");
-      BananaCache.init();
+      // console.warn("ResyncBase using default localStorage");
+      ResyncCache.init();
     }
-    if (!BananaConfig.instance) {
-      BananaConfig.instance = new BananaConfig(key);
+    if (!ResyncBase.instance) {
+      ResyncBase.instance = new ResyncBase(key);
     }
     if (callback && typeof callback === "function") {
-      BananaConfig.instance.subscribe(callback);
+      ResyncBase.instance.subscribe(callback);
     }
-    return BananaConfig.instance;
+    return ResyncBase.instance;
   }
 
   static getApiKey() {
-    return BananaConfig.#apiKey;
+    return ResyncBase.#apiKey;
   }
 
   static getAppId() {
-    return BananaConfig.#appId;
+    return ResyncBase.#appId;
   }
 
   static getApiUrl() {
-    return BananaConfig.#apiUrl;
+    return ResyncBase.#apiUrl;
   }
 
   static setUserId(userId) {
-    BananaConfig.userId = `${userId}`;
-    if (BananaCache.cache) {
-      BananaCache.saveKeyValue("userId", `${userId}`);
+    ResyncBase.userId = `${userId}`;
+    if (ResyncCache.cache) {
+      ResyncCache.saveKeyValue("userId", `${userId}`);
     }
-    // // BananaConfig.instance.getUserVariants();
+    // // ResyncBase.instance.getUserVariants();
   }
 
   static setClient(client) {
     if (typeof client !== "string") {
       throw new Error("Client must be a string");
     }
-    BananaConfig.client = client;
+    ResyncBase.client = client;
   }
 
   static setAttributes(attributes) {
     if (typeof attributes !== "object") {
       throw new Error("Attributes must be an object");
     }
-    BananaConfig.attributes = JSON.stringify(attributes);
+    ResyncBase.attributes = JSON.stringify(attributes);
   }
 
   static async executeFunction(functionName, args) {
-    if (!BananaConfig.exec) {
-      throw new Error("FunctionExecutor is not initialized. Please initialize BananaConfig first.");
+    if (!ResyncBase.exec) {
+      throw new Error("FunctionExecutor is not initialized. Please initialize ResyncBase first.");
     }
-    return await BananaConfig.exec.execute(functionName, args);
+    return await ResyncBase.exec.execute(functionName, args);
   }
 
   static async getVariant(experimentId, payload) {
-    if (!BananaConfig.abTest) {
-      throw new Error("AbTest is not initialized. Please initialize BananaConfig first.");
+    if (!ResyncBase.abTest) {
+      throw new Error("AbTest is not initialized. Please initialize ResyncBase first.");
     }
-    return await BananaConfig.abTest.getVariant(experimentId, payload);
+    return await ResyncBase.abTest.getVariant(experimentId, payload);
   }
 
   static getConfig(key) {
-    if (!BananaConfig.#appId) {
-      throw new Error("App ID is not set. Please initialize BananaConfig with a valid App ID.");
+    if (!ResyncBase.#appId) {
+      throw new Error("App ID is not set. Please initialize ResyncBase with a valid App ID.");
     }
-    const config = BananaCache.getKeyValue("configs");
+    const config = ResyncCache.getKeyValue("configs");
     if (config && key in config) {
       return config[key];
     }
@@ -166,7 +166,7 @@ export class BananaConfig {
       throw new Error("Experiment ID and variant value are required");
     }
     // Record the conversion event
-    return BananaConfig.abTest.recordConversion(experimentId, metadata);
+    return ResyncBase.abTest.recordConversion(experimentId, metadata);
 
   }
 
@@ -177,59 +177,57 @@ export class BananaConfig {
    * @throws {Error} - Throws an error if the API key is not set or if the request fails.
    */
   async #loadAppConfig() {
-    // console.log("BananaConfig.getAppConfig called");
-    if (!BananaConfig.#apiKey) {
+    if (!ResyncBase.#apiKey) {
       throw new Error(
-        "API key is not set. Please initialize BananaConfig with a valid API key."
+        "API key is not set. Please initialize ResyncBase with a valid API key."
       );
     }
 
-    const cache = BananaCache.getCache();
+    const cache = ResyncCache.getCache();
 
     const sessionId = '3amhexwa89r-1752095355810'
-    // BananaCache.getKeyValue("sessionId") ||
+    // ResyncCache.getKeyValue("sessionId") ||
     // `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
-    BananaCache.saveKeyValue("sessionId", sessionId);
-    BananaConfig.sessionId = sessionId;
-    if (BananaConfig.userId) {
-      BananaCache.saveKeyValue("userId", BananaConfig.userId);
+    ResyncCache.saveKeyValue("sessionId", sessionId);
+    ResyncBase.sessionId = sessionId;
+    if (ResyncBase.userId) {
+      ResyncCache.saveKeyValue("userId", ResyncBase.userId);
     }
 
     if (
       cache?.lastFetchTimestamp &&
-      Date.now() - cache?.lastFetchTimestamp < BananaConfig.#ttl
+      Date.now() - cache?.lastFetchTimestamp < ResyncBase.#ttl
     ) {
       this.#notifySubscribers(cache);
-      BananaConfig.#appId = cache.configs.appId;
-      BananaConfig.sessionId = cache.sessionId;
+      ResyncBase.#appId = cache.configs.appId;
+      ResyncBase.sessionId = cache.sessionId;
       // Always fetch user variants
       await this.getUserVariants();
       return cache;
     }
 
-    const config = await BananaConfig.#fetcher.fetchAppConfig();
+    const config = await ResyncBase.#fetcher.fetchAppConfig();
     const lastFetchTimestamp = new Date().toISOString();
 
     if (config) {
-      BananaCache.saveKeyValue("configs", config.appConfig || {});
-      BananaCache.saveKeyValue("functions", config.functions || []);
-      BananaCache.saveKeyValue(
+      ResyncCache.saveKeyValue("configs", config.appConfig || {});
+      ResyncCache.saveKeyValue("functions", config.functions || []);
+      ResyncCache.saveKeyValue(
         "functionSettings",
         config.functionSettings || {}
       );
-      BananaCache.saveKeyValue("experiments", config.experiments || []);
+      ResyncCache.saveKeyValue("experiments", config.experiments || []);
       // Always fetch user variants
       await this.getUserVariants();
 
-      BananaCache.saveKeyValue(
+      ResyncCache.saveKeyValue(
         "lastFetchTimestamp",
         lastFetchTimestamp
       );
 
-      BananaConfig.exec = new FunctionExecutor(cache);
-      BananaConfig.abTest = new AbTest(cache.experiments);
+      ResyncBase.exec = new FunctionExecutor(cache);
+      ResyncBase.abTest = new AbTest(cache.experiments);
       this.#notifySubscribers(cache);
-      // console.log("BananaConfig initialized with cache:", cache);
       return cache;
     }
   }
@@ -255,13 +253,13 @@ export class BananaConfig {
 
   async getUserVariants() {
     const userVariants = new Map();
-    const variants = await BananaConfig.#fetcher.fetchUserVariants();
+    const variants = await ResyncBase.#fetcher.fetchUserVariants();
     if (variants && Array.isArray(variants)) {
       variants.forEach((variant) => {
         userVariants.set(variant.experiment.id, variant);
       });
-      BananaConfig.userVariants = userVariants;
-      BananaCache.saveKeyValue("userVariants", userVariants);
+      ResyncBase.userVariants = userVariants;
+      ResyncCache.saveKeyValue("userVariants", userVariants);
     }
   }
 }

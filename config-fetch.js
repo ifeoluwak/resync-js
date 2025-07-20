@@ -1,41 +1,41 @@
-import { BananaConfig } from "./index.js";
-import BananaCache from "./cache.js";
+import { ResyncBase } from "./index.js";
+import ResyncCache from "./cache.js";
 
 export class ConfigFetch {
   constructor() {}
 
   validateEnv() {
     console.log("Validating environment variables...", 
-      BananaConfig.getApiKey(),
-      BananaConfig.getAppId(),
-      BananaConfig.getApiUrl()
+      ResyncBase.getApiKey(),
+      ResyncBase.getAppId(),
+      ResyncBase.getApiUrl()
     );
-    if (!BananaConfig.getApiKey()) {
-      throw new Error("API key is not set. Please initialize BananaConfig with a valid API key.");
+    if (!ResyncBase.getApiKey()) {
+      throw new Error("API key is not set. Please initialize ResyncBase with a valid API key.");
     }
-    if (!BananaConfig.getAppId()) {
-      throw new Error("App ID is not set. Please initialize BananaConfig with a valid App ID.");
+    if (!ResyncBase.getAppId()) {
+      throw new Error("App ID is not set. Please initialize ResyncBase with a valid App ID.");
     }
-    if (!BananaConfig.getApiUrl()) {
-      throw new Error("API URL is not set. Please initialize BananaConfig with a valid API URL.");
+    if (!ResyncBase.getApiUrl()) {
+      throw new Error("API URL is not set. Please initialize ResyncBase with a valid API URL.");
     }
   }
 
   async fetchAppConfig() {
-    console.log("xxxxxx", BananaConfig.getApiKey(), BananaConfig.getAppId(), BananaConfig.getApiUrl());
+    console.log("xxxxxx", ResyncBase.getApiKey(), ResyncBase.getAppId(), ResyncBase.getApiUrl());
     const numOfRetries = 5;
     const retryDelay = 2000; // 2 seconds
-    const appId = BananaConfig.getAppId();
+    const appId = ResyncBase.getAppId();
     let path = `${appId}/app-datas`;
 
     this.validateEnv();
 
     const fetchData = async () => {
       try {
-        const response = await fetch(`${BananaConfig.getApiUrl()}${path}`, {
+        const response = await fetch(`${ResyncBase.getApiUrl()}${path}`, {
           method: "GET",
           headers: {
-            "x-api-key": BananaConfig.getApiKey(),
+            "x-api-key": ResyncBase.getApiKey(),
             "Content-Type": "application/json",
           },
         });
@@ -77,7 +77,7 @@ export class ConfigFetch {
   }
 
   async fetchUserVariants() {
-    const experiments = BananaCache.getKeyValue("experiments") || [];
+    const experiments = ResyncCache.getKeyValue("experiments") || [];
     const experimentIds = experiments.map((experiment) => experiment.id);
     if (!experimentIds || !Array.isArray(experimentIds) || experimentIds.length === 0) {
       console.warn("No experiments found or experiment IDs are invalid.");
@@ -86,23 +86,23 @@ export class ConfigFetch {
     }
     this.validateEnv();
     // if userId is not set, use sessionId
-    const userId = BananaCache.getKeyValue("userId")
-    const sessionId = BananaCache.getKeyValue("sessionId");
-    let path = `${BananaConfig.getAppId()}/user-variants`;
+    const userId = ResyncCache.getKeyValue("userId")
+    const sessionId = ResyncCache.getKeyValue("sessionId");
+    let path = `${ResyncBase.getAppId()}/user-variants`;
 
     const fetchData = async () => {
       try {
-        const response = await fetch(`${BananaConfig.getApiUrl()}${path}`, {
+        const response = await fetch(`${ResyncBase.getApiUrl()}${path}`, {
           method: "POST",
           headers: {
-            "x-api-key": BananaConfig.getApiKey(),
+            "x-api-key": ResyncBase.getApiKey(),
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
             userId,
             sessionId,
             experimentIds,
-            appId: BananaConfig.getAppId(),
+            appId: ResyncBase.getAppId(),
           }),
         });
 
