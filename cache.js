@@ -1,7 +1,6 @@
 /**
  * Object representing the configuration for a Banana application.
- * @typedef Config
- * @type {object}
+ * @typedef {Object} Config
  * @property {string} id - The unique identifier for the configuration.
  * @property {boolean} isCurrent - Indicates whether this configuration is the current one.
  * @property {string} version - The version of the configuration.
@@ -9,75 +8,126 @@
  */
 
 /**
+ * Object representing a function parameter in the Banana application.
+ * @typedef {Object} FunctionParameter
+ * @property {string} name - The name of the parameter
+ * @property {string} type - The type of the parameter
+ * @property {*} [defaultValue] - The default value of the parameter
+ */
+
+/**
  * Object representing a function in the Banana application.
- * @typedef Function
- * @type {object}
+ * @typedef {Object} Function
  * @property {number} id - The unique identifier for the function.
  * @property {string} name - The name of the function.
  * @property {string} comment - A brief description of what the function does.
- * @property {string[]} parameters - An array of parameter names that the function accepts.
+ * @property {FunctionParameter[]} parameters - An array of parameter objects that the function accepts.
  * @property {string} code - The actual code of the function as a string.
  * @property {string} returnType - The type of value that the function returns.
  * @property {string[]} constants - Array of constants used in the function.
  * @property {boolean} public - Indicates whether the function is public or private.
  * @property {string} version - The version of the function.
- * @property {Function} calls - Object containing child function
+ * @property {Function} [calls] - Object containing child function
  */
 
 /**
  * Object representing the settings for functions in a Banana application.
- * @typedef FunctionSetting
- * @type {object}
+ * @typedef {Object} FunctionSetting
  * @property {string} id - The name of the function setting.
  * @property {number} maxExecutionDurationMs - The maximum execution duration for the function setting in milliseconds.
- * @property {string} allowedExternalApiDomains - A comma-separated list of allowed external API domains for the function setting.
- * @property {string} allowedExternalApiMethods - A comma-separated list of allowed HTTP methods for external API calls in the function setting.
- * @property {string} maxFetchCount - The maximum number of fetch calls allowed in the function setting.
- * @property {string} bannedKeywords - An array of keywords that are not allowed in the function setting.
+ * @property {string[]} allowedExternalApiDomains - Array of allowed external API domains for the function setting.
+ * @property {string[]} allowedExternalApiMethods - Array of allowed HTTP methods for external API calls in the function setting.
+ * @property {number} maxFetchCount - The maximum number of fetch calls allowed in the function setting.
+ * @property {string[]} bannedKeywords - An array of keywords that are not allowed in the function setting.
+ * @property {string[]} bannedPatterns - An array of regex patterns that are not allowed in the function setting.
+ * @property {boolean} allowFetch - Whether fetch calls are allowed
+ */
+
+/**
+ * Object representing an experiment variant in A/B testing.
+ * @typedef {Object} ExperimentVariant
+ * @property {string} id - The unique identifier for the variant
+ * @property {string} name - The name of the variant
+ * @property {string} value - The value of the variant
+ * @property {number} weight - The weight/percentage for this variant
+ */
+
+/**
+ * Object representing an A/B test experiment.
+ * @typedef {Object} Experiment
+ * @property {string} id - The unique identifier for the experiment
+ * @property {string} name - The name of the experiment
+ * @property {string} type - The type of experiment (e.g., 'system', 'custom')
+ * @property {ExperimentVariant[]} variants - Array of possible variants
+ * @property {Function} [assignmentFunction] - Custom function for variant assignment
+ * @property {string} [systemFunctionId] - ID of system function for variant assignment
  */
 
 /**
  * Cache object for storing Banana application configurations.
- * @typedef ResyncCache
- * @type {object}
- * @property {Map<string, Config>} configs - A map of configuration IDs to their respective configurations.
- * @property {Map<string, Function>} functions - A map of function names to their respective function objects.
- * @property {Map<string, FunctionSetting>} functionSettings - A map of function setting IDs to their respective function settings.
+ * @typedef {Object} ResyncCacheData
+ * @property {Object} configs - Application configuration object
+ * @property {Function[]} functions - Array of available functions
+ * @property {FunctionSetting} functionSettings - Function execution settings
+ * @property {Experiment[]} experiments - Array of A/B test experiments
+ * @property {string} [lastFetchTimestamp] - ISO timestamp of last fetch
+ * @property {string} [sessionId] - Current session ID
+ * @property {string} [userId] - Current user ID
+ * @property {Map<string, Object>} [userVariants] - User variant assignments
  */
 
+/**
+ * Storage interface for cache persistence.
+ * @typedef {Object} StorageInterface
+ * @property {function(string): string|null} getItem - Get item from storage
+ * @property {function(string, string): void} setItem - Set item in storage
+ * @property {function(string): void} removeItem - Remove item from storage
+ * @property {function(): void} clear - Clear all items from storage
+ */
 
 const STORAGE_KEY = "resyncConfigCache";
 
-
 /**
- * @type {ResyncCache}
+ * ResyncCache class for managing application configuration caching.
+ * Provides functionality for storing and retrieving configuration data,
+ * functions, experiments, and user variants with optional persistence.
+ * 
+ * @class ResyncCache
+ * @example
+ * // Initialize with localStorage
+ * ResyncCache.init(localStorage);
+ * 
+ * // Save a configuration value
+ * ResyncCache.saveKeyValue('configs', { featureFlag: true });
+ * 
+ * // Retrieve a configuration value
+ * const configs = ResyncCache.getKeyValue('configs');
  */
 export default class ResyncCache {
-//   constructor(storage) {
-//     ResyncCache.storage = storage;
-//     /**
-//      * @type {Config}
-//      */
-//     this.configs = {};
-//     /**
-//      * @type {Function[]}
-//      */
-//     this.functions = [];
-//     /**
-//      * @type {FunctionSetting[]}
-//      */
-//     this.functionSettings = {};
-//     /**
-//      * @type {null | Date}
-//      */
-//     this.lastFetchTimestamp = null;
-//   }
-
+  /** @type {StorageInterface|null} */
   static storage;
+
+  /** @type {ResyncCacheData} */
   static cache = {};
 
+  /** @type {Map<string, Object>} */
   static userVariants = new Map();
 
+  /**
+   * Initializes the ResyncCache with optional storage.
+   * @param {StorageInterface} [storage] - Optional storage interface for persistence
+   * @example
+   * // Initialize with localStorage
+   * ResyncCache.init(localStorage);
+   * 
+   * // Initialize with custom storage
+   * ResyncCache.init({
+   *   getItem: (key) => customStorage.get(key),
+   *   setItem: (key, value) => customStorage.set(key, value),
+   *   removeItem: (key) => customStorage.delete(key),
+   *   clear: () => customStorage.clear()
+   * });
+   */
   static init(storage) {
     ResyncCache.cache = new ResyncCache();
     if (storage) {
@@ -86,6 +136,13 @@ export default class ResyncCache {
     }
   }
 
+  /**
+   * Gets the current cache instance.
+   * @returns {ResyncCacheData} The current cache data
+   * @example
+   * const cache = ResyncCache.getCache();
+   * console.log('Current cache:', cache);
+   */
   static getCache() {
     if (!ResyncCache.cache) {
       ResyncCache.cache = new ResyncCache();
@@ -93,6 +150,14 @@ export default class ResyncCache {
     return ResyncCache.cache;
   }
 
+  /**
+   * Retrieves a value from cache by key.
+   * @param {string} key - The cache key to retrieve
+   * @returns {*} The cached value or null if not found
+   * @example
+   * const configs = ResyncCache.getKeyValue('configs');
+   * const functions = ResyncCache.getKeyValue('functions');
+   */
   static getKeyValue(key) {
     if (ResyncCache.storage) {
       const cache = ResyncCache.getCache();
@@ -103,6 +168,11 @@ export default class ResyncCache {
     }
   }
 
+  /**
+   * Saves the entire cache to storage.
+   * @example
+   * ResyncCache.saveToStorage();
+   */
   static saveToStorage() {
     if (ResyncCache.storage) {
       ResyncCache.storage.setItem(
@@ -114,6 +184,14 @@ export default class ResyncCache {
     }
   }
 
+  /**
+   * Saves a key-value pair to cache and optionally to storage.
+   * @param {string} key - The cache key
+   * @param {*} value - The value to cache
+   * @example
+   * ResyncCache.saveKeyValue('configs', { featureFlag: true });
+   * ResyncCache.saveKeyValue('lastFetchTimestamp', new Date().toISOString());
+   */
   static saveKeyValue(key, value) {
     if (ResyncCache.storage) {
       const cache = ResyncCache.getCache();
@@ -129,6 +207,11 @@ export default class ResyncCache {
     }
   }
 
+  /**
+   * Loads cache data from storage.
+   * @example
+   * ResyncCache.loadFromStorage();
+   */
   static loadFromStorage() {
     if (ResyncCache.storage) {
       const data = ResyncCache.storage.getItem(STORAGE_KEY);
@@ -142,8 +225,6 @@ export default class ResyncCache {
       }
     } else {
       console.warn("No storage available to load cache.");
-      // ResyncCache.cache = new ResyncCache(); // Initialize a new cache if no storage is available
     }
-    // console.warn("No storage available to load cache.", ResyncCache);
   }
 }

@@ -1,15 +1,52 @@
 import { ResyncBase } from "./index.js";
 import ResyncCache from "./cache.js";
 
+/**
+ * @typedef {Object} AppConfigResponse
+ * @property {Object} appConfig - The application configuration
+ * @property {import("./cache.js").Function[]} functions - Available functions
+ * @property {import("./cache.js").FunctionSetting} functionSettings - Function execution settings
+ * @property {import("./cache.js").Experiment[]} experiments - A/B test experiments
+ */
+
+/**
+ * @typedef {Object} UserVariantRequest
+ * @property {string} userId - The user ID
+ * @property {string} sessionId - The session ID
+ * @property {string[]} experimentIds - Array of experiment IDs
+ * @property {string} appId - The application ID
+ */
+
+/**
+ * @typedef {Object} UserVariantResponse
+ * @property {Object} variants - User variant assignments
+ * @property {string} userId - The user ID
+ * @property {string} sessionId - The session ID
+ */
+
+/**
+ * ConfigFetch class for fetching application configurations and user variants from the Banana API.
+ * Handles authentication, retry logic, and error handling for API requests.
+ * 
+ * @class ConfigFetch
+ * @example
+ * const fetcher = new ConfigFetch();
+ * const config = await fetcher.fetchAppConfig();
+ * const variants = await fetcher.fetchUserVariants();
+ */
 export class ConfigFetch {
+  /**
+   * Creates a new ConfigFetch instance.
+   * @constructor
+   */
   constructor() {}
 
+  /**
+   * Validates that required environment variables are set.
+   * @throws {Error} If API key, App ID, or API URL are not set
+   * @private
+   */
   validateEnv() {
-    console.log("Validating environment variables...", 
-      ResyncBase.getApiKey(),
-      ResyncBase.getAppId(),
-      ResyncBase.getApiUrl()
-    );
     if (!ResyncBase.getApiKey()) {
       throw new Error("API key is not set. Please initialize ResyncBase with a valid API key.");
     }
@@ -21,8 +58,18 @@ export class ConfigFetch {
     }
   }
 
+  /**
+   * Fetches the application configuration from the Banana API.
+   * Implements retry logic with exponential backoff and fallback URL handling.
+   * 
+   * @returns {Promise<AppConfigResponse>} The application configuration
+   * @throws {Error} If the API request fails after all retries
+   * @example
+   * const config = await fetcher.fetchAppConfig();
+   * console.log('App config:', config.appConfig);
+   * console.log('Functions:', config.functions);
+   */
   async fetchAppConfig() {
-    console.log("xxxxxx", ResyncBase.getApiKey(), ResyncBase.getAppId(), ResyncBase.getApiUrl());
     const numOfRetries = 5;
     const retryDelay = 2000; // 2 seconds
     const appId = ResyncBase.getAppId();
@@ -30,6 +77,12 @@ export class ConfigFetch {
 
     this.validateEnv();
 
+    /**
+     * Performs the actual fetch request to the API.
+     * @returns {Promise<AppConfigResponse>} The API response
+     * @throws {Error} If the request fails
+     * @private
+     */
     const fetchData = async () => {
       try {
         const response = await fetch(`${ResyncBase.getApiUrl()}${path}`, {
@@ -76,6 +129,15 @@ export class ConfigFetch {
     }
   }
 
+  /**
+   * Fetches user variants for A/B test experiments from the Banana API.
+   * 
+   * @returns {Promise<UserVariantResponse>} The user variant assignments
+   * @throws {Error} If the API request fails or no experiments are found
+   * @example
+   * const variants = await fetcher.fetchUserVariants();
+   * console.log('User variants:', variants.variants);
+   */
   async fetchUserVariants() {
     const experiments = ResyncCache.getKeyValue("experiments") || [];
     const experimentIds = experiments.map((experiment) => experiment.id);
@@ -90,6 +152,12 @@ export class ConfigFetch {
     const sessionId = ResyncCache.getKeyValue("sessionId");
     let path = `${ResyncBase.getAppId()}/user-variants`;
 
+    /**
+     * Performs the actual fetch request for user variants.
+     * @returns {Promise<UserVariantResponse>} The API response
+     * @throws {Error} If the request fails
+     * @private
+     */
     const fetchData = async () => {
       try {
         const response = await fetch(`${ResyncBase.getApiUrl()}${path}`, {
