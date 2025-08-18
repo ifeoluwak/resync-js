@@ -6,7 +6,10 @@
   "scripts": {
     "test": "npm test"
   },
-  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ifeoluwak/resyncbase-js.git"
+  },
   "author": "ifeoluwa",
   "license": "MIT"
 }
