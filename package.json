@@ -3,9 +3,32 @@
   "version": "1.0.0",
   "description": "Javascript client library for Resyncbase config",
   "main": "index.js",
+  "module": "index.js",
+  "react-native": "index.js",
+  "browser": "index.js",
+  "type": "commonjs",
+  "exports": {
+    ".": {
+      "react-native": "./index.js",
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "*.js",
+    "*.json"
+  ],
   "scripts": {
     "test": "npm test"
   },
+  "keywords": [
+    "resyncbase",
+    "content-management",
+    "cms",
+    "config",
+    "client",
+    "javascript",
+    "react-native"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/ifeoluwak/resyncbase-js.git"
