@@ -8,7 +8,7 @@ export class FunctionTracker {
     this.retryCount = 0;
     /**
      * This will be stopped and restarted every time we have unflushed logs
-     * @type {null | NodeJS.Timeout}
+     * @type {null | number}
      */
     this.timeoutId = setInterval(() => this.flushLogs(), FLUSH_INTERVAL); // Every 5s
   }
@@ -33,11 +33,7 @@ export class FunctionTracker {
 
   /**
    * Logs the execution of a function.
-   * @param {string} fnName - The name of the function being executed.
-   * @param {Array} args - The arguments passed to the function.
-   * @param {*} result - The result returned by the function.
-   * @param {Error|null} error - An error object if an error occurred, otherwise null.
-   * @param {number} dur - The duration of the function execution in milliseconds.
+   * @param {Object} entry - The log entry to send.
    * @returns {Promise<void>}
    * @throws {Error} If the log entry cannot be created or sent to the backend.
    * @description This method creates a log entry with the function name, arguments, result, error (if any), duration, and fetch count.
@@ -141,7 +137,7 @@ export class FunctionTracker {
         if (!response.ok) {
           return
         }
-        console.log("Log entry sent successfully 33333:", batchEntries.count);
+        console.log("Log entry sent successfully 33333:", batchEntries.length);
         this.executionLogs = this.executionLogs.filter(
           (log) => !batchEntries.some((entry) => entry.id === log.id)
         );

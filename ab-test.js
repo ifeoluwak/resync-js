@@ -1,6 +1,6 @@
 import { ResyncBase } from "./index.js";
 import ResyncCache from "./cache.js";
-import { featureFlagRolloutTemplate, getTimeVariant, weightedRandom, weightedRolloutTemplate } from "./system-templates.js";
+import { backendSystemTemplatesIds, featureFlagRolloutTemplate, getTimeVariant, weightedRandom, weightedRolloutTemplate } from "./system-templates.js";
 
 const FLUSH_INTERVAL = 5000; // 5 seconds
 
@@ -54,6 +54,7 @@ export class AbTest {
 
     if (cachedVariants.has(experiment.id)) {
       const userVariant = cachedVariants.get(experiment.id);
+      console.log("Using cached variant for experiment:", experimentName, userVariant);
       // No need to log again, just return the variant value
       return userVariant.variant.value;
     }
@@ -62,35 +63,50 @@ export class AbTest {
     if (experiment.type === "system") {
       // that should be executed in the backend
       if (backendSystemTemplatesIds.includes(experiment.systemFunctionId)) {
+        console.log("Calling backend system function for experiment:", experiment);
         try {
-          const response = await fetch(`${ResyncBase.getApiUrl()}${ResyncBase.getAppId()}/get-system-variant`, {
-          method: "POST",
-          headers: {
-            "x-api-key": ResyncBase.getApiKey(),
-            "Content-Type": "application/json",
-          },
-          data: JSON.stringify({
+          const postData = JSON.stringify({
             experimentId: experiment.id,
+            systemFunctionId: experiment.systemFunctionId,
             userId: ResyncBase.userId,
             sessionId: ResyncBase.sessionId,
             client: ResyncBase.client,
-          }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          return data;
-        }
+            metadata: ResyncBase.attributes,
+          });
+          const response = await fetch(`${ResyncBase.getApiUrl()}${ResyncBase.getAppId()}/get-system-variant`, {
+            method: "POST",
+            headers: {
+              "x-api-key": ResyncBase.getApiKey(),
+              "Content-Type": "application/json",
+            },
+            body: postData,
+          });
+          if (response.ok) {
+            const data = await response.json();
+            console.log("System function response:", data);
+            // store the variant in the cache
+            cachedVariants.set(experiment.id, {
+              variant: data
+            });
+            ResyncCache.saveKeyValue("userVariants", cachedVariants);
+            return data;
+          } else {
+            console.error("Failed to fetch system variant:", response.statusText);
+            // TODO: Handle error appropriately
+          }
         } catch (error) {
+          console.error("Failed to fetch system variant:", error);
+          // TODO: Handle error appropriately
           // If the backend call fails, choose a random variant
-          const randomIndex = Math.floor(
-            this.#hashString(ResyncBase.userId + experiment.id) % experiment.variants.length
-          );
-          const variant = experiment.variants[randomIndex];
-          this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
-          return variant.value;
+          // const randomIndex = Math.floor(
+          //   this.#hashString(ResyncBase.userId + experiment.id) % experiment.variants.length
+          // );
+          // const variant = experiment.variants[randomIndex];
+          // this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
+          // return variant.value;
         }
       } else {
-        return this.handleSystemFunction(experiment.systemFunctionId);
+        return this.handleSystemFunction(experiment);
       }
     }
 
@@ -168,7 +184,7 @@ export class AbTest {
       variantCaches.set(experimentId, logEntry);
       ResyncCache.saveKeyValue("userVariants", variantCaches);
     }
-    return;
+    // return;
     // Send the log entry to the backend API
     fetch(`${appUrl}${appId}/${experimentId}/log-experiment`, {
       method: "POST",
@@ -297,7 +313,7 @@ export class AbTest {
         }
         console.log(
           "A/B Log entry sent successfully 33333:",
-          batchEntries.count
+          batchEntries.length
         );
         this.executionLogs = this.executionLogs.filter(
           (log) => !batchEntries.some((entry) => entry.id === log.id)
@@ -310,6 +326,7 @@ export class AbTest {
   }
 
   handleSystemFunction(experiment) {
+    console.log("Handling system function for experiment:", experiment);
     switch (experiment.systemFunctionId) {
       case "weighted-rollout":
         return weightedRolloutTemplate(experiment);
@@ -320,6 +337,7 @@ export class AbTest {
       case "time-based":
         return getTimeVariant(experiment);
       default:
+        console.warn(`No handler for system function ID: ${experiment.systemFunctionId}`);
         throw new Error(`Unknown system function ID: ${experiment.systemFunctionId}`);
     }
   }

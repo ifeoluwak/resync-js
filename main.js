@@ -22,7 +22,9 @@ function fireAway() {
     // console.log("ResyncBase abtest", ResyncBase.abTest);
     // const variant = await ResyncBase.abTest.getVariant("Test 1", 7);
     // console.log("ResyncBase abTest variant", variant);
-    await ResyncBase.getVariant("Test 1", 44);
+    // await ResyncBase.getVariant("Test 1", 44);
+    const myVariant = await ResyncBase.getVariant("SimpleBand");
+    console.log("ResyncBase abTest myVariant", myVariant);
     // await ResyncBase.recordConversion("Test 1", {name: 'yellow'});
     // console.log("ResyncBase abTest variant", variant);
     // if (await ResyncBase.abTest.getVariant("Test 1", 500) === "world") {
@@ -33,11 +35,11 @@ function fireAway() {
   storage: null, // or Window.localStorage
 })
 }
-ResyncBase.setUserId("user123");
+ResyncBase.setUserId("user456");
 ResyncBase.setClient("test-client");
-ResyncBase.setAttributes({ user: {
-  id: "user123",
-  name: "John Doe",
+ResyncBase.setAttributes({ device: {
+  type: "mac",
+  name: "John's MacBook Pro",
 } });
 
 // setTimeout(() => {
