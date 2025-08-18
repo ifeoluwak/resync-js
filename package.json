@@ -1,12 +1,47 @@
 {
   "name": "resyncbase",
   "version": "1.0.0",
-  "description": "Javascript client library for Resyncbase config",
+  "description": "JavaScript client library for ResyncBase A/B testing and configuration management",
   "main": "index.js",
-  "scripts": {
-    "test": "npm test"
-  },
+  "module": "index.js",
   "type": "module",
-  "author": "ifeoluwa",
-  "license": "MIT"
+  "files": [
+    "*.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"No build step required\"",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "ab-testing",
+    "feature-flags",
+    "configuration",
+    "experiments",
+    "javascript",
+    "client-library",
+    "resyncbase",
+    "a-b-testing"
+  ],
+  "author": {
+    "name": "ifeoluwa",
+    "email": "your-email@example.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ifeoluwaking/resyncbase-js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ifeoluwaking/resyncbase-js/issues"
+  },
+  "homepage": "https://github.com/ifeoluwaking/resyncbase-js#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

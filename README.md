@@ -39,48 +39,250 @@ const result = await ResyncBase.executeFunction('calculatePrice', 100, 'USD');
 const variant = await ResyncBase.getVariant('pricing-experiment', { userId: '123' });
 ```
 
-## Type Safety with JSDoc
+## Content Management
 
-This library uses comprehensive JSDoc annotations for type safety. Modern IDEs like VS Code provide excellent support for JSDoc types.
+ResyncBase now includes a powerful **section-based content management system** that allows you to create complex, dynamic layouts for React Native applications. Each content view can contain multiple sections, and each section can have its own container styles and elements.
 
-### Configuration Types
+### Key Features
+
+- **📱 Section-Based Layouts** - Organize content into logical sections
+- **🎨 Container Styling** - Each section has independent layout, alignment, and styling
+- **🔧 Element Management** - Text, Button, and Icon elements with custom properties
+- **📱 React Native Ready** - Optimized for mobile applications
+- **💾 Smart Caching** - Efficient content caching with automatic updates
+- **🔄 Legacy Support** - Automatically transforms old element-based content to sections
+
+### Section Structure
 
 ```javascript
-/**
- * @typedef {Object} InitOptions
- * @property {string} key - The API key for Banana API
- * @property {string} appId - The application ID
- * @property {number} [ttl=3600000] - Time-to-live for cache in milliseconds
- * @property {Function} [callback] - Optional callback function when config is loaded
- * @property {Storage} [storage] - Optional storage object for caching. e.g localStorage (web), AsyncStorage (react-native)
- */
+{
+  id: 1,
+  name: "Header Section",
+  containerStyles: {
+    layout: "row",           // 'row' | 'column' | 'grid'
+    alignment: "center",     // 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around'
+    gap: 16,                // Spacing between elements (px)
+    padding: 16,            // Internal padding (px)
+    borderRadius: 8,        // Corner radius (px)
+    backgroundColor: "#ffffff", // Background color
+    flexWrap: "nowrap",     // 'nowrap' | 'wrap' | 'wrap-reverse'
+    maxWidth: 400           // Maximum width (px, optional)
+  },
+  elements: [
+    {
+      id: "text-1",
+      type: "text",
+      name: "Welcome Text",
+      properties: { textContent: "Welcome to our app!" },
+      styles: { fontSize: 18, color: "#333333" },
+      order: 0,
+      isVisible: true
+    },
+    {
+      id: "button-1", 
+      type: "button",
+      name: "Get Started",
+      properties: { buttonText: "Get Started", buttonAction: "navigate" },
+      styles: { backgroundColor: "#007AFF" },
+      order: 1,
+      isVisible: true
+    }
+  ],
+  order: 0
+}
 ```
 
-```javascript
-/**
- * @typedef {Object} Function
- * @property {number} id - The unique identifier for the function
- * @property {string} name - The name of the function
- * @property {string} comment - A brief description of what the function does
- * @property {FunctionParameter[]} parameters - An array of parameter objects
- * @property {string} code - The actual code of the function as a string
- * @property {string} returnType - The type of value that the function returns
- * @property {string[]} constants - Array of constants used in the function
- * @property {boolean} public - Indicates whether the function is public or private
- * @property {string} version - The version of the function
- */
-```
+### Quick Start
 
 ```javascript
-/**
- * @typedef {Object} Experiment
- * @property {string} id - The unique identifier for the experiment
- * @property {string} name - The name of the experiment
- * @property {string} type - The type of experiment (e.g., 'system', 'custom')
- * @property {ExperimentVariant[]} variants - Array of possible variants
- * @property {Function} [assignmentFunction] - Custom function for variant assignment
- * @property {string} [systemFunctionId] - ID of system function for variant assignment
- */
+import { ResyncBase } from 'resyncbase';
+
+// Initialize ResyncBase
+ResyncBase.init({
+  key: 'your-api-key',
+  appId: 'your-app-id'
+});
+
+// Fetch a content view
+const contentView = await ResyncBase.fetchContentView('cv-123');
+
+// Access sections and elements
+contentView.sections.forEach(section => {
+  console.log(`Section: ${section.name}`);
+  console.log(`Layout: ${section.containerStyles.layout}`);
+  console.log(`Elements: ${section.elements.length}`);
+});
+
+// Create a new section programmatically
+const newSection = ResyncBase.createSection('Custom Section', 1);
+newSection.containerStyles.layout = 'row';
+newSection.containerStyles.alignment = 'space-between';
+```
+
+### React Native Integration
+
+```javascript
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { ResyncBase } from 'resyncbase-js';
+
+const ContentViewComponent = ({ contentViewId }) => {
+  const [contentView, setContentView] = useState(null);
+  
+  useEffect(() => {
+    fetchContent();
+  }, [contentViewId]);
+  
+  const fetchContent = async () => {
+    const data = await ResyncBase.fetchContentView(contentViewId);
+    setContentView(data);
+  };
+  
+  if (!contentView) return <Text>Loading...</Text>;
+  
+  return (
+    <View style={styles.container}>
+      {contentView.sections.map(section => (
+        <View
+          key={section.id}
+          style={[
+            styles.section,
+            {
+              flexDirection: section.containerStyles.layout === 'column' ? 'column' : 'row',
+              justifyContent: section.containerStyles.alignment,
+              gap: section.containerStyles.gap,
+              padding: section.containerStyles.padding,
+              backgroundColor: section.containerStyles.backgroundColor,
+              borderRadius: section.containerStyles.borderRadius,
+            }
+          ]}
+        >
+          {section.elements.map(element => (
+            <View key={element.id} style={styles.element}>
+              {element.type === 'text' && (
+                <Text>{element.properties?.textContent}</Text>
+              )}
+              {element.type === 'button' && (
+                <TouchableOpacity>
+                  <Text>{element.properties?.buttonText}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+};
+```
+
+### API Reference
+
+#### Content Management Methods
+
+| Method | Description | Returns |
+|--------|-------------|---------|
+| `ResyncBase.fetchContentView(contentViewId, useCache)` | Fetch a single content view | `Promise<ContentView>` |
+| `ResyncBase.fetchContentViews(appId, useCache)` | Fetch all content views for an app | `Promise<ContentView[]>` |
+| `ResyncBase.createSection(name, order)` | Create a new section with default styles | `Section` |
+| `ResyncBase.getDefaultContainerStyles()` | Get default container styles | `ContainerStyles` |
+| `ResyncBase.getSectionStats(section)` | Get statistics for a section | `SectionStats` |
+
+#### Container Styles Properties
+
+| Property | Type | Description | Default |
+|----------|------|-------------|---------|
+| `layout` | `'row' \| 'column' \| 'grid'` | Layout direction | `'column'` |
+| `alignment` | `'flex-start' \| 'center' \| 'flex-end' \| 'space-between' \| 'space-around'` | Element alignment | `'flex-start'` |
+| `gap` | `number` | Spacing between elements (px) | `16` |
+| `padding` | `number` | Internal padding (px) | `16` |
+| `borderRadius` | `number` | Corner radius (px) | `8` |
+| `backgroundColor` | `string` | Background color (hex) | `'#ffffff'` |
+| `flexWrap` | `'nowrap' \| 'wrap' \| 'wrap-reverse'` | Flex wrap behavior | `'nowrap'` |
+| `maxWidth` | `number` | Maximum width (px, optional) | `undefined` |
+
+#### Element Types
+
+| Type | Properties | Description |
+|------|------------|-------------|
+| `text` | `textContent` | Text content with custom styling |
+| `button` | `buttonText`, `buttonAction` | Interactive button with custom actions |
+| `icon` | `iconName`, `iconLibrary`, `iconSize`, `iconColor` | Icon with customizable properties |
+
+### Content Versioning
+
+ResyncBase includes a comprehensive versioning system that tracks all changes to your content views, including the new section-based structure.
+
+#### Version Management
+
+```javascript
+// Get version history
+const versions = await ResyncBase.getVersionHistory('cv-123');
+
+// Get a specific version
+const version2 = await ResyncBase.getVersionByNumber('cv-123', 2);
+
+// Compare two versions
+const comparison = await ResyncBase.compareVersions('cv-123', 1, 2);
+
+// Get version statistics
+const stats = await ResyncBase.getVersionStats('cv-123');
+```
+
+#### Version Data Structure
+
+Each version contains a complete snapshot of the content view:
+
+```javascript
+{
+  version: 2,
+  note: "Updated header section layout",
+  changeSummary: "Changed header from column to row layout",
+  createdAt: "2024-01-15T10:30:00Z",
+  snapshot: {
+    name: "Home Page",
+    description: "Main landing page",
+    status: "published",
+    sections: [
+      {
+        id: 1,
+        name: "Header",
+        containerStyles: {
+          layout: "row",
+          alignment: "space-between",
+          gap: 16,
+          padding: 20,
+          // ... other styles
+        },
+        elements: [
+          // ... section elements
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Legacy Support
+
+The versioning system automatically handles legacy content views that use the old element-based structure:
+
+- **Automatic Migration**: Old versions are automatically converted to section-based format
+- **Backward Compatibility**: All existing version data is preserved
+- **Migration Tools**: API endpoints to manually migrate legacy versions
+- **Statistics**: Track how many versions are legacy vs. section-based
+
+#### Version Comparison
+
+Compare any two versions to see what changed:
+
+```javascript
+const comparison = await ResyncBase.compareVersions('cv-123', 1, 2);
+
+console.log('Sections added:', comparison.differences.sections.changes.added.length);
+console.log('Sections removed:', comparison.differences.sections.changes.removed.length);
+console.log('Sections modified:', comparison.differences.sections.changes.modified.length);
+console.log('Total element changes:', comparison.differences.sections.changes.elementChanges);
 ```
 
 ## A/B Testing
@@ -398,12 +600,6 @@ This custom logic approach gives you unprecedented control over your A/B testing
 
 ## API Reference
 
-### ResyncBase Class
-
-#### Static Methods
-
-##### `init(options: InitOptions): ResyncBase`
-
 Initializes the ResyncBase library.
 
 ```javascript
@@ -519,16 +715,6 @@ ResyncCache.init(localStorage);
 // Note that the storage interface must implement the following methods
 getItem, setItem, removeItem, clear.
 ```
-
-## IDE Support
-
-### VS Code
-
-For the best experience with JSDoc types in VS Code:
-
-1. Install the "TypeScript and JavaScript Language Features" extension
-2. Add a `jsconfig.json` file to your project (already included)
-3. Enable "Check JS" in your workspace settings
 
 ## Error Handling
 

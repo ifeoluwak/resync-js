@@ -2,6 +2,7 @@ import { AbTest } from "./ab-test.js";
 import ResyncCache from "./cache.js";
 import { ConfigFetch } from "./config-fetch.js";
 import { FunctionExecutor } from "./function-executor.js";
+import { ResyncBaseSDK, ReactNativeRenderer } from "./react-native-sdk.js";
 
 const STORAGE_KEY = "ResyncBaseCache";
 
@@ -109,6 +110,12 @@ export class ResyncBase {
 
   /** @type {AbTest|null} */
   static abTest = null;
+
+  /** @type {ResyncBaseSDK|null} */
+  static contentSDK = null;
+
+  /** @type {ReactNativeRenderer|null} */
+  static contentRenderer = null;
 
   /** @type {boolean} */
   static ready = false;
@@ -325,7 +332,139 @@ export class ResyncBase {
     }
     // Record the conversion event
     return ResyncBase.abTest.recordConversion(experimentId, metadata);
+  }
 
+  /**
+   * Fetch a content view by ID
+   * @param {string} contentViewId - The content view ID
+   * @param {boolean} useCache - Whether to use cached data
+   * @returns {Promise<Object>} The content view data
+   * @throws {Error} If content SDK is not initialized
+   * @example
+   * const contentView = await ResyncBase.fetchContentView('cv-123');
+   */
+  static async fetchContentView(contentViewId, useCache = true) {
+    if (!ResyncBase.contentSDK) {
+      throw new Error("Content SDK is not initialized. Please initialize ResyncBase first.");
+    }
+    return await ResyncBase.contentSDK.fetchContentView(contentViewId, useCache);
+  }
+
+  /**
+   * Fetch all content views for an app
+   * @param {string} appId - The app ID
+   * @param {boolean} useCache - Whether to use cached data
+   * @returns {Promise<Array>} Array of content views
+   * @throws {Error} If content SDK is not initialized
+   * @example
+   * const contentViews = await ResyncBase.fetchContentViews('app-123');
+   */
+  static async fetchContentViews(appId, useCache = true) {
+    if (!ResyncBase.contentSDK) {
+      throw new Error("Content SDK is not initialized. Please initialize ResyncBase first.");
+    }
+    return await ResyncBase.contentSDK.fetchContentViews(appId, useCache);
+  }
+
+  /**
+   * Get default container styles for a new section
+   * @returns {Object} Default container styles
+   * @example
+   * const defaultStyles = ResyncBase.getDefaultContainerStyles();
+   */
+  static getDefaultContainerStyles() {
+    if (!ResyncBase.contentSDK) {
+      throw new Error("Content SDK is not initialized. Please initialize ResyncBase first.");
+    }
+    return ResyncBase.contentSDK.getDefaultContainerStyles();
+  }
+
+  /**
+   * Create a new section with default styles
+   * @param {string} name - Section name
+   * @param {number} order - Section order
+   * @returns {Object} New section object
+   * @example
+   * const newSection = ResyncBase.createSection('Header', 0);
+   */
+  static createSection(name, order = 0) {
+    if (!ResyncBase.contentSDK) {
+      throw new Error("Content SDK is not initialized. Please initialize ResyncBase first.");
+    }
+    return ResyncBase.contentSDK.createSection(name, order);
+  }
+
+  /**
+   * Get section statistics
+   * @param {Object} section - Section data
+   * @returns {Object} Section statistics
+   * @example
+   * const stats = ResyncBase.getSectionStats(section);
+   */
+  static getSectionStats(section) {
+    if (!ResyncBase.contentRenderer) {
+      throw new Error("Content renderer is not initialized. Please initialize ResyncBase first.");
+    }
+    return ResyncBase.contentRenderer.getSectionStats(section);
+  }
+
+  /**
+   * Get version history for a content view
+   * @param {string} contentViewId - The content view ID
+   * @returns {Promise<Array>} Array of versions
+   * @example
+   * const versions = await ResyncBase.getVersionHistory('cv-123');
+   */
+  static async getVersionHistory(contentViewId) {
+    if (!ResyncBase.contentSDK) {
+      throw new Error("Content SDK is not initialized. Please initialize ResyncBase first.");
+    }
+    return await ResyncBase.contentSDK.getVersionHistory(contentViewId);
+  }
+
+  /**
+   * Get a specific version by number
+   * @param {string} contentViewId - The content view ID
+   * @param {number} versionNumber - The version number
+   * @returns {Promise<Object>} Version data
+   * @example
+   * const version = await ResyncBase.getVersionByNumber('cv-123', 2);
+   */
+  static async getVersionByNumber(contentViewId, versionNumber) {
+    if (!ResyncBase.contentSDK) {
+      throw new Error("Content SDK is not initialized. Please initialize ResyncBase first.");
+    }
+    return await ResyncBase.contentSDK.getVersionByNumber(contentViewId, versionNumber);
+  }
+
+  /**
+   * Compare two versions
+   * @param {string} contentViewId - The content view ID
+   * @param {number} version1 - First version number
+   * @param {number} version2 - Second version number
+   * @returns {Promise<Object>} Comparison data
+   * @example
+   * const comparison = await ResyncBase.compareVersions('cv-123', 1, 2);
+   */
+  static async compareVersions(contentViewId, version1, version2) {
+    if (!ResyncBase.contentSDK) {
+      throw new Error("Content SDK is not initialized. Please initialize ResyncBase first.");
+    }
+    return await ResyncBase.contentSDK.compareVersions(contentViewId, version1, version2);
+  }
+
+  /**
+   * Get version statistics
+   * @param {string} contentViewId - The content view ID
+   * @returns {Promise<Object>} Version statistics
+   * @example
+   * const stats = await ResyncBase.getVersionStats('cv-123');
+   */
+  static async getVersionStats(contentViewId) {
+    if (!ResyncBase.contentSDK) {
+      throw new Error("Content SDK is not initialized. Please initialize ResyncBase first.");
+    }
+    return await ResyncBase.contentSDK.getVersionStats(contentViewId);
   }
 
   /**
@@ -344,7 +483,7 @@ export class ResyncBase {
 
     const cache = ResyncCache.getCache();
 
-    const sessionId = '3amhexwa89r-1752095355810'
+    const sessionId = Math.random().toString(36).substring(2, 15) + "-" + Date.now();
     // ResyncCache.getKeyValue("sessionId") ||
     // `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     ResyncCache.saveKeyValue("sessionId", sessionId);
@@ -386,6 +525,15 @@ export class ResyncBase {
 
       ResyncBase.exec = new FunctionExecutor(cache);
       ResyncBase.abTest = new AbTest(cache.experiments);
+      
+      // Initialize content management SDK
+      ResyncBase.contentSDK = new ResyncBaseSDK({
+        baseUrl: ResyncBase.#apiUrl.replace('/v1/apps-external/', ''),
+        apiKey: ResyncBase.#apiKey,
+        cacheTimeout: ResyncBase.#ttl
+      });
+      ResyncBase.contentRenderer = new ReactNativeRenderer(ResyncBase.contentSDK);
+      
       this.#notifySubscribers(cache);
       return cache;
     }
