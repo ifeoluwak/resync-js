@@ -64,6 +64,27 @@
  */
 
 /**
+ * Object representing an React Native Content Section.
+ * @typedef {Object} CMS_Section
+ * @property {string} id - The unique identifier for the content section
+ * @property {string} name - The name of the section
+ * @property {number} order - The order of the section
+ * @property {Object} containerStyles - container styles
+ * @property {*[]} elements - Array of possible elements
+ */
+
+/**
+ * Object representing an React Native Content Section.
+ * @typedef {Object} Content
+ * @property {string} id - The unique identifier for the content
+ * @property {string} name - The name of the content
+ * @property {string} description - The description of the content
+ * @property {string} version - The version of the content
+ * @property {Object} metadata - The order of the content
+ * @property {CMS_Section[]} sections - Array of sections
+ */
+
+/**
  * Cache object for storing Banana application configurations.
  * @typedef {Object} ResyncCacheData
  * @property {Object} configs - Application configuration object
@@ -85,7 +106,7 @@
  * @property {function(): void} clear - Clear all items from storage
  */
 
-const STORAGE_KEY = "resyncConfigCache";
+const STORAGE_KEY = "resyncbase_cache";
 
 /**
  * ResyncCache class for managing application configuration caching.

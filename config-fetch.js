@@ -7,6 +7,7 @@ import ResyncCache from "./cache.js";
  * @property {import("./cache.js").Function[]} functions - Available functions
  * @property {import("./cache.js").FunctionSetting} functionSettings - Function execution settings
  * @property {import("./cache.js").Experiment[]} experiments - A/B test experiments
+ * @property {import("./cache.js").Content[]} content - Content
  */
 
 /**
@@ -73,7 +74,7 @@ export class ConfigFetch {
     const numOfRetries = 5;
     const retryDelay = 2000; // 2 seconds
     const appId = ResyncBase.getAppId();
-    let path = `${appId}/app-datas`;
+    let path = `${appId}/app-data`;
 
     this.validateEnv();
 

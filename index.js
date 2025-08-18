@@ -3,12 +3,10 @@ import ResyncCache from "./cache.js";
 import { ConfigFetch } from "./config-fetch.js";
 import { FunctionExecutor } from "./function-executor.js";
 
-const STORAGE_KEY = "ResyncBaseCache";
-
 /**
  * @typedef {Object} InitOptions
  * @property {string} key - The API key for Banana API
- * @property {string} appId - The application ID
+ * @property {number} appId - The application ID
  * @property {number} [ttl=3600000] - Time-to-live for cache in milliseconds
  * @property {Function} [callback] - Optional callback function when config is loaded
  * @property {Storage} [storage] - Optional storage object for caching
@@ -266,6 +264,9 @@ export class ResyncBase {
    * const result = await ResyncBase.executeFunction('calculatePrice', 100, 'USD');
    */
   static async executeFunction(functionName, args) {
+    if (!ResyncBase.#appId) {
+      throw new Error("App ID is not set. Please initialize ResyncBase with a valid App ID.");
+    }
     if (!ResyncBase.exec) {
       throw new Error("FunctionExecutor is not initialized. Please initialize ResyncBase first.");
     }
@@ -282,6 +283,9 @@ export class ResyncBase {
    * const variant = await ResyncBase.getVariant('pricing-experiment', { userId: '123' });
    */
   static async getVariant(experimentId, payload) {
+    if (!ResyncBase.#appId) {
+      throw new Error("App ID is not set. Please initialize ResyncBase with a valid App ID.");
+    }
     if (!ResyncBase.abTest) {
       throw new Error("AbTest is not initialized. Please initialize ResyncBase first.");
     }
@@ -305,6 +309,17 @@ export class ResyncBase {
       return config[key];
     }
     throw new Error(`Configuration for key "${key}" not found.`);
+  }
+
+  static getContent() {
+    if (!ResyncBase.#appId) {
+      throw new Error("App ID is not set. Please initialize ResyncBase with a valid App ID.");
+    }
+    const content = ResyncCache.getKeyValue("content");
+    if (content) {
+      return content;
+    }
+    throw new Error(`No content available`);
   }
 
   /**
@@ -371,6 +386,7 @@ export class ResyncBase {
     if (config) {
       ResyncCache.saveKeyValue("configs", config.appConfig || {});
       ResyncCache.saveKeyValue("functions", config.functions || []);
+      ResyncCache.saveKeyValue("content", config.content);
       ResyncCache.saveKeyValue(
         "functionSettings",
         config.functionSettings || {}

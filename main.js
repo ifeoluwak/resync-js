@@ -23,8 +23,8 @@ function fireAway() {
     // const variant = await ResyncBase.abTest.getVariant("Test 1", 7);
     // console.log("ResyncBase abTest variant", variant);
     // await ResyncBase.getVariant("Test 1", 44);
-    const myVariant = await ResyncBase.getVariant("SimpleBand");
-    console.log("ResyncBase abTest myVariant", myVariant);
+    // const myVariant = await ResyncBase.getVariant("SimpleBand");
+    // console.log("ResyncBase abTest myVariant", myVariant);
     // await ResyncBase.recordConversion("Test 1", {name: 'yellow'});
     // console.log("ResyncBase abTest variant", variant);
     // if (await ResyncBase.abTest.getVariant("Test 1", 500) === "world") {
