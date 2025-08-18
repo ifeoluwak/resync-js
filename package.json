@@ -16,7 +16,8 @@
   },
   "files": [
     "*.js",
-    "*.json"
+    "*.json",
+    "*.d.ts"
   ],
   "scripts": {
     "test": "npm test"
