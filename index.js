@@ -62,7 +62,7 @@ import { FunctionExecutor } from "./function-executor.js";
  * // Get A/B test variant
  * const variant = await ResyncBase.getVariant('experiment-name', payload);
  */
-export class ResyncBase {
+class ResyncBase {
   /**
    * Creates a new ResyncBase instance.
    * @constructor
@@ -461,3 +461,9 @@ export class ResyncBase {
     }
   }
 }
+
+export const ResyncBaseInit = (options) => {
+  return ResyncBase.init(options);
+};
+
+export { ResyncBase }
