@@ -6,12 +6,13 @@
   "module": "index.js",
   "react-native": "index.js",
   "browser": "index.js",
-  "type": "commonjs",
+  "type": "module",
   "types": "resyncbase.d.ts",
   "exports": {
     ".": {
       "react-native": "./index.js",
-      "default": "./index.js"
+      "default": "./index.js",
+      "types": "./resyncbase.d.ts"
     }
   },
   "files": [
