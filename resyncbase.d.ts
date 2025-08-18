@@ -1,0 +1,332 @@
+// TypeScript declarations for ResyncBase library
+
+// ============================================================================
+// CORE TYPES
+// ============================================================================
+
+export interface InitOptions {
+    key: string;
+    appId: number;
+    ttl?: number;
+    callback?: (config: AppConfig) => void;
+    storage?: Storage;
+  }
+  
+  export interface Storage {
+    getItem(key: string): string | null;
+    setItem(key: string, value: string): void;
+    removeItem(key: string): void;
+    clear(): void;
+  }
+  
+  export interface AppConfig {
+    appConfig: any;
+    functions: Function[];
+    functionSettings: FunctionSetting;
+    experiments: Experiment[];
+    content?: Content;
+  }
+  
+  export interface UserVariant {
+    experimentId: string;
+    variant: any;
+    sessionId: string;
+    userId: string;
+    timestamp: string;
+    client: string;
+    metadata: any;
+  }
+  
+  // ============================================================================
+  // CACHE TYPES
+  // ============================================================================
+  
+  export interface Config {
+    id: string;
+    isCurrent: boolean;
+    version: string;
+    config: any;
+  }
+  
+  export interface FunctionParameter {
+    name: string;
+    type: string;
+    defaultValue?: any;
+  }
+  
+  export interface Function {
+    id: number;
+    name: string;
+    comment: string;
+    parameters: FunctionParameter[];
+    code: string;
+    returnType: string;
+    constants: string[];
+    public: boolean;
+    version: string;
+    calls?: Function;
+  }
+  
+  export interface FunctionSetting {
+    id: string;
+    maxExecutionDurationMs: number;
+    allowedExternalApiDomains: string[];
+    allowedExternalApiMethods: string[];
+    maxFetchCount: number;
+    bannedKeywords: string[];
+    bannedPatterns: string[];
+    allowFetch: boolean;
+  }
+  
+  export interface ExperimentVariant {
+    id: string;
+    name: string;
+    value: string;
+    weight: number;
+    default?: boolean;
+  }
+  
+  export interface Experiment {
+    id: string;
+    name: string;
+    type: 'system' | 'custom';
+    variants: ExperimentVariant[];
+    assignmentFunction?: Function;
+    systemFunctionId?: string;
+    rolloutPercent?: number;
+    dateSettings?: {
+      startDate: string;
+      endDate: string;
+    };
+  }
+  
+  export interface CMS_Section {
+    id: string;
+    name: string;
+    order: number;
+    containerStyles: any;
+    elements: any[];
+  }
+  
+  export interface Content {
+    id: string;
+    name: string;
+    description: string;
+    version: string;
+    metadata: any;
+    sections: CMS_Section[];
+  }
+  
+  export interface ResyncCacheData {
+    configs: any;
+    functions: Function[];
+    functionSettings: FunctionSetting;
+    experiments: Experiment[];
+    lastFetchTimestamp?: string;
+    sessionId?: string;
+    userId?: string;
+    userVariants?: Map<string, any>;
+  }
+  
+  export interface StorageInterface {
+    getItem(key: string): string | null;
+    setItem(key: string, value: string): void;
+    removeItem(key: string): void;
+    clear(): void;
+  }
+  
+  // ============================================================================
+  // API RESPONSE TYPES
+  // ============================================================================
+  
+  export interface AppConfigResponse {
+    appConfig: any;
+    functions: Function[];
+    functionSettings: FunctionSetting;
+    experiments: Experiment[];
+    content: Content[];
+  }
+  
+  export interface UserVariantRequest {
+    userId: string;
+    sessionId: string;
+    experimentIds: string[];
+    appId: string;
+  }
+  
+  export interface UserVariantResponse {
+    variants: any;
+    userId: string;
+    sessionId: string;
+  }
+  
+  // ============================================================================
+  // LOGGING TYPES
+  // ============================================================================
+  
+  export interface LogEntry {
+    type: 'IMPRESSION' | 'CONVERSION';
+    experimentId: string;
+    variant: any;
+    sessionId: string;
+    userId: string;
+    timestamp: string;
+    client: string;
+    metadata: any;
+  }
+  
+  export interface FunctionExecutionLog {
+    timestamp: string;
+    functionId: number;
+    version: string;
+    calledById: number | null;
+    arguments: string;
+    result: string | null;
+    error: string | null;
+    durationMs: number;
+    client: string | null;
+    attributes: string | null;
+    sessionId: string | null;
+  }
+  
+  // ============================================================================
+  // SYSTEM TEMPLATE TYPES
+  // ============================================================================
+  
+  export type SystemTemplateId = 
+    | 'weighted-rollout'
+    | 'feature-flag-rollout'
+    | 'weighted-random'
+    | 'time-based'
+    | 'bandit-epsilon-greedy'
+    | 'round-robin';
+  
+  export interface SystemTemplateMap {
+    'weighted-rollout': typeof weightedRolloutTemplate;
+    'feature-flag-rollout': typeof featureFlagRolloutTemplate;
+    'weighted-random': typeof weightedRandom;
+    'time-based': typeof getTimeVariant;
+  }
+  
+  // ============================================================================
+  // MAIN CLASS DECLARATIONS
+  // ============================================================================
+  
+  export declare class ResyncBase {
+    static instance: ResyncBase | null;
+    static exec: FunctionExecutor | null;
+    static abTest: AbTest | null;
+    static ready: boolean;
+    static userId: string | null;
+    static sessionId: string | null;
+    static client: string | null;
+    static attributes: string | null;
+    static userVariants: Map<string, UserVariant>;
+  
+    static init(options: InitOptions): ResyncBase;
+    static getApiKey(): string | null;
+    static getAppId(): string | null;
+    static getApiUrl(): string;
+    static setUserId(userId: string | number): void;
+    static setClient(client: string): void;
+    static setAttributes(attributes: object): void;
+    static executeFunction(functionName: string, ...args: any[]): Promise<any>;
+    static getVariant(experimentId: string, payload: any): Promise<string | null>;
+    static getConfig(key: string): any;
+    static getContent(): any;
+    static recordConversion(experimentId: string, metadata?: object): any;
+    
+    subscribers: Set<Function>;
+    subscribe(callback: (config: AppConfig) => void): void;
+    unsubscribe(callback: (config: AppConfig) => void): void;
+  }
+  
+  export declare class ResyncCache {
+    static storage: StorageInterface | null;
+    static cache: ResyncCacheData;
+    static userVariants: Map<string, any>;
+  
+    static init(storage?: StorageInterface): void;
+    static getCache(): ResyncCacheData;
+    static getKeyValue(key: string): any;
+    static saveKeyValue(key: string, value: any): void;
+    static saveToStorage(): void;
+    static loadFromStorage(): void;
+  }
+  
+  export declare class ConfigFetch {
+    constructor();
+    validateEnv(): void;
+    fetchAppConfig(): Promise<AppConfigResponse>;
+    fetchUserVariants(): Promise<UserVariantResponse>;
+  }
+  
+  export declare class FunctionExecutor extends FunctionTracker {
+    functions: Function[];
+    settings: FunctionSetting;
+    config: any;
+    functionMap: Map<string, Function>;
+    fetchCount: number;
+    currentFetchCount: number;
+    calledBy: number | null;
+  
+    constructor(cache: ResyncCacheData);
+    get safeFetch(): (url: string, options?: RequestInit) => Promise<Response>;
+    validateCode(code: string): void;
+    executeFunction(fnDef: Function, ...args: any[]): Promise<any>;
+    loadFunctions(fns: Function[]): void;
+    functionMapper(fnName: string, ...args: any[]): Promise<any>;
+  }
+  
+  export declare class FunctionTracker {
+    executionLogs: FunctionExecutionLog[];
+    retryCount: number;
+    timeoutId: number | null;
+  
+    constructor();
+    saveLogForLaterUpload(logEntries: FunctionExecutionLog[]): void;
+    logExecution(entry: FunctionExecutionLog): Promise<void>;
+    flushLogs(): Promise<void>;
+    sendLogToBackend(logEntry: FunctionExecutionLog): void;
+    sendLogsToBackend(batchEntries: FunctionExecutionLog[]): void;
+  }
+  
+  export declare class AbTest {
+    experiments: Experiment[];
+    logs: LogEntry[];
+    retryCount: number;
+    timeoutId: number;
+  
+    constructor(experiments: Experiment[]);
+    getVariant(experimentName: string, ...payload: any[]): Promise<string | null>;
+    logExperiment(experimentId: string, variant: any, type: 'IMPRESSION' | 'CONVERSION', metadata?: any): void;
+    recordConversion(experimentName: string, metadata?: any): void;
+    saveLogForLaterUpload(logEntries: LogEntry[]): void;
+    flushLogs(): Promise<void>;
+    sendLogsToBackend(batchEntries: LogEntry[]): void;
+    handleSystemFunction(experiment: Experiment): any;
+  }
+  
+  // ============================================================================
+  // SYSTEM TEMPLATE FUNCTIONS
+  // ============================================================================
+  
+  export declare function weightedRolloutTemplate(experiment: Experiment): string;
+  export declare function featureFlagRolloutTemplate(experiment: Experiment): string;
+  export declare function weightedRandom(experiment: Experiment): string;
+  export declare function getTimeVariant(experiment: Experiment): string;
+  
+  export declare const systemTemplatesIdMap: SystemTemplateMap;
+  export declare const backendSystemTemplatesIds: string[];
+  
+  // ============================================================================
+  // FACTORY FUNCTION
+  // ============================================================================
+  
+  export declare function ResyncBaseInit(options: InitOptions): ResyncBase;
+  
+  // ============================================================================
+  // DEFAULT EXPORT
+  // ============================================================================
+  
+  export default ResyncBase;
