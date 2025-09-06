@@ -24,7 +24,7 @@ export interface InitOptions {
     functions: Function[];
     functionSettings: FunctionSetting;
     experiments: Experiment[];
-    content?: Content;
+    content?: ContentView[]; // Updated to use ContentView array
   }
   
   export interface UserVariant {
@@ -100,28 +100,264 @@ export interface InitOptions {
     };
   }
   
-  export interface CMS_Section {
-    id: string;
-    name: string;
-    order: number;
-    containerStyles: any;
-    elements: any[];
+  // ============================================================================
+  // CONTENT TYPES (Updated to match admin content-view.ts)
+  // ============================================================================
+  
+  export enum ContentViewStatus {
+    DRAFT = 'draft',
+    PUBLISHED = 'published',
+    ARCHIVED = 'archived',
   }
   
-  export interface Content {
-    id: string;
-    name: string;
-    description: string;
-    version: string;
-    metadata: any;
-    sections: CMS_Section[];
+  export type ElementType =
+    | 'text'
+    | 'button'
+    | 'image'
+    | 'input'
+    | 'select'
+    | 'checkbox'
+    | 'radio'
+    | 'textarea';
+  
+  export type ContentType = 'section' | 'list' | 'list-item' | 'form' | 'element';
+  
+  export enum ListDataSource {
+    STATIC = 'static',
+    API = 'api',
+    DATABASE = 'database',
   }
+  
+  export enum FormStatus {
+    ACTIVE = 'active',
+    INACTIVE = 'inactive',
+    MAINTENANCE = 'maintenance',
+  }
+  
+  export enum FormSubmissionType {
+    WEBHOOK = 'webhook',
+    FUNCTION = 'function',
+  }
+  
+  export type ClickAction = {
+    actionType?: 'link' | 'navigation' | 'share' | 'props';
+    actionValue?: string;
+    navigation?: {
+      routeName?: string;
+      params?: Record<string, any>;
+      type?: 'push' | 'navigate' | 'goBack';
+    };
+    shareOption?: {
+      message?: string;
+      url?: string;
+      title?: string;
+    };
+  };
+  
+  export type ContentElementStyles = {
+    fontSize?: number;
+    fontStyle?: string;
+    fontFamily?: string;
+    fontWeight?: string;
+    textDecorationLine?: string;
+    textDecorationColor?: string;
+    textAlign?: 'left' | 'center' | 'right' | 'justify';
+    color?: string;
+    textTransform?: string;
+    backgroundColor?: string;
+    padding?: number;
+    margin?: number;
+    borderRadius?: number;
+    borderWidth?: number;
+    borderColor?: string;
+    width?: number | string;
+    height?: number | string;
+    position?: string;
+    boxShadow?: string;
+    boxShadowColor?: string;
+    boxShadowOffset?: string;
+    boxShadowOpacity?: number;
+    boxShadowRadius?: number;
+    flex?: number;
+    flexGrow?: number;
+    flexShrink?: number;
+    flexBasis?: number;
+    flexDirection?: string;
+    flexWrap?: string;
+    opacity?: number;
+    objectFit?: 'cover' | 'contain' | 'stretch' | 'repeat' | 'center';
+    resizeMode?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
+    tintColor?: string;
+    customStyles?: Record<string, any>;
+  };
+  
+  export interface ContainerStyles {
+    layout: 'row' | 'column' | 'grid';
+    alignment: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around';
+    justifyContent?:
+      | 'flex-start'
+      | 'center'
+      | 'flex-end'
+      | 'space-between'
+      | 'space-around'
+      | 'space-evenly';
+    gap: number;
+    padding: number;
+    borderRadius: number;
+    backgroundColor: string;
+    flexWrap: 'nowrap' | 'wrap' | 'wrap-reverse';
+    width?: number | string;
+    flex?: number;
+  }
+  
+  export interface ContentElementProperties {
+    textContent?: string;
+    // Image properties
+    imageUrl?: string;
+    imageAltText?: string;
+    imageWidth?: number;
+    imageHeight?: number;
+    // Form element properties
+    inputMode?:
+      | 'none'
+      | 'text'
+      | 'email'
+      | 'numeric'
+      | 'decimal'
+      | 'tel'
+      | 'url'
+      | 'search';
+    placeholder?: string;
+    label?: string;
+    required?: boolean;
+    secureTextEntry?: boolean;
+    defaultValue?: string | number | boolean;
+    minLength?: number;
+    maxLength?: number;
+    min?: number;
+    max?: number;
+    step?: number;
+    pattern?: string;
+    options?: Array<{ value: string; label: string; disabled?: boolean }>;
+    rows?: number;
+    cols?: number;
+    validationRules?: Record<string, any>;
+    labelStyle?: Record<string, any>;
+  }
+  
+  export type ElementProperty = {
+    styles: ContentElementStyles;
+    customStyles?: Record<string, any>;
+    properties: ContentElementProperties;
+    clickAction?: ClickAction;
+    customProps?: Record<string, any>;
+  };
+  
+  export type SectionProperty = {
+    styles: ContainerStyles;
+    customStyles?: Record<string, any>;
+    clickAction?: ClickAction;
+    customProps?: Record<string, any>;
+    scrollOptions: {
+      scrollType: 'vertical' | 'horizontal';
+    };
+  };
+  
+  export type ListProperty = {
+    styles: ContainerStyles;
+    customStyles?: Record<string, any>;
+    dataSource: ListDataSource;
+    data?: Array<Record<string, any>>;
+    apiEndpoint?: string;
+    maxItems?: number;
+    pagination: boolean;
+    customProps?: Record<string, any>;
+  };
+  
+  export type FormProperty = {
+    styles: ContainerStyles;
+    customStyles?: Record<string, any>;
+    submissionType: FormSubmissionType;
+    submitUrl?: string;
+    submissionSettings?: {
+      webhookHeaders?: Record<string, string>;
+      webhookMethod?: 'GET' | 'POST' | 'PUT' | 'PATCH';
+      webhookTimeout?: number;
+      functionName?: string;
+    };
+    submittedSuccessAction?: {
+      type?: 'alert' | 'in_app_navigate' | 'out_app_navigate';
+      alertTitle?: string;
+      alertMessage?: string;
+      inAppNavigate?: {
+        routeName?: string;
+        params?: Record<string, any>;
+        type?: 'push' | 'navigate' | 'goBack';
+      };
+      outAppNavigate?: {
+        url?: string;
+      };
+    };
+    submittedErrorAction?: {
+      type?: 'alert' | 'in_app_navigate' | 'out_app_navigate';
+      alertTitle?: string;
+      alertMessage?: string;
+      inAppNavigate?: {
+        routeName?: string;
+        params?: Record<string, any>;
+        type?: 'push' | 'navigate' | 'goBack';
+      };
+      outAppNavigate?: {
+        url?: string;
+      };
+    };
+    status: FormStatus;
+    isActive: boolean;
+    requiresCaptcha: boolean;
+    customProps?: Record<string, any>;
+  };
+  
+  export type ContentView = {
+    id: number;
+    name: string;
+    description?: string;
+    status: ContentViewStatus;
+    metadata?: Record<string, any>;
+    version?: string;
+    appId: number;
+    createdBy: {
+      id: number;
+      name: string;
+      email: string;
+    };
+    contents: Array<ContentItem>;
+    isFullPage: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+  
+  // maintain a completely flat structure, no children
+  export type ContentItem = {
+    id?: number | null; // Database-generated ID (for backend relationships)
+    itemId: string; // Frontend uses string IDs (UUIDs)
+    type: ContentType;
+    elementType?: ElementType | null;
+    name: string;
+    parentItemId: string | null; // Frontend uses string parent IDs
+    order: number;
+    data: ElementProperty | SectionProperty | ListProperty | FormProperty;
+    contentViewId: number;
+    isVisible: boolean;
+    isScrollable: boolean;
+  };
+  
   
   export interface ResyncCacheData {
     configs: any;
     functions: Function[];
     functionSettings: FunctionSetting;
     experiments: Experiment[];
+    content: ContentView[]; // Updated to use ContentView array
     lastFetchTimestamp?: string;
     sessionId?: string;
     userId?: string;
@@ -144,7 +380,7 @@ export interface InitOptions {
     functions: Function[];
     functionSettings: FunctionSetting;
     experiments: Experiment[];
-    content: Content[];
+    content: ContentView[]; // Updated to use ContentView array
   }
   
   export interface UserVariantRequest {
@@ -233,7 +469,7 @@ export interface InitOptions {
     static executeFunction(functionName: string, ...args: any[]): Promise<any>;
     static getVariant(experimentId: string, payload: any): Promise<string | null>;
     static getConfig(key: string): any;
-    static getContent(): any;
+    static getContent(): ContentView[];
     static recordConversion(experimentId: string, metadata?: object): any;
     
     subscribers: Set<Function>;
