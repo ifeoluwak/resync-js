@@ -105,8 +105,8 @@
 /**
  * Object representing container styles.
  * @typedef {Object} ContainerStyles
- * @property {string} layout - Layout type (row, column, grid)
- * @property {string} alignment - Alignment type
+ * @property {string} flexDirection - Layout type (row, column, grid)
+ * @property {string} alignItems - Alignment type
  * @property {string} [justifyContent] - Justify content
  * @property {number} gap - Gap between items
  * @property {number} padding - Padding

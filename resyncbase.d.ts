@@ -192,8 +192,8 @@ export interface InitOptions {
   };
   
   export interface ContainerStyles {
-    layout: 'row' | 'column' | 'grid';
-    alignment: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around';
+    flexDirection: 'row' | 'column' | 'grid';
+    alignItems: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around';
     justifyContent?:
       | 'flex-start'
       | 'center'
