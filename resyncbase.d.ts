@@ -261,6 +261,7 @@ export interface InitOptions {
     scrollOptions: {
       scrollType: 'vertical' | 'horizontal';
     };
+    backgroundImage?: string;
   };
   
   export type ListProperty = {
