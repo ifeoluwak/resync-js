@@ -1,12 +1,8 @@
-import { ResyncBase } from "../core/ResyncBase.js";
+import { configService } from "../core/ConfigService.js";
 import ResyncCache from "../core/ResyncCache.js";
+import { API_CONFIG, ERROR_MESSAGES, RETRY_CONFIG, TIMING_CONFIG } from "../utils/constants.js";
 
-const FLUSH_INTERVAL = 5000; // 5 seconds
-
-const LogType = {
-  IMPRESSION: "IMPRESSION",
-  CONVERSION: "CONVERSION"
-};
+// Remove duplicate constants - using from constants.js
 
 /**
  * ContentLogger class for managing content events.
@@ -19,7 +15,7 @@ export class ContentLogger {
   constructor() {
     this.logs = [];
     this.retryCount = 0;
-    this.timeoutId = setInterval(() => this.flushLogs(), FLUSH_INTERVAL); // Every 5s
+    this.timeoutId = setInterval(() => this.flushLogs(), TIMING_CONFIG.FLUSH_INTERVAL);
   }
 
 
@@ -37,11 +33,11 @@ export class ContentLogger {
       contentViewId,
       logId,
       itemId,
-      sessionId: ResyncCache.getKeyValue("sessionId") || ResyncBase.sessionId,
-      userId: ResyncCache.getKeyValue("userId") || ResyncBase.userId,
+      sessionId: ResyncCache.getKeyValue("sessionId"),
+      userId: ResyncCache.getKeyValue("userId"),
       timestamp: new Date().toISOString(),
-      client: ResyncBase.client,
-      metadata: metadata || ResyncBase.attributes,
+      client: ResyncCache.getKeyValue("client"),
+      metadata: metadata || ResyncCache.getKeyValue("attributes"),
     };
     // Send the log entry to the backend API
     this.saveLogForLaterUpload([logEntry]);
@@ -53,14 +49,15 @@ export class ContentLogger {
    * @description This method saves log entries for later upload if the backend API is unreachable or returns an error.
    */
   saveLogForLaterUpload(logEntrys) {
+    console.log("******** Content. Saving logs for later upload:", logEntrys);
     // Add to logs (circular buffer for memory safety)
     this.logs.unshift(...logEntrys);
-    if (this.logs.length > 1000) {
+    if (this.logs.length > RETRY_CONFIG.MAX_LOG_BUFFER) {
       this.logs.pop();
     }
     if (!this.timeoutId) {
       console.log("No timeout set, setting a new one");
-      this.timeoutId = setTimeout(() => this.flushLogs(), FLUSH_INTERVAL); // Reset timeout
+      this.timeoutId = setTimeout(() => this.flushLogs(), TIMING_CONFIG.FLUSH_INTERVAL);
     }
   }
 
@@ -83,17 +80,17 @@ export class ContentLogger {
       return;
     }
 
-    if (this.retryCount > 5) {
-      console.warn("Content. Too many retries, stopping flush");
+    console.log("******** Content. Flushing logs:", this.logs);
+
+    if (this.retryCount > RETRY_CONFIG.MAX_RETRIES) {
+      console.warn(ERROR_MESSAGES.TOO_MANY_RETRIES);
       clearInterval(this.timeoutId);
-      // this.timeoutId = null;
       return;
     }
 
     this.retryCount++;
 
-    const BATCH_SIZE = 100;
-    const batch = this.logs.splice(0, BATCH_SIZE);
+    const batch = this.logs.splice(0, RETRY_CONFIG.BATCH_SIZE);
 
     this.sendLogsToBackend(batch);
   }
@@ -107,20 +104,18 @@ export class ContentLogger {
    * If unsuccessful, it will save the log entries for later upload.
    */
   sendLogsToBackend(batchEntries) {
-    const apiKey = ResyncBase.getApiKey();
-    const appId = ResyncBase.getAppId();
-    const appUrl = ResyncBase.getApiUrl();
-    if (!apiKey || !appId || !appUrl) {
+    const { apiKey, appId, apiUrl } = configService.getApiConfig();
+    if (!apiKey || !appId || !apiUrl) {
       console.warn(
         "API key, App ID, or App URL not set. Skipping log exposure."
       );
       return;
     }
-    fetch(`${appUrl}${appId}/log-content-events`, {
+    fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.LOG_CONTENT_EVENTS}`, {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
-        "Content-Type": "application/json",
+        "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
       },
       body: JSON.stringify(batchEntries),
     })

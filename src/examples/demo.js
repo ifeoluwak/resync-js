@@ -1,61 +1,259 @@
+/**
+ * ResyncBase Demo - Showcasing the improved library functionality
+ * This demo demonstrates all the key features of the ResyncBase library
+ * with the new architecture and constants system.
+ */
+
 import { ResyncBase } from "../core/ResyncBase.js";
 
+// Make ResyncBase available globally in browser environments
 if (typeof window !== "undefined") {
-  // make function available globally
+  // @ts-ignore - Adding to global window object
   window.ResyncBase = ResyncBase;
 }
 
+/**
+ * Demo configuration
+ */
+const DEMO_CONFIG = {
+  API_KEY: "your-api-key-here",
+  APP_ID: 7,
+  TTL: 60 * 60 * 1000, // 1 hour
+  USER_ID: "demo-user-456",
+  CLIENT: "demo-web-app",
+  USER_ATTRIBUTES: {
+    device: {
+      type: "mac",
+      name: "John's MacBook Pro",
+      os: "macOS 14.0"
+    },
+    plan: "premium",
+    country: "US",
+    age: 28
+  }
+};
 
-
-function fireAway() {
-  ResyncBase.init({
-  key: "your-api-key-here",
-  appId: 7,
-  ttl: 60 * 60 * 1000,
-  callback: async (data) => {
-    // console.log("ResyncBase now ready", JSON.stringify(data, null, 2));
-    // console.log("ResyncBase exec", ResyncBase.exec);
-    // console.log("ResyncBase instance", ResyncBase.instance);
-    // const res = await ResyncBase.exec.functionMapper('stripNonAsciiAndGetLength', 'stripNonAsciiAndGetLength.     ');
-    // const res = await ResyncBase.exec.functionMapper('loadJsonResource', 'todos', 3);
-    // console.log("ResyncBase exec result", res, ResyncBase.exec.executionLogs);
-    // console.log("ResyncBase abtest", ResyncBase.abTest);
-    // const variant = await ResyncBase.abTest.getVariant("Test 1", 7);
-    // console.log("ResyncBase abTest variant", variant);
-    // await ResyncBase.getVariant("Test 1", 44);
-    // const myVariant = await ResyncBase.getVariant("SimpleBand");
-    // console.log("ResyncBase abTest myVariant", myVariant);
-    // await ResyncBase.recordConversion("Test 1", {name: 'yellow'});
-    // console.log("ResyncBase abTest variant", variant);
-    // if (await ResyncBase.abTest.getVariant("Test 1", 500) === "world") {
-    //   console.log("Test 1 variant is world");
-    // }
-    // console.log("ResyncBase", ResyncBase);
-  },
-  storage: null, // or Window.localStorage
-})
+/**
+ * Initialize ResyncBase with comprehensive configuration
+ */
+function initializeResyncBase() {
+  console.log("🚀 Initializing ResyncBase with new architecture...");
+  
+  try {
+    ResyncBase.init({
+      key: DEMO_CONFIG.API_KEY,
+      appId: DEMO_CONFIG.APP_ID,
+      ttl: DEMO_CONFIG.TTL,
+      callback: onConfigLoaded,
+      storage: typeof window !== "undefined" ? window.localStorage : null
+    });
+    
+    console.log("✅ ResyncBase initialized successfully!");
+  } catch (error) {
+    console.error("❌ Failed to initialize ResyncBase:", error.message);
+  }
 }
-ResyncBase.setUserId("user456");
-ResyncBase.setClient("test-client");
-ResyncBase.setAttributes({ device: {
-  type: "mac",
-  name: "John's MacBook Pro",
-} });
 
-// setTimeout(() => {
+/**
+ * Callback function when configuration is loaded
+ * @param {Object} config - The loaded configuration
+ */
+async function onConfigLoaded(config) {
+  console.log("📦 Configuration loaded:", {
+    appConfig: config.appConfig,
+    experimentsCount: config.experiments?.length || 0,
+    contentCount: config.content?.length || 0
+  });
+  
+  // Set user context
+  setUserContext();
+  
+  // Demonstrate configuration access
+  demonstrateConfigAccess();
+  
+  // Demonstrate A/B testing
+  await demonstrateABTesting();
+  
+  // Demonstrate content logging
+  demonstrateContentLogging();
+  
+  // Demonstrate subscription system
+  demonstrateSubscriptionSystem();
+}
 
-// ResyncBase.instance.subscribe = (callback) => {
-//     console.log("Subscribed to ResyncBase updates");
-// }
-// }
-// , 500);
+/**
+ * Set user context for tracking and targeting
+ */
+function setUserContext() {
+  console.log("👤 Setting user context...");
+  
+  ResyncBase.setUserId(DEMO_CONFIG.USER_ID);
+  ResyncBase.setClient(DEMO_CONFIG.CLIENT);
+  ResyncBase.setAttributes(DEMO_CONFIG.USER_ATTRIBUTES);
+  
+  console.log("✅ User context set:", {
+    userId: DEMO_CONFIG.USER_ID,
+    client: DEMO_CONFIG.CLIENT,
+    attributes: DEMO_CONFIG.USER_ATTRIBUTES
+  });
+}
 
-fireAway();
-// console.log("ResyncBase instance", ResyncBase.instance);
-// setTimeout(() => {
-// ResyncBase.instance.subscribe((callback) => {
-//     console.log("Outside subcription to ResyncBase updates", ResyncBase.instance);
-// })
-// }
-// , 500);
-// console.log("ResyncBase instance", ResyncBase.instance);
+/**
+ * Demonstrate configuration access
+ */
+function demonstrateConfigAccess() {
+  console.log("⚙️ Demonstrating configuration access...");
+  
+  try {
+    // Try to get a configuration value
+    const featureFlag = ResyncBase.getConfig('new-feature');
+    console.log("✅ Feature flag retrieved:", featureFlag);
+  } catch (error) {
+    console.log("ℹ️ Configuration key not found (expected in demo):", error.message);
+  }
+  
+  try {
+    // Try to get content
+    const content = ResyncBase.getContent();
+    console.log("✅ Content retrieved:", content);
+  } catch (error) {
+    console.log("ℹ️ No content available (expected in demo):", error.message);
+  }
+}
+
+/**
+ * Demonstrate A/B testing functionality
+ */
+async function demonstrateABTesting() {
+  console.log("🧪 Demonstrating A/B testing...");
+  
+  try {
+    // Simulate getting a variant for an experiment
+    const variant = await ResyncBase.getVariant('pricing-experiment', {
+      userId: DEMO_CONFIG.USER_ID,
+      userData: DEMO_CONFIG.USER_ATTRIBUTES
+    });
+    console.log("✅ A/B test variant retrieved:", variant);
+    
+    // Simulate recording a conversion
+    ResyncBase.recordConversion('pricing-experiment', {
+      revenue: 99.99,
+      currency: 'USD',
+      product: 'premium-plan'
+    });
+    console.log("✅ Conversion recorded for pricing experiment");
+    
+  } catch (error) {
+    console.log("ℹ️ A/B testing not available (expected in demo):", error.message);
+  }
+}
+
+/**
+ * Demonstrate content logging functionality
+ */
+function demonstrateContentLogging() {
+  console.log("📊 Demonstrating content logging...");
+  
+  try {
+    // Log a content event
+    ResyncBase.logContentEvent({
+      contentViewId: 8,
+      itemId: 'hero-banner',
+      logId: 'click-001',
+      action: 'click',
+      type: 'IMPRESSION',
+      metadata: {
+        position: 'top',
+        element: 'cta-button'
+      }
+    });
+    console.log("✅ Content event logged successfully");
+    
+  } catch (error) {
+    console.log("ℹ️ Content logging not available (expected in demo):", error.message);
+  }
+}
+
+/**
+ * Demonstrate subscription system
+ */
+function demonstrateSubscriptionSystem() {
+  console.log("🔔 Demonstrating subscription system...");
+  
+  // Subscribe to configuration updates
+  const updateCallback = (config) => {
+    console.log("📡 Configuration update received:", {
+      timestamp: new Date().toISOString(),
+      experimentsCount: config.experiments?.length || 0
+    });
+  };
+  
+  ResyncBase.instance.subscribe(updateCallback);
+  console.log("✅ Subscribed to configuration updates");
+  
+  // Simulate unsubscribing after 5 seconds
+  setTimeout(() => {
+    ResyncBase.instance.unsubscribe(updateCallback);
+    console.log("✅ Unsubscribed from configuration updates");
+  }, 5000);
+}
+
+/**
+ * Demonstrate error handling
+ */
+function demonstrateErrorHandling() {
+  console.log("⚠️ Demonstrating error handling...");
+  
+  // Try to get config without initialization
+  try {
+    ResyncBase.getConfig('test-key');
+  } catch (error) {
+    console.log("✅ Error handling works:", error.message);
+  }
+  
+  // Try to set invalid client
+  try {
+    // @ts-ignore - Intentionally passing wrong type to test validation
+    ResyncBase.setClient(123); // Should be string - this will cause an error
+  } catch (error) {
+    console.log("✅ Validation works:", error.message);
+  }
+}
+
+/**
+ * Run the complete demo
+ */
+function runDemo() {
+  console.log("🎯 Starting ResyncBase Demo");
+  console.log("=" .repeat(50));
+  
+  // Initialize ResyncBase
+  initializeResyncBase();
+  
+  // Demonstrate error handling
+  setTimeout(() => {
+    demonstrateErrorHandling();
+  }, 2000);
+  
+  // Show library status
+  setTimeout(() => {
+    console.log("📊 Library Status:", {
+      ready: ResyncBase.ready,
+      hasInstance: !!ResyncBase.instance,
+      hasAbTest: !!ResyncBase.abTest,
+      hasContentLogger: !!ResyncBase.contentLogger
+    });
+  }, 3000);
+}
+
+// Export for use in other modules
+export { runDemo, DEMO_CONFIG };
+
+// Auto-run demo if this file is executed directly
+if (typeof window !== "undefined") {
+  // Run demo in browser
+  runDemo();
+} else {
+  // Export for Node.js usage
+  console.log("ResyncBase Demo loaded. Call runDemo() to start the demonstration.");
+}

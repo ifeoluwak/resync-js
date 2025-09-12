@@ -223,7 +223,9 @@
  * @property {function(): void} clear - Clear all items from storage
  */
 
-const STORAGE_KEY = "resyncbase_cache";
+import { STORAGE_CONFIG } from "../utils/constants.js";
+
+const STORAGE_KEY = STORAGE_CONFIG.CACHE_KEY;
 
 /**
  * ResyncCache class for managing application configuration caching.

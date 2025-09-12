@@ -1,9 +1,10 @@
-import ResyncCache from "../core/ResyncCache";
+import ResyncCache from "../core/ResyncCache.js";
+import { TIMING_CONFIG } from "../utils/constants.js";
 
 function hashUserId(userId) {
   let hash = 0;
   for (let i = 0; i < userId.length; i++) {
-    hash = (hash * 31 + userId.charCodeAt(i)) % 100;
+    hash = (hash * TIMING_CONFIG.HASH_MULTIPLIER + userId.charCodeAt(i)) % TIMING_CONFIG.HASH_MODULO;
   }
   return hash;
 }

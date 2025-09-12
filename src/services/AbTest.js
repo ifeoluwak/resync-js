@@ -1,13 +1,9 @@
-import { ResyncBase } from "../core/ResyncBase.js";
+import { configService } from "../core/ConfigService.js";
 import ResyncCache from "../core/ResyncCache.js";
-import { backendSystemTemplatesIds, featureFlagRolloutTemplate, getTimeVariant, weightedRandom, weightedRolloutTemplate } from "../../system-templates.js";
+import { backendSystemTemplatesIds, featureFlagRolloutTemplate, getTimeVariant, weightedRandom, weightedRolloutTemplate } from "../templates/AbSystemTemplate.js";
+import { API_CONFIG, ERROR_MESSAGES, LOG_TYPES, RETRY_CONFIG, TIMING_CONFIG } from "../utils/constants.js";
 
-const FLUSH_INTERVAL = 5000; // 5 seconds
-
-const LogType = {
-  IMPRESSION: "IMPRESSION",
-  CONVERSION: "CONVERSION"
-};
+const LogType = LOG_TYPES;
 
 /**
  * AbTest class for managing A/B testing experiments.
@@ -24,7 +20,7 @@ export class AbTest {
     this.experiments = experiments || [];
     this.logs = [];
     this.retryCount = 0;
-    this.timeoutId = setInterval(() => this.flushLogs(), FLUSH_INTERVAL); // Every 5s
+    this.timeoutId = setInterval(() => this.flushLogs(), TIMING_CONFIG.FLUSH_INTERVAL);
   }
 
   /**
@@ -40,7 +36,7 @@ export class AbTest {
       (exp) => exp.name === experimentName
     );
     if (!experiment) {
-      throw new Error(`Experiment "${experimentName}" not found.`);
+      throw new Error(ERROR_MESSAGES.EXPERIMENT_NOT_FOUND(experimentName));
     }
 
     // check if user already has a variant for this experiment
@@ -59,19 +55,20 @@ export class AbTest {
       if (backendSystemTemplatesIds.includes(experiment.systemFunctionId)) {
         console.log("Calling backend system function for experiment:", experiment);
         try {
+          const { apiUrl, appId, apiKey } = configService.getApiConfig();
           const postData = JSON.stringify({
             experimentId: experiment.id,
             systemFunctionId: experiment.systemFunctionId,
-            userId: ResyncBase.userId,
-            sessionId: ResyncBase.sessionId,
-            client: ResyncBase.client,
-            metadata: ResyncBase.attributes,
+            userId: ResyncCache.getKeyValue("userId"),
+            sessionId: ResyncCache.getKeyValue("sessionId"),
+            client: ResyncCache.getKeyValue("client"),
+            metadata: ResyncCache.getKeyValue("attributes"),
           });
-          const response = await fetch(`${ResyncBase.getApiUrl()}${ResyncBase.getAppId()}/get-system-variant`, {
+          const response = await fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.SYSTEM_VARIANT}`, {
             method: "POST",
             headers: {
-              "x-api-key": ResyncBase.getApiKey(),
-              "Content-Type": "application/json",
+              "x-api-key": apiKey,
+              "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
             },
             body: postData,
           });
@@ -138,10 +135,8 @@ export class AbTest {
    * logExperiment("exp123", { value: "variantA" }, "IMPRESSION");
    */
   logExperiment(experimentId, variant, type, metadata = {}) {
-    const apiKey = ResyncBase.getApiKey();
-    const appId = ResyncBase.getAppId();
-    const appUrl = ResyncBase.getApiUrl();
-    if (!apiKey || !appId || !appUrl) {
+    const { apiKey, appId, apiUrl } = configService.getApiConfig();
+    if (!apiKey || !appId || !apiUrl) {
       console.warn(
         "API key, App ID, or App URL not set. Skipping log exposure."
       );
@@ -151,11 +146,11 @@ export class AbTest {
       type,
       experimentId,
       variant,
-      sessionId: ResyncCache.getKeyValue("sessionId") || ResyncBase.sessionId,
-      userId: ResyncCache.getKeyValue("userId") || ResyncBase.userId,
+      sessionId: ResyncCache.getKeyValue("sessionId"),
+      userId: ResyncCache.getKeyValue("userId"),
       timestamp: new Date().toISOString(),
-      client: ResyncBase.client,
-      metadata: metadata || ResyncBase.attributes,
+      client: ResyncCache.getKeyValue("client"),
+      metadata: metadata || ResyncCache.getKeyValue("attributes"),
     };
     if (type === LogType.IMPRESSION) {
       // also log to userVariants
@@ -166,11 +161,11 @@ export class AbTest {
     }
     // return;
     // Send the log entry to the backend API
-    fetch(`${appUrl}${appId}/${experimentId}/log-experiment`, {
+    fetch(`${apiUrl}${appId}/${experimentId}${API_CONFIG.ENDPOINTS.LOG_EXPERIMENT}`, {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
-        "Content-Type": "application/json",
+        "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
       },
       body: JSON.stringify(logEntry),
     })
@@ -195,15 +190,15 @@ export class AbTest {
       (exp) => exp.name === experimentName
     )?.id;
     if (!experimentId) {
-      throw new Error(`Experiment "${experimentName}" not found.`);
+      throw new Error(ERROR_MESSAGES.EXPERIMENT_NOT_FOUND(experimentName));
     }
     if (!userVariants) {
-      throw new Error(`No impression logged for experiment "${experimentName}".`);
+      throw new Error(ERROR_MESSAGES.NO_IMPRESSION_LOGGED(experimentName));
     }
     const variant = userVariants.get(experimentId);
     console.log("Recording conversion for userVariants:", userVariants);
     if (!variant) {
-      throw new Error(`No variant found for experiment ID "${experimentId}".`);
+      throw new Error(ERROR_MESSAGES.NO_VARIANT_FOUND(experimentId));
     }
     console.log("found conversion for variant:", variant);
     // // Log the conversion
@@ -218,12 +213,12 @@ export class AbTest {
   saveLogForLaterUpload(logEntrys) {
     // Add to logs (circular buffer for memory safety)
     this.logs.unshift(...logEntrys);
-    if (this.logs.length > 1000) {
+    if (this.logs.length > RETRY_CONFIG.MAX_LOG_BUFFER) {
       this.logs.pop();
     }
     if (!this.timeoutId) {
       console.log("No timeout set, setting a new one");
-      this.timeoutId = setTimeout(() => this.flushLogs(), FLUSH_INTERVAL); // Reset timeout
+      this.timeoutId = setTimeout(() => this.flushLogs(), TIMING_CONFIG.FLUSH_INTERVAL);
     }
   }
 
@@ -246,17 +241,15 @@ export class AbTest {
       return;
     }
 
-    if (this.retryCount > 5) {
-      console.warn("A/B Too many retries, stopping flush");
+    if (this.retryCount > RETRY_CONFIG.MAX_RETRIES) {
+      console.warn(ERROR_MESSAGES.TOO_MANY_RETRIES);
       clearInterval(this.timeoutId);
-      // this.timeoutId = null;
       return;
     }
 
     this.retryCount++;
 
-    const BATCH_SIZE = 100;
-    const batch = this.logs.splice(0, BATCH_SIZE);
+    const batch = this.logs.splice(0, RETRY_CONFIG.BATCH_SIZE);
 
     this.sendLogsToBackend(batch);
   }
@@ -270,20 +263,18 @@ export class AbTest {
    * If unsuccessful, it will save the log entries for later upload.
    */
   sendLogsToBackend(batchEntries) {
-    const apiKey = ResyncBase.getApiKey();
-    const appId = ResyncBase.getAppId();
-    const appUrl = ResyncBase.getApiUrl();
-    if (!apiKey || !appId || !appUrl) {
+    const { apiKey, appId, apiUrl } = configService.getApiConfig();
+    if (!apiKey || !appId || !apiUrl) {
       console.warn(
         "API key, App ID, or App URL not set. Skipping log exposure."
       );
       return;
     }
-    fetch(`${appUrl}${appId}/log-experiment/batch`, {
+    fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.LOG_EXPERIMENT_BATCH}`, {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
-        "Content-Type": "application/json",
+        "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
       },
       body: JSON.stringify(batchEntries),
     })
@@ -318,7 +309,7 @@ export class AbTest {
         return getTimeVariant(experiment);
       default:
         console.warn(`No handler for system function ID: ${experiment.systemFunctionId}`);
-        throw new Error(`Unknown system function ID: ${experiment.systemFunctionId}`);
+        throw new Error(ERROR_MESSAGES.UNKNOWN_SYSTEM_FUNCTION(experiment.systemFunctionId));
     }
   }
 }
