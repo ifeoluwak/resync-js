@@ -1,5 +1,5 @@
-import { ResyncBase } from "./index.js";
-import ResyncCache from "./cache.js";
+import { ResyncBase } from "../core/ResyncBase.js";
+import ResyncCache from "../core/ResyncCache.js";
 
 const FLUSH_INTERVAL = 5000; // 5 seconds
 

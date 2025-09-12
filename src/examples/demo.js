@@ -1,4 +1,4 @@
-import { ResyncBase } from "./index.js";
+import { ResyncBase } from "../core/ResyncBase.js";
 
 if (typeof window !== "undefined") {
   // make function available globally

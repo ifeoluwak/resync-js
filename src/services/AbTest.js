@@ -1,6 +1,6 @@
-import { ResyncBase } from "./index.js";
-import ResyncCache from "./cache.js";
-import { backendSystemTemplatesIds, featureFlagRolloutTemplate, getTimeVariant, weightedRandom, weightedRolloutTemplate } from "./system-templates.js";
+import { ResyncBase } from "../core/ResyncBase.js";
+import ResyncCache from "../core/ResyncCache.js";
+import { backendSystemTemplatesIds, featureFlagRolloutTemplate, getTimeVariant, weightedRandom, weightedRolloutTemplate } from "../../system-templates.js";
 
 const FLUSH_INTERVAL = 5000; // 5 seconds
 

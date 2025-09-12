@@ -1,4 +1,4 @@
-import BananaCache from "./cache.js";
+import ResyncCache from "../core/ResyncCache";
 
 function hashUserId(userId) {
   let hash = 0;
@@ -11,7 +11,7 @@ function hashUserId(userId) {
 // Weighted rollout: supports even or uneven splits
 export const weightedRolloutTemplate = (experiment) => {
   const { variants, rolloutPercent } = experiment;
-  const userId = BananaCache.getKeyValue("userId") || BananaCache.getKeyValue("sessionId");
+  const userId = ResyncCache.getKeyValue("userId") || ResyncCache.getKeyValue("sessionId");
   const hash = hashUserId(userId);
 
   // Only users with hash < rolloutPercent are in the rollout
@@ -36,7 +36,7 @@ export const weightedRolloutTemplate = (experiment) => {
 // Feature flag rollout: simple on/off (control/treatment)
 export const featureFlagRolloutTemplate = (experiment) => {
   const { variants, rolloutPercent } = experiment;
-  const userId = BananaCache.getKeyValue("userId") || BananaCache.getKeyValue("sessionId");
+  const userId = ResyncCache.getKeyValue("userId") || ResyncCache.getKeyValue("sessionId");
   const treatmentValue = variants.find(v => v.default)?.value;
   const controlValue = variants.find(v => !v.default)?.value;
   const hash = hashUserId(userId);

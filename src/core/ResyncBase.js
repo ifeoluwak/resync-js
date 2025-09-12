@@ -1,7 +1,7 @@
-import { AbTest } from "./ab-test.js";
-import ResyncCache from "./cache.js";
-import { ConfigFetch } from "./config-fetch.js";
-import { ContentLogger } from "./content-logger.js";
+import { AbTest } from "../services/AbTest.js";
+import ResyncCache from "./ResyncCache.js";
+import { ConfigFetch } from "../services/ConfigFetch.js";
+import { ContentLogger } from "../services/ContentLogger.js";
 
 /**
  * @typedef {Object} InitOptions

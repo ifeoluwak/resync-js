@@ -1,11 +1,11 @@
-import { ResyncBase } from "./index.js";
-import ResyncCache from "./cache.js";
+import { ResyncBase } from "../core/ResyncBase.js";
+import ResyncCache from "../core/ResyncCache.js";
 
 /**
  * @typedef {Object} AppConfigResponse
  * @property {Object} appConfig - The application configuration
- * @property {import("./cache.js").Experiment[]} experiments - A/B test experiments
- * @property {import("./cache.js").ContentView[]} content - Content
+ * @property {import("../core/ResyncCache.js").Experiment[]} experiments - A/B test experiments
+ * @property {import("../core/ResyncCache.js").ContentView[]} content - Content
  */
 
 /**
