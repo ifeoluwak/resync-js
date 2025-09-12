@@ -8,42 +8,6 @@
  */
 
 /**
- * Object representing a function parameter in the Banana application.
- * @typedef {Object} FunctionParameter
- * @property {string} name - The name of the parameter
- * @property {string} type - The type of the parameter
- * @property {*} [defaultValue] - The default value of the parameter
- */
-
-/**
- * Object representing a function in the Banana application.
- * @typedef {Object} Function
- * @property {number} id - The unique identifier for the function.
- * @property {string} name - The name of the function.
- * @property {string} comment - A brief description of what the function does.
- * @property {FunctionParameter[]} parameters - An array of parameter objects that the function accepts.
- * @property {string} code - The actual code of the function as a string.
- * @property {string} returnType - The type of value that the function returns.
- * @property {string[]} constants - Array of constants used in the function.
- * @property {boolean} public - Indicates whether the function is public or private.
- * @property {string} version - The version of the function.
- * @property {Function} [calls] - Object containing child function
- */
-
-/**
- * Object representing the settings for functions in a Banana application.
- * @typedef {Object} FunctionSetting
- * @property {string} id - The name of the function setting.
- * @property {number} maxExecutionDurationMs - The maximum execution duration for the function setting in milliseconds.
- * @property {string[]} allowedExternalApiDomains - Array of allowed external API domains for the function setting.
- * @property {string[]} allowedExternalApiMethods - Array of allowed HTTP methods for external API calls in the function setting.
- * @property {number} maxFetchCount - The maximum number of fetch calls allowed in the function setting.
- * @property {string[]} bannedKeywords - An array of keywords that are not allowed in the function setting.
- * @property {string[]} bannedPatterns - An array of regex patterns that are not allowed in the function setting.
- * @property {boolean} allowFetch - Whether fetch calls are allowed
- */
-
-/**
  * Object representing an experiment variant in A/B testing.
  * @typedef {Object} ExperimentVariant
  * @property {string} id - The unique identifier for the variant
@@ -59,7 +23,6 @@
  * @property {string} name - The name of the experiment
  * @property {string} type - The type of experiment (e.g., 'system', 'custom')
  * @property {ExperimentVariant[]} variants - Array of possible variants
- * @property {Function} [assignmentFunction] - Custom function for variant assignment
  * @property {string} [systemFunctionId] - ID of system function for variant assignment
  */
 
@@ -243,8 +206,6 @@
  * Cache object for storing Banana application configurations.
  * @typedef {Object} ResyncCacheData
  * @property {Object} configs - Application configuration object
- * @property {Function[]} functions - Array of available functions
- * @property {FunctionSetting} functionSettings - Function execution settings
  * @property {Experiment[]} experiments - Array of A/B test experiments
  * @property {ContentView[]} content - Array of content views
  * @property {string} [lastFetchTimestamp] - ISO timestamp of last fetch

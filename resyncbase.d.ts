@@ -21,8 +21,6 @@ export interface InitOptions {
   
   export interface AppConfig {
     appConfig: any;
-    functions: Function[];
-    functionSettings: FunctionSetting;
     experiments: Experiment[];
     content?: ContentView[]; // Updated to use ContentView array
   }
@@ -48,36 +46,6 @@ export interface InitOptions {
     config: any;
   }
   
-  export interface FunctionParameter {
-    name: string;
-    type: string;
-    defaultValue?: any;
-  }
-  
-  export interface Function {
-    id: number;
-    name: string;
-    comment: string;
-    parameters: FunctionParameter[];
-    code: string;
-    returnType: string;
-    constants: string[];
-    public: boolean;
-    version: string;
-    calls?: Function;
-  }
-  
-  export interface FunctionSetting {
-    id: string;
-    maxExecutionDurationMs: number;
-    allowedExternalApiDomains: string[];
-    allowedExternalApiMethods: string[];
-    maxFetchCount: number;
-    bannedKeywords: string[];
-    bannedPatterns: string[];
-    allowFetch: boolean;
-  }
-  
   export interface ExperimentVariant {
     id: string;
     name: string;
@@ -91,7 +59,6 @@ export interface InitOptions {
     name: string;
     type: 'system' | 'custom';
     variants: ExperimentVariant[];
-    assignmentFunction?: Function;
     systemFunctionId?: string;
     rolloutPercent?: number;
     dateSettings?: {
@@ -355,8 +322,6 @@ export interface InitOptions {
   
   export interface ResyncCacheData {
     configs: any;
-    functions: Function[];
-    functionSettings: FunctionSetting;
     experiments: Experiment[];
     content: ContentView[]; // Updated to use ContentView array
     lastFetchTimestamp?: string;
@@ -378,8 +343,6 @@ export interface InitOptions {
   
   export interface AppConfigResponse {
     appConfig: any;
-    functions: Function[];
-    functionSettings: FunctionSetting;
     experiments: Experiment[];
     content: ContentView[]; // Updated to use ContentView array
   }
@@ -412,20 +375,6 @@ export interface InitOptions {
     metadata: any;
   }
   
-  export interface FunctionExecutionLog {
-    timestamp: string;
-    functionId: number;
-    version: string;
-    calledById: number | null;
-    arguments: string;
-    result: string | null;
-    error: string | null;
-    durationMs: number;
-    client: string | null;
-    attributes: string | null;
-    sessionId: string | null;
-  }
-  
   // ============================================================================
   // SYSTEM TEMPLATE TYPES
   // ============================================================================
@@ -451,7 +400,6 @@ export interface InitOptions {
   
   export declare class ResyncBase {
     static instance: ResyncBase | null;
-    static exec: FunctionExecutor | null;
     static abTest: AbTest | null;
     static ready: boolean;
     static userId: string | null;
@@ -467,10 +415,17 @@ export interface InitOptions {
     static setUserId(userId: string | number): void;
     static setClient(client: string): void;
     static setAttributes(attributes: object): void;
-    static executeFunction(functionName: string, ...args: any[]): Promise<any>;
     static getVariant(experimentId: string, payload: any): Promise<string | null>;
     static getConfig(key: string): any;
     static getContent(): ContentView[];
+    static logContentEvent(event: {
+      contentViewId: number,
+      itemId: string,
+      logId: string,
+      action: 'view' | 'click',
+      type: 'IMPRESSION' | 'CONVERSION',
+      metadata: Record<string, any>
+    }): void;
     static recordConversion(experimentId: string, metadata?: object): any;
     
     subscribers: Set<Function>;
@@ -497,36 +452,7 @@ export interface InitOptions {
     fetchAppConfig(): Promise<AppConfigResponse>;
     fetchUserVariants(): Promise<UserVariantResponse>;
   }
-  
-  export declare class FunctionExecutor extends FunctionTracker {
-    functions: Function[];
-    settings: FunctionSetting;
-    config: any;
-    functionMap: Map<string, Function>;
-    fetchCount: number;
-    currentFetchCount: number;
-    calledBy: number | null;
-  
-    constructor(cache: ResyncCacheData);
-    get safeFetch(): (url: string, options?: RequestInit) => Promise<Response>;
-    validateCode(code: string): void;
-    executeFunction(fnDef: Function, ...args: any[]): Promise<any>;
-    loadFunctions(fns: Function[]): void;
-    functionMapper(fnName: string, ...args: any[]): Promise<any>;
-  }
-  
-  export declare class FunctionTracker {
-    executionLogs: FunctionExecutionLog[];
-    retryCount: number;
-    timeoutId: number | null;
-  
-    constructor();
-    saveLogForLaterUpload(logEntries: FunctionExecutionLog[]): void;
-    logExecution(entry: FunctionExecutionLog): Promise<void>;
-    flushLogs(): Promise<void>;
-    sendLogToBackend(logEntry: FunctionExecutionLog): void;
-    sendLogsToBackend(batchEntries: FunctionExecutionLog[]): void;
-  }
+
   
   export declare class AbTest {
     experiments: Experiment[];

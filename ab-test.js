@@ -24,12 +24,6 @@ export class AbTest {
     this.experiments = experiments || [];
     this.logs = [];
     this.retryCount = 0;
-    const fns = this.experiments
-      .map((exp) => exp.assignmentFunction)
-      .filter((fn) => fn);
-    if (fns.length > 0) {
-      ResyncBase.exec.loadFunctions(fns);
-    }
     this.timeoutId = setInterval(() => this.flushLogs(), FLUSH_INTERVAL); // Every 5s
   }
 
@@ -108,20 +102,6 @@ export class AbTest {
       } else {
         return this.handleSystemFunction(experiment);
       }
-    }
-
-    // Does the experiment have custom logic for variant assignment?
-    if (experiment.assignmentFunction) {
-      // Call the custom function via the functionMapper
-      const variantValue = await ResyncBase.exec.functionMapper(
-        experiment.assignmentFunction.name,
-        ...payload
-      );
-      const variant = experiment.variants.find(
-        (v) => v.value === variantValue
-      );
-      this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
-      return variantValue;
     }
   }
 

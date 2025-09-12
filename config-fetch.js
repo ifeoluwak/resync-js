@@ -4,10 +4,8 @@ import ResyncCache from "./cache.js";
 /**
  * @typedef {Object} AppConfigResponse
  * @property {Object} appConfig - The application configuration
- * @property {import("./cache.js").Function[]} functions - Available functions
- * @property {import("./cache.js").FunctionSetting} functionSettings - Function execution settings
  * @property {import("./cache.js").Experiment[]} experiments - A/B test experiments
- * @property {import("./cache.js").Content[]} content - Content
+ * @property {import("./cache.js").ContentView[]} content - Content
  */
 
 /**
@@ -68,7 +66,6 @@ export class ConfigFetch {
    * @example
    * const config = await fetcher.fetchAppConfig();
    * console.log('App config:', config.appConfig);
-   * console.log('Functions:', config.functions);
    */
   async fetchAppConfig() {
     const numOfRetries = 5;

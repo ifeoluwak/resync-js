@@ -1,7 +1,7 @@
 import { AbTest } from "./ab-test.js";
 import ResyncCache from "./cache.js";
 import { ConfigFetch } from "./config-fetch.js";
-import { FunctionExecutor } from "./function-executor.js";
+import { ContentLogger } from "./content-logger.js";
 
 /**
  * @typedef {Object} InitOptions
@@ -102,11 +102,11 @@ class ResyncBase {
   /** @type {ResyncBase|null} */
   static instance = null;
 
-  /** @type {FunctionExecutor|null} */
-  static exec = null;
-
   /** @type {AbTest|null} */
   static abTest = null;
+
+  /** @type {ContentLogger|null} */
+  static contentLogger = null;
 
   /** @type {boolean} */
   static ready = false;
@@ -255,25 +255,6 @@ class ResyncBase {
   }
 
   /**
-   * Executes a function by name with the provided arguments.
-   * @param {string} functionName - The name of the function to execute
-   * @param {...*} args - Arguments to pass to the function
-   * @returns {Promise<*>} The result of the function execution
-   * @throws {Error} If FunctionExecutor is not initialized
-   * @example
-   * const result = await ResyncBase.executeFunction('calculatePrice', 100, 'USD');
-   */
-  static async executeFunction(functionName, args) {
-    if (!ResyncBase.#appId) {
-      throw new Error("App ID is not set. Please initialize ResyncBase with a valid App ID.");
-    }
-    if (!ResyncBase.exec) {
-      throw new Error("FunctionExecutor is not initialized. Please initialize ResyncBase first.");
-    }
-    return await ResyncBase.exec.execute(functionName, args);
-  }
-
-  /**
    * Gets a variant for an A/B test experiment.
    * @param {string} experimentId - The experiment ID
    * @param {*} payload - Additional payload for variant assignment
@@ -320,6 +301,16 @@ class ResyncBase {
       return content;
     }
     throw new Error(`No content available`);
+  }
+
+  static logContentEvent(event) {
+    if (!ResyncBase.#appId) {
+      throw new Error("App ID is not set. Please initialize ResyncBase with a valid App ID.");
+    }
+    if (!ResyncBase.contentLogger) {
+      throw new Error("ContentLogger is not initialized. Please initialize ResyncBase first.");
+    }
+    ResyncBase.contentLogger.logContentEvent(event);
   }
 
   /**
@@ -385,12 +376,7 @@ class ResyncBase {
 
     if (config) {
       ResyncCache.saveKeyValue("configs", config.appConfig || {});
-      ResyncCache.saveKeyValue("functions", config.functions || []);
       ResyncCache.saveKeyValue("content", config.content);
-      ResyncCache.saveKeyValue(
-        "functionSettings",
-        config.functionSettings || {}
-      );
       ResyncCache.saveKeyValue("experiments", config.experiments || []);
       // Always fetch user variants
       await this.getUserVariants();
@@ -400,10 +386,10 @@ class ResyncBase {
         lastFetchTimestamp
       );
 
-      ResyncBase.exec = new FunctionExecutor(cache);
       ResyncBase.abTest = new AbTest(cache.experiments);
-      this.#notifySubscribers(cache);
-      return cache;
+      ResyncBase.contentLogger = new ContentLogger();
+      this.#notifySubscribers(config);
+      return config;
     }
   }
 
