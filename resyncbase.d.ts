@@ -523,17 +523,6 @@ export declare class ResyncBase {
 }
 
 // ============================================================================
-// FACTORY FUNCTION
-// ============================================================================
-
-/**
- * Initialize ResyncBase (alternative to ResyncBase.init)
- * @param options - Initialization options
- * @returns ResyncBase instance
- */
-export declare function ResyncBaseInit(options: InitOptions): ResyncBase;
-
-// ============================================================================
 // DEFAULT EXPORT
 // ============================================================================
 
