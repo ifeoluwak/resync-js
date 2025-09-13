@@ -82,6 +82,25 @@ export interface ExperimentVariant {
   default?: boolean;
 }
 
+
+export enum ContentViewStatus {
+  DRAFT = 'draft',
+  PUBLISHED = 'published',
+  ARCHIVED = 'archived',
+}
+
+export type ElementType =
+  | 'text'
+  | 'button'
+  | 'image'
+  | 'input'
+  | 'select'
+  | 'checkbox'
+  | 'radio'
+  | 'textarea';
+
+export type ContentType = 'section' | 'list' | 'list-item' | 'form' | 'element';
+
 /**
  * Content view for dynamic content management
  */
@@ -93,7 +112,7 @@ export interface ContentView {
   /** Description */
   description?: string;
   /** Status of the content view */
-  status: 'draft' | 'published' | 'archived';
+  status: ContentViewStatus;
   /** Additional metadata */
   metadata?: Record<string, any>;
   /** Version */
@@ -116,6 +135,214 @@ export interface ContentView {
   updatedAt: Date;
 }
 
+export enum ListDataSource {
+  STATIC = 'static',
+  API = 'api',
+  DATABASE = 'database',
+}
+
+export enum FormStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  MAINTENANCE = 'maintenance',
+}
+
+export enum FormSubmissionType {
+  WEBHOOK = 'webhook',
+  FUNCTION = 'function',
+}
+
+export type ClickAction = {
+  actionType?: 'link' | 'navigation' | 'share' | 'props';
+  actionValue?: string;
+  navigation?: {
+    routeName?: string;
+    params?: Record<string, any>;
+    type?: 'push' | 'navigate' | 'goBack';
+  };
+  shareOption?: {
+    message?: string;
+    url?: string;
+    title?: string;
+  };
+};
+
+export type ContentElementStyles = {
+  fontSize?: number;
+  fontStyle?: string;
+  fontFamily?: string;
+  fontWeight?: string;
+  textDecorationLine?: string;
+  textDecorationColor?: string;
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  color?: string;
+  textTransform?: string;
+  lineHeight?: number;
+  backgroundColor?: string;
+  padding?: number;
+  margin?: number;
+  marginBottom?: number;
+  borderRadius?: number;
+  borderWidth?: number;
+  borderColor?: string;
+  width?: number | string;
+  height?: number | string;
+  maxWidth?: number | string;
+  position?: string;
+  boxShadow?: string;
+  boxShadowColor?: string;
+  boxShadowOffset?: string;
+  boxShadowOpacity?: number;
+  boxShadowRadius?: number;
+  flex?: number;
+  flexGrow?: number;
+  flexShrink?: number;
+  flexBasis?: number;
+  flexDirection?: string;
+  flexWrap?: string;
+  gap?: number;
+  opacity?: number;
+  objectFit?: 'cover' | 'contain' | 'stretch' | 'repeat' | 'center';
+  resizeMode?: 'cover' | 'contain' | 'fill' | 'scale-down' | 'none';
+  tintColor?: string;
+  customStyles?: Record<string, any>;
+};
+
+export interface ContainerStyles {
+  flexDirection: 'row' | 'column' | 'grid';
+  alignItems:
+    | 'flex-start'
+    | 'center'
+    | 'flex-end'
+    | 'space-between'
+    | 'space-around';
+  justifyContent?:
+    | 'flex-start'
+    | 'center'
+    | 'flex-end'
+    | 'space-between'
+    | 'space-around'
+    | 'space-evenly';
+  gap: number;
+  padding: number;
+  borderRadius: number;
+  backgroundColor: string;
+  flexWrap: 'nowrap' | 'wrap' | 'wrap-reverse';
+  width?: number | string;
+  flex?: number;
+}
+
+export interface ContentElementProperties {
+  textContent?: string;
+
+  // Image properties
+  imageUrl?: string; // Image URL/link
+  imageAltText?: string; // Alt text for accessibility
+  imageWidth?: number; // Image width in pixels
+  imageHeight?: number; // Image height in pixels
+}
+
+export type ElementProperty = {
+  styles: ContentElementStyles;
+  customStyles?: Record<string, any>;
+  properties: ContentElementProperties;
+  clickAction?: ClickAction;
+  customProps?: Record<string, any>;
+  backgroundImage?: string;
+};
+export type SectionProperty = {
+  styles: ContainerStyles;
+  customStyles?: Record<string, any>;
+  clickAction?: ClickAction;
+  customProps?: Record<string, any>;
+  scrollOptions: {
+    scrollType: 'vertical' | 'horizontal';
+  };
+  backgroundImage?: string;
+};
+export type ListProperty = {
+  styles: ContainerStyles;
+  customStyles?: Record<string, any>;
+  dataSource: ListDataSource;
+  data?: Array<Record<string, any>>;
+  apiEndpoint?: string;
+  maxItems?: number;
+  pagination: boolean;
+  customProps?: Record<string, any>;
+};
+export type FormProperty = {
+  styles: ContainerStyles;
+  customStyles?: Record<string, any>;
+  submissionType: FormSubmissionType;
+  submitUrl?: string;
+  submissionSettings?: {
+    // Webhook settings
+    webhookHeaders?: Record<string, string>;
+    webhookMethod?: 'GET' | 'POST' | 'PUT' | 'PATCH';
+    webhookTimeout?: number;
+
+    // Function settings
+    functionName?: string;
+  };
+  submittedSuccessAction?: {
+    type?: 'alert' | 'in_app_navigate' | 'out_app_navigate';
+    alertTitle?: string;
+    alertMessage?: string;
+    inAppNavigate?: {
+      routeName?: string;
+      params?: Record<string, any>;
+      type?: 'push' | 'navigate' | 'goBack';
+    };
+    outAppNavigate?: {
+      url?: string;
+    };
+  };
+  submittedErrorAction?: {
+    type?: 'alert' | 'in_app_navigate' | 'out_app_navigate';
+    alertTitle?: string;
+    alertMessage?: string;
+    inAppNavigate?: {
+      routeName?: string;
+      params?: Record<string, any>;
+      type?: 'push' | 'navigate' | 'goBack';
+    };
+    outAppNavigate?: {
+      url?: string;
+    };
+  };
+  // Form element properties
+  inputMode?:
+    | 'none'
+    | 'text'
+    | 'email'
+    | 'numeric'
+    | 'decimal'
+    | 'tel'
+    | 'url'
+    | 'search';
+  placeholder?: string;
+  label?: string;
+  required?: boolean;
+  secureTextEntry?: boolean;
+  defaultValue?: string | number | boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+  step?: number;
+  pattern?: string;
+  options?: Array<{ value: string; label: string; disabled?: boolean }>;
+  rows?: number;
+  cols?: number;
+  validationRules?: Record<string, any>;
+
+  labelStyle?: Record<string, any>;
+  status: FormStatus;
+  isActive: boolean;
+  requiresCaptcha: boolean;
+  customProps?: Record<string, any>;
+};
+
 /**
  * Content item within a content view
  */
@@ -125,9 +352,9 @@ export interface ContentItem {
   /** Frontend item ID */
   itemId: string;
   /** Content type */
-  type: 'section' | 'list' | 'list-item' | 'form' | 'element';
+  type: ContentType;
   /** Element type (for elements) */
-  elementType?: 'text' | 'button' | 'image' | 'input' | 'select' | 'checkbox' | 'radio' | 'textarea' | null;
+  elementType?: ElementType | null;
   /** Item name */
   name: string;
   /** Parent item ID */
@@ -135,7 +362,7 @@ export interface ContentItem {
   /** Display order */
   order: number;
   /** Item data (styles, properties, etc.) */
-  data: Record<string, any>;
+  data: ElementProperty | SectionProperty | ListProperty | FormProperty;
   /** Content view ID */
   contentViewId: number;
   /** Whether the item is visible */
@@ -173,11 +400,11 @@ export interface ContentEvent {
   /** Item ID */
   itemId: string;
   /** Log ID */
-  logId: string;
+  logId?: string;
   /** Action type */
-  action: 'view' | 'click';
+  action?: 'view' | 'click';
   /** Event type */
-  type: 'IMPRESSION' | 'CONVERSION';
+  type?: 'IMPRESSION' | 'CONVERSION';
   /** Additional metadata */
   metadata?: Record<string, any>;
 }
@@ -190,65 +417,60 @@ export interface ContentEvent {
  * Main ResyncBase class for configuration management and A/B testing
  */
 export declare class ResyncBase {
-  /** Current ResyncBase instance */
-  static instance: ResyncBase | null;
-  /** A/B test manager */
-  static abTest: any | null;
-  /** Whether ResyncBase is ready */
-  static ready: boolean;
+  ready: boolean;
   /** Current user ID */
-  static userId: string | null;
+  userId: string | null;
   /** Current session ID */
-  static sessionId: string | null;
+  sessionId: string | null;
   /** Current client identifier */
-  static client: string | null;
+  client: string | null;
   /** Current user attributes */
-  static attributes: string | null;
+  attributes: string | null;
   /** User variant assignments */
-  static userVariants: Map<string, UserVariant>;
+  userVariants: Map<string, UserVariant>;
 
   /**
    * Initialize ResyncBase
    * @param options - Initialization options
    * @returns ResyncBase instance
    */
-  static init(options: InitOptions): ResyncBase;
+  init(options: InitOptions): ResyncBase;
 
   /**
    * Get the current API key
    * @returns API key or null if not set
    */
-  static getApiKey(): string | null;
+  getApiKey(): string | null;
 
   /**
    * Get the current App ID
    * @returns App ID or null if not set
    */
-  static getAppId(): string | null;
+  getAppId(): string | null;
 
   /**
    * Get the current API URL
    * @returns API URL
    */
-  static getApiUrl(): string;
+  getApiUrl(): string;
 
   /**
    * Set the user ID for tracking and variant assignment
    * @param userId - The user ID to set
    */
-  static setUserId(userId: string | number): void;
+  setUserId(userId: string | number): void;
 
   /**
    * Set the client identifier for tracking
    * @param client - The client identifier
    */
-  static setClient(client: string): void;
+  setClient(client: string): void;
 
   /**
    * Set user attributes for tracking and targeting
    * @param attributes - User attributes object
    */
-  static setAttributes(attributes: object): void;
+  setAttributes(attributes: object): void;
 
   /**
    * Get a variant for an A/B test experiment
@@ -256,33 +478,33 @@ export declare class ResyncBase {
    * @param payload - Additional payload for variant assignment
    * @returns Promise that resolves to the variant value or null
    */
-  static getVariant(experimentId: string, payload?: any): Promise<string | null>;
+  getVariant(experimentId: string, payload?: any): Promise<string | null>;
 
   /**
    * Get a configuration value by key
    * @param key - The configuration key
    * @returns The configuration value
    */
-  static getConfig(key: string): any;
+  getConfig(key: string): any;
 
   /**
    * Get content views
    * @returns Array of content views
    */
-  static getContent(): ContentView[];
+  getContent(): ContentView[];
 
   /**
    * Log a content event
    * @param event - Content event parameters
    */
-  static logContentEvent(event: ContentEvent): void;
+  logContentEvent(event: ContentEvent): void;
 
   /**
    * Record a conversion for an A/B test experiment
    * @param experimentId - The experiment ID
    * @param metadata - Additional metadata for the conversion
    */
-  static recordConversion(experimentId: string, metadata?: object): any;
+  recordConversion(experimentId: string, metadata?: object): any;
 
   /** Subscribers to configuration updates */
   subscribers: Set<Function>;

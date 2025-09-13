@@ -11,7 +11,7 @@ import { API_CONFIG, ERROR_MESSAGES, RETRY_CONFIG, TIMING_CONFIG } from "../util
  * It uses the ResyncBase for configuration and logging.
  * It also handles retry logic for fetching data and logging.
  */
-export class ContentLogger {
+class ContentLogger {
   constructor() {
     this.logs = [];
     this.retryCount = 0;
@@ -137,3 +137,5 @@ export class ContentLogger {
       });
   }
 }
+
+export default new ContentLogger();

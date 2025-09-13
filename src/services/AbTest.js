@@ -15,7 +15,7 @@ const LogType = LOG_TYPES;
  * It uses the ResyncBase for configuration and logging.
  * It also handles retry logic for fetching data and logging.
  */
-export class AbTest {
+class AbTest {
   constructor(experiments) {
     this.experiments = experiments || [];
     this.logs = [];
@@ -119,6 +119,10 @@ export class AbTest {
       hash = (hash << 5) + hash + str.charCodeAt(i);
     }
     return Math.abs(hash);
+  }
+
+  setExperiments(experiments) {
+    this.experiments = experiments;
   }
 
   /**
@@ -313,3 +317,5 @@ export class AbTest {
     }
   }
 }
+
+export default new AbTest();

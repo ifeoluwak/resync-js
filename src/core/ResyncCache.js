@@ -243,15 +243,23 @@ const STORAGE_KEY = STORAGE_CONFIG.CACHE_KEY;
  * // Retrieve a configuration value
  * const configs = ResyncCache.getKeyValue('configs');
  */
-export default class ResyncCache {
+class ResyncCache {
   /** @type {StorageInterface|null} */
-  static storage;
+  storage;
 
   /** @type {ResyncCacheData} */
-  static cache = {};
+  cache = {
+    configs: {},
+    experiments: [],
+    content: [],
+    lastFetchTimestamp: null,
+    sessionId: null,
+    userId: null,
+    userVariants: new Map(),
+  };
 
   /** @type {Map<string, Object>} */
-  static userVariants = new Map();
+  userVariants = new Map();
 
   /**
    * Initializes the ResyncCache with optional storage.
@@ -268,11 +276,10 @@ export default class ResyncCache {
    *   clear: () => customStorage.clear()
    * });
    */
-  static init(storage) {
-    ResyncCache.cache = new ResyncCache();
+  init(storage) {
     if (storage) {
-      ResyncCache.storage = storage;
-      ResyncCache.loadFromStorage();
+      this.storage = storage;
+      this.loadFromStorage();
     }
   }
 
@@ -283,11 +290,8 @@ export default class ResyncCache {
    * const cache = ResyncCache.getCache();
    * console.log('Current cache:', cache);
    */
-  static getCache() {
-    if (!ResyncCache.cache) {
-      ResyncCache.cache = new ResyncCache();
-    }
-    return ResyncCache.cache;
+  getCache() {
+    return this.cache;
   }
 
   /**
@@ -298,14 +302,8 @@ export default class ResyncCache {
    * const configs = ResyncCache.getKeyValue('configs');
    * const functions = ResyncCache.getKeyValue('functions');
    */
-  static getKeyValue(key) {
-    if (ResyncCache.storage) {
-      const cache = ResyncCache.getCache();
-      return cache[key] || null;
-    } else {
-      console.warn("No storage available to get key-value pair.");
-      return ResyncCache.cache[key] || null; // Fallback to in-memory cache
-    }
+  getKeyValue(key) {
+    return this.cache[key] || null;
   }
 
   /**
@@ -313,11 +311,11 @@ export default class ResyncCache {
    * @example
    * ResyncCache.saveToStorage();
    */
-  static saveToStorage() {
-    if (ResyncCache.storage) {
-      ResyncCache.storage.setItem(
+  saveToStorage() {
+    if (this.storage) {
+      this.storage.setItem(
         STORAGE_KEY,
-        JSON.stringify(ResyncCache.getCache())
+        JSON.stringify(this.cache)
       );
     } else {
       console.warn("No storage available to save cache.");
@@ -332,18 +330,10 @@ export default class ResyncCache {
    * ResyncCache.saveKeyValue('configs', { featureFlag: true });
    * ResyncCache.saveKeyValue('lastFetchTimestamp', new Date().toISOString());
    */
-  static saveKeyValue(key, value) {
-    if (ResyncCache.storage) {
-      const cache = ResyncCache.getCache();
-      cache[key] = value;
-      ResyncCache.storage.setItem(STORAGE_KEY, JSON.stringify(cache));
-      ResyncCache.cache = cache; // Update the static cache
-    } else {
-      // console.log("Saving to in-memory cache instead:", ResyncCache.cache);
-      if (!ResyncCache.cache) {
-        ResyncCache.cache = new ResyncCache();
-      }
-      ResyncCache.cache[key] = value; // Update the in-memory cache
+  saveKeyValue(key, value) {
+    this.cache[key] = value;
+    if (this.storage) {
+      this.storage.setItem(STORAGE_KEY, JSON.stringify(this.cache));
     }
   }
 
@@ -352,19 +342,20 @@ export default class ResyncCache {
    * @example
    * ResyncCache.loadFromStorage();
    */
-  static loadFromStorage() {
-    if (ResyncCache.storage) {
-      const data = ResyncCache.storage.getItem(STORAGE_KEY);
-      if (data) {
+  loadFromStorage() {
+    if (this.storage) {
+       try {
+        const data = this.storage.getItem(STORAGE_KEY);
         const parsedData = JSON.parse(data);
         // Restore the cache state from the parsed data
-        ResyncCache.cache = Object.assign(
-          ResyncCache.getCache(),
-          parsedData
-        );
-      }
+        this.cache = parsedData;
+       } catch (error) {
+        console.error("Error loading cache from storage:", error);
+       }
     } else {
       console.warn("No storage available to load cache.");
     }
   }
 }
+
+export default new ResyncCache();

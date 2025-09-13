@@ -1,9 +1,13 @@
-import { AbTest } from "../services/AbTest.js";
+import AbTest from "../services/AbTest.js";
 import ResyncCache from "./ResyncCache.js";
-import { ConfigFetch } from "../services/ConfigFetch.js";
-import { ContentLogger } from "../services/ContentLogger.js";
+import ConfigFetch from "../services/ConfigFetch.js";
 import { configService } from "./ConfigService.js";
-import { API_CONFIG, ERROR_MESSAGES, STORAGE_CONFIG } from "../utils/constants.js";
+import {
+  API_CONFIG,
+  ERROR_MESSAGES,
+  STORAGE_CONFIG,
+} from "../utils/constants.js";
+import ContentLogger from "../services/ContentLogger.js";
 
 /**
  * @typedef {Object} InitOptions
@@ -44,7 +48,7 @@ import { API_CONFIG, ERROR_MESSAGES, STORAGE_CONFIG } from "../utils/constants.j
  * Main ResyncBase class for configuration management and A/B testing.
  * Provides functionality for fetching app configurations, executing functions,
  * and managing A/B test experiments.
- * 
+ *
  * @class ResyncBase
  * @example
  * // Initialize ResyncBase
@@ -53,10 +57,10 @@ import { API_CONFIG, ERROR_MESSAGES, STORAGE_CONFIG } from "../utils/constants.j
  *   appId: 'your-app-id',
  *   callback: (config) => console.log('Config loaded:', config)
  * });
- * 
+ *
  * // Get configuration value
  * const value = ResyncBase.getConfig('feature-flag');
- * 
+ *
  * // Get A/B test variant
  * const variant = await ResyncBase.getVariant('experiment-name', payload);
  */
@@ -66,66 +70,34 @@ class ResyncBase {
    * @constructor
    * @throws {Error} If initialization fails
    */
-  constructor() {
-    /**
-     * @type {ConfigFetch}
-     * @private
-     */
-    ResyncBase.#fetcher = new ConfigFetch();
-    this.#loadAppConfig()
-      .then((data) => {
-        ResyncBase.ready = true;
-      })
-      .catch((error) => {
-        console.error("Error initializing ResyncBase:", error);
-      });
-    /**
-     * @type {Set<Function>}
-     */
-    this.subscribers = new Set();
-  }
-
-  /** @type {ConfigFetch|null} */
-  static #fetcher = null;
+  constructor() {}
 
   /** @type {string|null} */
-  static #apiKey = null;
-
-  /** @type {string} */
-  static #apiUrl = API_CONFIG.DEFAULT_URL;
+  #apiKey = null;
 
   /** @type {number} */
-  static #ttl = 60 * 60 * 1000; // 60 minutes in milliseconds
-
-  /** @type {ResyncBase|null} */
-  static instance = null;
-
-  /** @type {AbTest|null} */
-  static abTest = null;
-
-  /** @type {ContentLogger|null} */
-  static contentLogger = null;
+  #ttl = 60 * 60 * 1000; // 60 minutes in milliseconds
 
   /** @type {boolean} */
-  static ready = false;
+  ready = false;
 
   /** @type {string|null} */
-  static #appId = null;
+  #appId = null;
 
   /** @type {string|null} */
-  static userId = null;
+  userId = null;
 
   /** @type {string|null} */
-  static sessionId = null;
+  sessionId = null;
 
   /** @type {string|null} */
-  static client = null;
+  client = null;
 
   /** @type {string|null} */
-  static attributes = null;
+  attributes = null;
 
   /** @type {Map<string, UserVariant>} */
-  static userVariants = new Map();
+  userVariants = new Map();
 
   /**
    * Initializes the ResyncBase class.
@@ -147,23 +119,27 @@ class ResyncBase {
    *   storage: localStorage
    * });
    */
-  static init({ key, appId, ttl = 60 * 60 * 1000, callback, storage }) {
+  init({ key, appId, ttl = 60 * 60 * 1000, callback, storage }) {
     if (!key) {
       throw new Error(ERROR_MESSAGES.API_KEY_REQUIRED);
     }
     if (!appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_REQUIRED);
     }
-    
+
+    if (this.ready) {
+      return this;
+    }
+
     // Update configuration service
     configService.setApiKey(key);
     configService.setAppId(appId);
     configService.setTtl(ttl);
-    
-    ResyncBase.#apiKey = key;
-    ResyncBase.#appId = `${appId}`;
-    ResyncBase.#ttl = ttl;
-    
+
+    this.#apiKey = key;
+    this.#appId = `${appId}`;
+    this.#ttl = ttl;
+
     // storage must have a getItem, setItem, removeItem and clear methods
     if (
       storage &&
@@ -174,39 +150,23 @@ class ResyncBase {
       ResyncCache.init(storage);
       console.log("ResyncBase using custom storage", storage);
     } else {
-      ResyncCache.init();
-    }
-    if (!ResyncBase.instance) {
-      ResyncBase.instance = new ResyncBase();
+      // this = new ResyncBase();
+      this.#loadAppConfig()
+        .then((data) => {
+          this.ready = true;
+        })
+        .catch((error) => {
+          console.error("Error initializing ResyncBase:", error);
+        });
+      /**
+       * @type {Set<Function>}
+       */
+      this.subscribers = new Set();
     }
     if (callback && typeof callback === "function") {
-      ResyncBase.instance.subscribe(callback);
+      this.subscribe(callback);
     }
-    return ResyncBase.instance;
-  }
-
-  /**
-   * Gets the current API key.
-   * @returns {string|null} The API key or null if not set
-   */
-  static getApiKey() {
-    return ResyncBase.#apiKey;
-  }
-
-  /**
-   * Gets the current App ID.
-   * @returns {string|null} The App ID or null if not set
-   */
-  static getAppId() {
-    return ResyncBase.#appId;
-  }
-
-  /**
-   * Gets the current API URL.
-   * @returns {string} The API URL
-   */
-  static getApiUrl() {
-    return ResyncBase.#apiUrl;
+    return this;
   }
 
   /**
@@ -216,12 +176,12 @@ class ResyncBase {
    * ResyncBase.setUserId('user123');
    * ResyncBase.setUserId(12345);
    */
-  static setUserId(userId) {
-    ResyncBase.userId = `${userId}`;
-    if (ResyncCache.cache) {
+  setUserId(userId) {
+    this.userId = `${userId}`;
+    if (ResyncCache) {
       ResyncCache.saveKeyValue("userId", `${userId}`);
     }
-    // // ResyncBase.instance.getUserVariants();
+    // // this.getUserVariants();
   }
 
   /**
@@ -231,11 +191,11 @@ class ResyncBase {
    * @example
    * ResyncBase.setClient('web-app');
    */
-  static setClient(client) {
+  setClient(client) {
     if (typeof client !== "string") {
       throw new Error(ERROR_MESSAGES.CLIENT_MUST_BE_STRING);
     }
-    ResyncBase.client = client;
+    this.client = client;
   }
 
   /**
@@ -249,11 +209,11 @@ class ResyncBase {
    *   age: 25
    * });
    */
-  static setAttributes(attributes) {
+  setAttributes(attributes) {
     if (typeof attributes !== "object") {
       throw new Error(ERROR_MESSAGES.ATTRIBUTES_MUST_BE_OBJECT);
     }
-    ResyncBase.attributes = JSON.stringify(attributes);
+    this.attributes = JSON.stringify(attributes);
   }
 
   /**
@@ -265,14 +225,14 @@ class ResyncBase {
    * @example
    * const variant = await ResyncBase.getVariant('pricing-experiment', { userId: '123' });
    */
-  static async getVariant(experimentId, payload) {
-    if (!ResyncBase.#appId) {
+  async getVariant(experimentId, payload) {
+    if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
-    if (!ResyncBase.abTest) {
+    if (!AbTest) {
       throw new Error(ERROR_MESSAGES.ABTEST_NOT_INITIALIZED);
     }
-    return await ResyncBase.abTest.getVariant(experimentId, payload);
+    return await AbTest.getVariant(experimentId, payload);
   }
 
   /**
@@ -283,8 +243,8 @@ class ResyncBase {
    * @example
    * const featureFlag = ResyncBase.getConfig('new-feature');
    */
-  static getConfig(key) {
-    if (!ResyncBase.#appId) {
+  getConfig(key) {
+    if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
     const config = ResyncCache.getKeyValue("configs");
@@ -294,8 +254,8 @@ class ResyncBase {
     throw new Error(ERROR_MESSAGES.CONFIG_NOT_FOUND(key));
   }
 
-  static getContent() {
-    if (!ResyncBase.#appId) {
+  getContent() {
+    if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
     const content = ResyncCache.getKeyValue("content");
@@ -305,14 +265,29 @@ class ResyncBase {
     throw new Error(ERROR_MESSAGES.NO_CONTENT_AVAILABLE);
   }
 
-  static logContentEvent(event) {
-    if (!ResyncBase.#appId) {
+  /**
+   * Logs a content event.
+   * @param {Object} event - The content event object
+   * @throws {Error} If App ID is not set or ContentLogger is not initialized
+   * @example
+   * ResyncBase.logContentEvent({
+   *   contentViewId: 8,
+   *   itemId: 'hero-banner',
+   *   logId: 'click-001',
+   *   action: 'click',
+   *   type: 'IMPRESSION',
+   *   metadata: { position: 'top', element: 'cta-button' }
+   * });
+   */
+  logContentEvent(event) {
+    if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
-    if (!ResyncBase.contentLogger) {
+    if (!ContentLogger) {
       throw new Error(ERROR_MESSAGES.CONTENT_LOGGER_NOT_INITIALIZED);
     }
-    ResyncBase.contentLogger.logContentEvent(event);
+    console.log("===================Trying to log content event", event);
+    ContentLogger.logContentEvent(event);
   }
 
   /**
@@ -322,17 +297,17 @@ class ResyncBase {
    * @returns {*} The result of recording the conversion
    * @throws {Error} If experiment ID is not provided
    * @example
-   * ResyncBase.recordConversion('pricing-experiment', { 
+   * ResyncBase.recordConversion('pricing-experiment', {
    *   revenue: 99.99,
    *   currency: 'USD'
    * });
    */
-  static recordConversion(experimentId, metadata = {}) {
+  recordConversion(experimentId, metadata = {}) {
     if (!experimentId) {
       throw new Error(ERROR_MESSAGES.EXPERIMENT_ID_REQUIRED);
     }
     // Record the conversion event
-    return ResyncBase.abTest.recordConversion(experimentId, metadata);
+    return AbTest.recordConversion(experimentId, metadata);
   }
 
   /**
@@ -342,56 +317,50 @@ class ResyncBase {
    * @throws {Error} - Throws an error if the API key is not set or if the request fails.
    */
   async #loadAppConfig() {
-    if (!ResyncBase.#apiKey) {
+    if (!this.#apiKey) {
       throw new Error(ERROR_MESSAGES.API_KEY_NOT_SET);
     }
 
     const cache = ResyncCache.getCache();
 
-    const sessionId = '3amhexwa89r-1752095355810'
+    const sessionId = "3amhexwa89r-1752095355810";
     // ResyncCache.getKeyValue("sessionId") ||
     // `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     ResyncCache.saveKeyValue("sessionId", sessionId);
-    ResyncBase.sessionId = sessionId;
-    if (ResyncBase.userId) {
-      ResyncCache.saveKeyValue("userId", ResyncBase.userId);
+    this.sessionId = sessionId;
+    if (this.userId) {
+      ResyncCache.saveKeyValue("userId", this.userId);
     }
 
     if (
       cache?.lastFetchTimestamp &&
-      Date.now() - new Date(cache.lastFetchTimestamp).getTime() < ResyncBase.#ttl
+      Date.now() - new Date(cache.lastFetchTimestamp).getTime() <
+        this.#ttl
     ) {
       // Create AppConfig-like object from cache
       const appConfig = {
         appConfig: cache.configs || {},
         experiments: cache.experiments || [],
-        content: cache.content || []
+        content: cache.content || [],
       };
       this.#notifySubscribers(appConfig);
-      ResyncBase.#appId = cache.configs?.appId;
-      ResyncBase.sessionId = cache.sessionId;
+      this.sessionId = cache.sessionId;
       // Always fetch user variants
       await this.getUserVariants();
       return appConfig;
     }
 
-    const config = await ResyncBase.#fetcher.fetchAppConfig();
+    const config = await ConfigFetch.fetchAppConfig();
     const lastFetchTimestamp = new Date().toISOString();
 
     if (config) {
       ResyncCache.saveKeyValue("configs", config.appConfig || {});
       ResyncCache.saveKeyValue("content", config.content);
       ResyncCache.saveKeyValue("experiments", config.experiments || []);
+      ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp);
       // Always fetch user variants
       await this.getUserVariants();
-
-      ResyncCache.saveKeyValue(
-        "lastFetchTimestamp",
-        lastFetchTimestamp
-      );
-
-      ResyncBase.abTest = new AbTest(config.experiments);
-      ResyncBase.contentLogger = new ContentLogger();
+      AbTest.setExperiments(config.experiments);
       this.#notifySubscribers(config);
       return config;
     }
@@ -402,7 +371,7 @@ class ResyncBase {
    * @param {Function} callback - The callback function to subscribe
    * @throws {Error} If callback is not a function
    * @example
-   * ResyncBase.instance.subscribe((config) => {
+   * this.subscribe((config) => {
    *   console.log('Configuration updated:', config);
    * });
    */
@@ -419,7 +388,7 @@ class ResyncBase {
    * @param {Function} callback - The callback function to unsubscribe
    * @throws {Error} If callback is not found in subscribers
    * @example
-   * ResyncBase.instance.unsubscribe(myCallback);
+   * this.unsubscribe(myCallback);
    */
   unsubscribe(callback) {
     if (this.subscribers.has(callback)) {
@@ -440,30 +409,33 @@ class ResyncBase {
 
   async getUserVariants() {
     const userVariants = new Map();
-    const variants = await ResyncBase.#fetcher.fetchUserVariants();
+    const variants = await ConfigFetch.fetchUserVariants();
     if (variants && Array.isArray(variants)) {
       variants.forEach((variant) => {
         userVariants.set(variant.experiment.id, variant);
       });
-      ResyncBase.userVariants = userVariants;
       ResyncCache.saveKeyValue("userVariants", userVariants);
     }
   }
 }
 
-/**
- * Initializes the ResyncBase class.
- * @param {InitOptions} options - Initialization options
- * @returns {ResyncBase} - Returns the instance of ResyncBase.
- * @example
- * ResyncBaseInit({
- *   key: 'your-api-key',
- *   appId: 'your-app-id',
- *   callback: (config) => console.log('Config loaded')
- * });
- */
-export const ResyncBaseInit = (options) => {
-  return ResyncBase.init(options);
-};
+// /**
+//  * Initializes the ResyncBase class.
+//  * @param {InitOptions} options - Initialization options
+//  * @returns {ResyncBase} - Returns the instance of ResyncBase.
+//  * @example
+//  * ResyncBaseInit({
+//  *   key: 'your-api-key',
+//  *   appId: 'your-app-id',
+//  *   callback: (config) => console.log('Config loaded')
+//  * });
+//  */
+// export const ResyncBaseInit = (options) => {
+//   return ResyncBase.init(options);
+// };
 
-export { ResyncBase }
+// Export the class as default
+export default ResyncBase;
+
+// Also export an instance for convenience
+export const ResyncBaseAPI = new ResyncBase();

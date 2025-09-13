@@ -3,5 +3,8 @@
  * Main entry point for the library
  */
 
-// Export main classes
-export { ResyncBase, ResyncBaseInit } from './src/core/ResyncBase.js';
+// Import the class and instance
+import { ResyncBaseAPI } from './src/core/ResyncBase.js';
+
+// Export the class as default
+export default ResyncBaseAPI;

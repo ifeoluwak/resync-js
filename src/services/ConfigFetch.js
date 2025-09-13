@@ -34,7 +34,7 @@ import { API_CONFIG, ERROR_MESSAGES, RETRY_CONFIG } from "../utils/constants.js"
  * const config = await fetcher.fetchAppConfig();
  * const variants = await fetcher.fetchUserVariants();
  */
-export class ConfigFetch {
+class ConfigFetch {
   /**
    * Creates a new ConfigFetch instance.
    * @constructor
@@ -185,3 +185,5 @@ export class ConfigFetch {
       }
   }
 }
+
+export default new ConfigFetch();
