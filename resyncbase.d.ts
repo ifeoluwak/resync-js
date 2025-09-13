@@ -416,7 +416,7 @@ export interface ContentEvent {
 /**
  * Main ResyncBase class for configuration management and A/B testing
  */
-export declare class ResyncBase {
+export declare class ResyncBaseAPI {
   ready: boolean;
   /** Current user ID */
   userId: string | null;
@@ -434,7 +434,7 @@ export declare class ResyncBase {
    * @param options - Initialization options
    * @returns ResyncBase instance
    */
-  init(options: InitOptions): ResyncBase;
+  init(options: InitOptions): ResyncBaseAPI;
 
   /**
    * Get the current API key
@@ -521,41 +521,6 @@ export declare class ResyncBase {
    */
   unsubscribe(callback: (config: AppConfig) => void): void;
 }
-
-// ============================================================================
-// RESYNCBASE API INSTANCE (SINGLETON)
-// ============================================================================
-
-/**
- * ResyncBaseAPI - Singleton instance of ResyncBase
- * This is the actual instance that gets exported as default
- */
-export interface ResyncBaseAPI {
-  // Instance properties
-  ready: boolean;
-  userId: string | null;
-  client: string | null;
-  sessionId: string | null;
-  attributes: string | null;
-  userVariants: Map<string, any>;
-
-  // Instance methods
-  init(options: InitOptions): ResyncBaseAPI;
-  setUserId(userId: string | number): void;
-  setClient(client: string): void;
-  setAttributes(attributes: Record<string, any>): void;
-  getVariant(experimentId: string, payload?: any): Promise<string | null>;
-  getConfig(key: string): any;
-  getContent(): ContentView[];
-  logContentEvent(event: ContentEvent): void;
-  recordConversion(experimentId: string, metadata?: any): void;
-  subscribe(callback: (config: AppConfig) => void): void;
-  unsubscribe(callback: (config: AppConfig) => void): void;
-}
-
-// ============================================================================
-// DEFAULT EXPORT - ResyncBaseAPI instance (singleton)
-// ============================================================================
 
 // Export the ResyncBaseAPI instance as default (matches the actual JavaScript export)
 export default ResyncBaseAPI;
