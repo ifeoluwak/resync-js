@@ -523,7 +523,39 @@ export declare class ResyncBase {
 }
 
 // ============================================================================
-// DEFAULT EXPORT
+// RESYNCBASE API INSTANCE (SINGLETON)
 // ============================================================================
 
-export default ResyncBase;
+/**
+ * ResyncBaseAPI - Singleton instance of ResyncBase
+ * This is the actual instance that gets exported as default
+ */
+export interface ResyncBaseAPI {
+  // Instance properties
+  ready: boolean;
+  userId: string | null;
+  client: string | null;
+  sessionId: string | null;
+  attributes: string | null;
+  userVariants: Map<string, any>;
+
+  // Instance methods
+  init(options: InitOptions): ResyncBaseAPI;
+  setUserId(userId: string | number): void;
+  setClient(client: string): void;
+  setAttributes(attributes: Record<string, any>): void;
+  getVariant(experimentId: string, payload?: any): Promise<string | null>;
+  getConfig(key: string): any;
+  getContent(): ContentView[];
+  logContentEvent(event: ContentEvent): void;
+  recordConversion(experimentId: string, metadata?: any): void;
+  subscribe(callback: (config: AppConfig) => void): void;
+  unsubscribe(callback: (config: AppConfig) => void): void;
+}
+
+// ============================================================================
+// DEFAULT EXPORT - ResyncBaseAPI instance (singleton)
+// ============================================================================
+
+// Export the ResyncBaseAPI instance as default (matches the actual JavaScript export)
+export default ResyncBaseAPI;
