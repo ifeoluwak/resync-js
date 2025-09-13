@@ -416,7 +416,7 @@ export interface ContentEvent {
 /**
  * Main ResyncBase class for configuration management and A/B testing
  */
-export declare class ResyncBaseAPI {
+declare class ResyncBaseAPI {
   ready: boolean;
   /** Current user ID */
   userId: string | null;
@@ -523,4 +523,5 @@ export declare class ResyncBaseAPI {
 }
 
 // Export the ResyncBaseAPI instance as default (matches the actual JavaScript export)
-export default ResyncBaseAPI;
+declare const instance: ResyncBaseAPI;
+export default instance;
