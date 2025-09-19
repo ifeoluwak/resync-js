@@ -165,6 +165,7 @@ class ContentLogger {
       }),
     })
     .then((response) => {
+      console.log("Content. Form submission response:", response);
       if (response.ok) {
         return true;
       }

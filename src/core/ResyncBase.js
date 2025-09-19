@@ -303,6 +303,7 @@ class ResyncBase {
     if (!ContentLogger) {
       throw new Error(ERROR_MESSAGES.CONTENT_LOGGER_NOT_INITIALIZED);
     }
+    console.log("===================Trying to submit form", formData);
     return ContentLogger.submitForm(formData);
   }
 
