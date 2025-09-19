@@ -12,7 +12,8 @@ export const API_CONFIG = {
     SYSTEM_VARIANT: "/get-system-variant",
     LOG_EXPERIMENT: "/log-experiment",
     LOG_EXPERIMENT_BATCH: "/log-experiment/batch",
-    LOG_CONTENT_EVENTS: "/log-content-events"
+    LOG_CONTENT_EVENTS: "/log-content-events",
+    SUBMIT_FORM: "/submit-form"
   },
   HEADERS: {
     CONTENT_TYPE: "application/json",

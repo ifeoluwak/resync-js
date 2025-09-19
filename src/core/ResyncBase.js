@@ -291,6 +291,22 @@ class ResyncBase {
   }
 
   /**
+   * Submits a form to the backend API.
+   * @param {{itemId: string, contentViewId: number, data: Record<string, unknown>}} formData - The form data to submit.
+   * @returns {boolean | Error} - Returns true if the form is submitted successfully, false otherwise.
+   * @description This method sends a form data to the backend API for storage.
+   */
+  submitForm(formData) {
+    if (!this.#appId) {
+      throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
+    }
+    if (!ContentLogger) {
+      throw new Error(ERROR_MESSAGES.CONTENT_LOGGER_NOT_INITIALIZED);
+    }
+    return ContentLogger.submitForm(formData);
+  }
+
+  /**
    * Records a conversion for an A/B test experiment.
    * @param {string} experimentId - The experiment ID
    * @param {Object} [metadata={}] - Additional metadata for the conversion

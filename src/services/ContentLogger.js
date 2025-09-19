@@ -136,6 +136,46 @@ class ContentLogger {
         this.saveLogForLaterUpload(batchEntries);
       });
   }
+
+  /**
+   * Submits a form to the backend API.
+   * @param {{itemId: string, contentViewId: number, data: Record<string, unknown>}} formData - The form data to submit.
+   * @returns {boolean} - Returns true if the form is submitted successfully, false otherwise.
+   * @description This method sends a form data to the backend API for storage.
+   */
+  submitForm(formData) {
+    const { apiKey, appId, apiUrl } = configService.getApiConfig();
+    if (!apiKey || !appId || !apiUrl) {
+      console.warn(
+        "API key, App ID, or App URL not set. Skipping form submission."
+      );
+      return false;
+    }
+
+    fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.SUBMIT_FORM}`, {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
+      },
+      body: JSON.stringify({
+        ...formData,
+        sessionId: ResyncCache.getKeyValue("sessionId"),
+        userId: ResyncCache.getKeyValue("userId"),
+      }),
+    })
+    .then((response) => {
+      if (response.ok) {
+        return true;
+      }
+      return false;
+    })
+    .catch((error) => {
+      console.error("Content. Form submission failed:", error);
+      // throw error;
+      return false;
+    });
+  }
 }
 
 export default new ContentLogger();
