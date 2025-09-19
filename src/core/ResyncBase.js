@@ -293,10 +293,10 @@ class ResyncBase {
   /**
    * Submits a form to the backend API.
    * @param {{itemId: string, contentViewId: number, data: Record<string, unknown>}} formData - The form data to submit.
-   * @returns {boolean | Error} - Returns true if the form is submitted successfully, false otherwise.
+   * @returns {Promise<boolean | Error>} - Returns true if the form is submitted successfully, false otherwise.
    * @description This method sends a form data to the backend API for storage.
    */
-  submitForm(formData) {
+  async submitForm(formData) {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }

@@ -150,6 +150,7 @@ export enum FormStatus {
 export enum FormSubmissionType {
   WEBHOOK = 'webhook',
   FUNCTION = 'function',
+  INTERNAL = 'internal',
 }
 
 export type ClickAction = {
