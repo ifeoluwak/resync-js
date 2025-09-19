@@ -503,9 +503,9 @@ declare class ResyncBaseAPI {
   /**
    * Submit a form to the backend API.
    * @param formData - Form data to submit.
-   * @returns {boolean | Error} - Returns true if the form is submitted successfully, false otherwise.
+   * @returns {Promise<boolean | Error>} - Returns true if the form is submitted successfully, false otherwise.
    */
-  submitForm(formData: { itemId: string, contentViewId: number, data: Record<string, unknown> }): boolean | Error;
+  submitForm(formData: { itemId: string, contentViewId: number, data: Record<string, unknown> }): Promise<boolean | Error>;
 
   /**
    * Record a conversion for an A/B test experiment
