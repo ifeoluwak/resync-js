@@ -76,7 +76,7 @@ class ContentLogger {
         this.logs
       );
       clearInterval(this.timeoutId);
-      // this.timeoutId = null;
+      this.timeoutId = null;
       return;
     }
 
