@@ -9,29 +9,53 @@ function hashUserId(userId) {
   return hash;
 }
 
-// Weighted rollout: supports even or uneven splits
-export const weightedRolloutTemplate = (experiment) => {
-  const { variants, rolloutPercent } = experiment;
-  const userId = ResyncCache.getKeyValue("userId") || ResyncCache.getKeyValue("sessionId");
-  const hash = hashUserId(userId);
-
-  // Only users with hash < rolloutPercent are in the rollout
-  if (hash >= rolloutPercent) {
-    // Assign the default or first variant as default
-    return variants.find(v => v.default)?.value || variants[0].value;
+function assignVariant(userId, variants) {
+  if (variants.length === 0) {
+    return null;
   }
-
-  // Assign based on weights (weights can be even or uneven)
-  const totalWeight = variants.reduce((acc, v) => acc + v.weight, 0);
+  const totalWeight = variants.reduce((sum, v) => sum + v.weight, 0);
+  if (totalWeight <= 0) {
+    throw new Error('Total weight must be greater than 0');
+  }
+  const normalizedVariants = variants.map(v => ({
+    variant: v.variant,
+    weight: v.weight / totalWeight,
+  })).filter(v => v.variant !== null);
+  console.log("normalizedVariants ===>", normalizedVariants);
+  const hashValue = hashUserId(userId);
   let cumulative = 0;
-  for (const variant of variants) {
-    cumulative += (variant.weight / totalWeight) * rolloutPercent;
-    if (hash < cumulative) {
-      return variant.value;
+  for (const v of normalizedVariants) {
+    cumulative += v.weight;
+    if (hashValue < cumulative) {
+      return v.variant;
     }
   }
-  // Fallback: return last variant
-  return variants[variants.length - 1].value;
+  return normalizedVariants[normalizedVariants.length - 1].variant;
+}
+
+// Weighted rollout: supports even or uneven splits
+export const weightedRolloutTemplate = (experiment) => {
+  let variants = [{
+    weight: experiment.controlWeight,
+    variant: experiment.controlContentId,
+  }, {
+    weight: experiment.variantAWeight,
+    variant: experiment.variantAContentId,
+  }];
+  if (experiment?.variantBWeight && experiment.variantBContentId) {
+    variants.push({
+      weight: experiment.variantBWeight,
+      variant: experiment.variantBContentId,
+    });
+  }
+  const userId = ResyncCache.getKeyValue("userId") || ResyncCache.getKeyValue("sessionId");
+
+  // Only users with hash < rolloutPercent are in the rollout
+  // if (hash >= rolloutPercent) {
+  //   // Assign the default or first variant as default
+  //   return variants.find(v => v.default)?.value || variants[0].value;
+  // }
+  return assignVariant(userId, variants);
 };
 
 // Feature flag rollout: simple on/off (control/treatment)

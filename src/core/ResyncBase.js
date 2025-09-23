@@ -217,22 +217,21 @@ class ResyncBase {
   }
 
   /**
-   * Gets a variant for an A/B test experiment.
-   * @param {string} experimentId - The experiment ID
-   * @param {*} payload - Additional payload for variant assignment
+   * Gets a variant for an A/B test campaign.
+   * @param {string} experimentName - The campaign name
    * @returns {Promise<string|null>} The variant value or null if not found
    * @throws {Error} If AbTest is not initialized
    * @example
    * const variant = await ResyncBase.getVariant('pricing-experiment', { userId: '123' });
    */
-  async getVariant(experimentId, payload) {
+  async getVariant(experimentName) {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
     if (!AbTest) {
       throw new Error(ERROR_MESSAGES.ABTEST_NOT_INITIALIZED);
     }
-    return await AbTest.getVariant(experimentId, payload);
+    return await AbTest.getVariant(experimentName);
   }
 
   /**
@@ -309,7 +308,7 @@ class ResyncBase {
 
   /**
    * Records a conversion for an A/B test experiment.
-   * @param {string} experimentId - The experiment ID
+   * @param {string} experimentName - The experiment name
    * @param {Object} [metadata={}] - Additional metadata for the conversion
    * @returns {*} The result of recording the conversion
    * @throws {Error} If experiment ID is not provided
@@ -319,12 +318,12 @@ class ResyncBase {
    *   currency: 'USD'
    * });
    */
-  recordConversion(experimentId, metadata = {}) {
-    if (!experimentId) {
+  recordConversion(experimentName, metadata = {}) {
+    if (!experimentName) {
       throw new Error(ERROR_MESSAGES.EXPERIMENT_ID_REQUIRED);
     }
     // Record the conversion event
-    return AbTest.recordConversion(experimentId, metadata);
+    return AbTest.recordConversion(experimentName, metadata);
   }
 
   /**

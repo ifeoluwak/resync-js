@@ -10,8 +10,11 @@ export const API_CONFIG = {
     APP_DATA: "/app-data",
     USER_VARIANTS: "/user-variants",
     SYSTEM_VARIANT: "/get-system-variant",
+    GET_ROUND_ROBIN_VARIANT: "/get-round-robin-variant",
     LOG_EXPERIMENT: "/log-experiment",
     LOG_EXPERIMENT_BATCH: "/log-experiment/batch",
+    LOG_CAMPAIGN_EVENT: "/log-campaign-event",
+    LOG_CAMPAIGN_EVENT_BATCH: "/log-campaign-event/batch",
     LOG_CONTENT_EVENTS: "/log-content-events",
     SUBMIT_FORM: "/submit-form"
   },
@@ -34,7 +37,7 @@ export const TIMING_CONFIG = {
   FLUSH_INTERVAL: 5000, // 5 seconds
   DEFAULT_TTL: 60 * 60 * 1000, // 60 minutes in milliseconds
   HASH_MULTIPLIER: 31,
-  HASH_MODULO: 100
+  HASH_MODULO: 1000000007
 };
 
 // Log Types

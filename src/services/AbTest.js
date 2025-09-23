@@ -26,12 +26,11 @@ class AbTest {
   /**
    * Return the variant value and logs the execution of an experiment
    * @param {string} experimentName - The name of the experiment.
-   * @param {...*} payload - The payload to use for variant assignment.
    * @returns {Promise<string|null>} - The variant value or null if the experiment is not found.
    * @description This method returns the variant value for the given experiment and logs the execution.
    * It uses the experiment's assignment function if available, otherwise it uses a random assignment based on the input string.
    */
-  async getVariant(experimentName, ...payload) {
+  async getVariant(experimentName) {
     const experiment = this.experiments.find(
       (exp) => exp.name === experimentName
     );
@@ -46,79 +45,65 @@ class AbTest {
       const userVariant = cachedVariants.get(experiment.id);
       console.log("Using cached variant for experiment:", experimentName, userVariant);
       // No need to log again, just return the variant value
-      return userVariant.variant.value;
+      return userVariant.contentViewId;
     }
 
     // check if the function is a system template
-    if (experiment.type === "system") {
+    if (experiment.abTestType === "round-robin") {
       // that should be executed in the backend
-      if (backendSystemTemplatesIds.includes(experiment.systemFunctionId)) {
-        console.log("Calling backend system function for experiment:", experiment);
-        try {
-          const { apiUrl, appId, apiKey } = configService.getApiConfig();
-          const postData = JSON.stringify({
-            experimentId: experiment.id,
-            systemFunctionId: experiment.systemFunctionId,
-            userId: ResyncCache.getKeyValue("userId"),
+      console.log("Calling backend system function for experiment:", experiment);
+      try {
+        const { apiUrl, appId, apiKey } = configService.getApiConfig();
+        const postData = JSON.stringify({
+          campaignId: experiment.id,
+          userId: ResyncCache.getKeyValue("userId"),
+          sessionId: ResyncCache.getKeyValue("sessionId"),
+          client: ResyncCache.getKeyValue("client"),
+          metadata: ResyncCache.getKeyValue("attributes"),
+        });
+        const response = await fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.GET_ROUND_ROBIN_VARIANT}`, {
+          method: "POST",
+          headers: {
+            "x-api-key": apiKey,
+            "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
+          },
+          body: postData,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          console.log("System function response:", data);
+          // store the variant in the cache
+          cachedVariants.set(experiment.id, {
+            eventType: 'IMPRESSION',
+            contentViewId: data.id,
+            campaignId: experiment.id,
             sessionId: ResyncCache.getKeyValue("sessionId"),
+            userId: ResyncCache.getKeyValue("userId"),
             client: ResyncCache.getKeyValue("client"),
-            metadata: ResyncCache.getKeyValue("attributes"),
           });
-          const response = await fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.SYSTEM_VARIANT}`, {
-            method: "POST",
-            headers: {
-              "x-api-key": apiKey,
-              "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
-            },
-            body: postData,
-          });
-          if (response.ok) {
-            const data = await response.json();
-            console.log("System function response:", data);
-            // store the variant in the cache
-            cachedVariants.set(experiment.id, {
-              variant: data
-            });
-            ResyncCache.saveKeyValue("userVariants", cachedVariants);
-            return data;
-          } else {
-            console.error("Failed to fetch system variant:", response.statusText);
-            // TODO: Handle error appropriately
-          }
-        } catch (error) {
-          console.error("Failed to fetch system variant:", error);
+          ResyncCache.saveKeyValue("userVariants", cachedVariants);
+          return data;
+        } else {
+          console.error("Failed to fetch system variant:", response.statusText);
           // TODO: Handle error appropriately
-          // If the backend call fails, choose a random variant
-          // const randomIndex = Math.floor(
-          //   this.#hashString(ResyncBase.userId + experiment.id) % experiment.variants.length
-          // );
-          // const variant = experiment.variants[randomIndex];
-          // this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
-          // return variant.value;
+          // return control variant
+          return experiment.controlContentId;
         }
-      } else {
-        return this.handleSystemFunction(experiment);
+      } catch (error) {
+        console.error("Failed to fetch system variant:", error);
+        // TODO: Handle error appropriately
+        // If the backend call fails, choose a random variant
+        // const randomIndex = Math.floor(
+        //   this.#hashString(ResyncBase.userId + experiment.id) % experiment.variants.length
+        // );
+        // const variant = experiment.variants[randomIndex];
+        // this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
+        // return variant.value;
+        return experiment.controlContentId;
       }
+    } else {
+      return this.handleSystemFunction(experiment);
     }
-  }
-
-  /**
-   * Hashes a string using the djb2 algorithm.
-   * @param {string} str - The string to hash.
-   * @returns {number} - The hash value.
-   * @description This method hashes a string using the djb2 algorithm.
-   * It is used to ensure consistent variant assignment based on the input string.
-   * @example
-   * // Hash a string
-   * const hashValue = hashString("example string");
-   * console.log("Hash value:", hashValue);
-   */
-  #hashString(str) {
-    let hash = 5381;
-    for (let i = 0; i < str.length; i++) {
-      hash = (hash << 5) + hash + str.charCodeAt(i);
-    }
-    return Math.abs(hash);
   }
 
   setExperiments(experiments) {
@@ -127,9 +112,9 @@ class AbTest {
 
   /**
    * Logs an experiment exposure.
-   * @param {string} experimentId - The ID of the experiment.
-   * @param {Object} variant - The variant that was exposed.
-   * @param {string} type - The type of exposure (e.g., "IMPRESSION", "CONVERSION").
+   * @param {string} campaignId - The ID of the campaign.
+   * @param {string} contentViewId - The ID of the content view.
+   * @param {string} eventType - The type of event (e.g., "IMPRESSION", "CONVERSION").
    * @returns {void}
    * @description This method logs the exposure of an experiment variant.
    * It sends the log entry to the backend API for storage.
@@ -138,7 +123,7 @@ class AbTest {
    * // Log an experiment exposure
    * logExperiment("exp123", { value: "variantA" }, "IMPRESSION");
    */
-  logExperiment(experimentId, variant, type, metadata = {}) {
+  logExperiment(campaignId, contentViewId, eventType, metadata = null) {
     const { apiKey, appId, apiUrl } = configService.getApiConfig();
     if (!apiKey || !appId || !apiUrl) {
       console.warn(
@@ -147,25 +132,25 @@ class AbTest {
       return;
     }
     const logEntry = {
-      type,
-      experimentId,
-      variant,
+      eventType,
+      campaignId,
+      contentViewId,
       sessionId: ResyncCache.getKeyValue("sessionId"),
       userId: ResyncCache.getKeyValue("userId"),
-      timestamp: new Date().toISOString(),
-      client: ResyncCache.getKeyValue("client"),
+      // timestamp: new Date().toISOString(),
+      client: ResyncCache.getKeyValue("client") || '',
       metadata: metadata || ResyncCache.getKeyValue("attributes"),
     };
-    if (type === LogType.IMPRESSION) {
+    if (eventType === LogType.IMPRESSION) {
       // also log to userVariants
       // ResyncBase.userVariants.set(experimentId, logEntry);
       const variantCaches = ResyncCache.getKeyValue("userVariants") || new Map();
-      variantCaches.set(experimentId, logEntry);
+      variantCaches.set(campaignId, logEntry);
       ResyncCache.saveKeyValue("userVariants", variantCaches);
     }
     // return;
     // Send the log entry to the backend API
-    fetch(`${apiUrl}${appId}/${experimentId}${API_CONFIG.ENDPOINTS.LOG_EXPERIMENT}`, {
+    fetch(`${apiUrl}${appId}/${campaignId}${API_CONFIG.ENDPOINTS.LOG_CAMPAIGN_EVENT}ss`, {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -175,14 +160,12 @@ class AbTest {
     })
       .then((response) => {
         if (!response.ok) {
-          console.error("A/B Failed to send log entry:", response.statusText);
           this.saveLogForLaterUpload([logEntry]);
           return;
         }
         console.log("A/B Log entry sent successfully:", logEntry);
       })
       .catch((error) => {
-        console.error("A/B Logging failed:", error);
         this.saveLogForLaterUpload([logEntry]);
       });
   }
@@ -190,23 +173,23 @@ class AbTest {
   recordConversion(experimentName, metadata = {}) {
     // get the variant from userVariants
     const userVariants = ResyncCache.getKeyValue("userVariants")
-    const experimentId = this.experiments.find(
+    const campaignId = this.experiments.find(
       (exp) => exp.name === experimentName
     )?.id;
-    if (!experimentId) {
+    if (!campaignId) {
       throw new Error(ERROR_MESSAGES.EXPERIMENT_NOT_FOUND(experimentName));
     }
     if (!userVariants) {
       throw new Error(ERROR_MESSAGES.NO_IMPRESSION_LOGGED(experimentName));
     }
-    const variant = userVariants.get(experimentId);
+    const variant = userVariants.get(campaignId);
     console.log("Recording conversion for userVariants:", userVariants);
     if (!variant) {
-      throw new Error(ERROR_MESSAGES.NO_VARIANT_FOUND(experimentId));
+      throw new Error(ERROR_MESSAGES.NO_VARIANT_FOUND(campaignId));
     }
     console.log("found conversion for variant:", variant);
     // // Log the conversion
-    // this.logExperiment(experimentId, variant, LogType.CONVERSION, metadata);
+    this.logExperiment(campaignId, variant.contentViewId, LogType.CONVERSION, metadata);
   }
 
   /** * Saves log entries for later upload.
@@ -241,7 +224,7 @@ class AbTest {
         this.logs
       );
       clearInterval(this.timeoutId);
-      // this.timeoutId = null;
+      this.timeoutId = null;
       return;
     }
 
@@ -274,7 +257,7 @@ class AbTest {
       );
       return;
     }
-    fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.LOG_EXPERIMENT_BATCH}`, {
+    fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.LOG_CAMPAIGN_EVENT_BATCH}`, {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -284,33 +267,31 @@ class AbTest {
     })
       .then((response) => {
         if (!response.ok) {
+          this.saveLogForLaterUpload(batchEntries);
           return;
         }
         console.log(
           "A/B Log entry sent successfully 33333:",
           batchEntries.length
         );
-        this.executionLogs = this.executionLogs.filter(
+        this.logs = this.logs.filter(
           (log) => !batchEntries.some((entry) => entry.id === log.id)
         );
       })
       .catch((error) => {
-        console.error("A/B Logging failed:", error);
         this.saveLogForLaterUpload(batchEntries);
       });
   }
 
   handleSystemFunction(experiment) {
-    console.log("Handling system function for experiment:", experiment);
-    switch (experiment.systemFunctionId) {
+    switch (experiment.abTestType) {
       case "weighted-rollout":
-        return weightedRolloutTemplate(experiment);
-      case "feature-flag-rollout":
-        return featureFlagRolloutTemplate(experiment);
-      case "weighted-random":
-        return weightedRandom(experiment);
-      case "time-based":
-        return getTimeVariant(experiment);
+        const variant = weightedRolloutTemplate(experiment);
+        this.logExperiment(experiment.id, variant, LogType.IMPRESSION, {
+          timestamp: new Date().toISOString(),
+        });
+        console.log("Weighted rollout variant:", variant);
+        return variant;
       default:
         console.warn(`No handler for system function ID: ${experiment.systemFunctionId}`);
         throw new Error(ERROR_MESSAGES.UNKNOWN_SYSTEM_FUNCTION(experiment.systemFunctionId));
