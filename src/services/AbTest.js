@@ -166,6 +166,7 @@ class AbTest {
         console.log("A/B Log entry sent successfully:", logEntry);
       })
       .catch((error) => {
+        console.error("A/B Failed to send log entry:", error);
         this.saveLogForLaterUpload([logEntry]);
       });
   }
@@ -267,6 +268,7 @@ class AbTest {
     })
       .then((response) => {
         if (!response.ok) {
+          console.error("1---- A/B Failed to send batch log entry:", response.statusText);
           this.saveLogForLaterUpload(batchEntries);
           return;
         }
@@ -279,6 +281,7 @@ class AbTest {
         );
       })
       .catch((error) => {
+        console.error("A/B Failed to send batch log entry:", error);
         this.saveLogForLaterUpload(batchEntries);
       });
   }
