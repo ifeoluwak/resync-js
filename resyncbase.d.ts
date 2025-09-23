@@ -475,11 +475,10 @@ declare class ResyncBaseAPI {
 
   /**
    * Get a variant for an A/B test experiment
-   * @param experimentId - The experiment ID
-   * @param payload - Additional payload for variant assignment
-   * @returns Promise that resolves to the variant value or null
+   * @param campaignName - The campaign name
+   * @returns Promise that resolves to the variant content view id or null
    */
-  getVariant(experimentId: string, payload?: any): Promise<string | null>;
+  getVariant(campaignName: string): Promise<number | null>;
 
   /**
    * Get a configuration value by key
@@ -509,10 +508,10 @@ declare class ResyncBaseAPI {
 
   /**
    * Record a conversion for an A/B test experiment
-   * @param experimentId - The experiment ID
+   * @param campaignName - The campaign name
    * @param metadata - Additional metadata for the conversion
    */
-  recordConversion(experimentId: string, metadata?: object): any;
+  recordConversion(campaignName: string, metadata?: object): any;
 
   /** Subscribers to configuration updates */
   subscribers: Set<Function>;

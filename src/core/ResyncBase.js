@@ -219,10 +219,10 @@ class ResyncBase {
   /**
    * Gets a variant for an A/B test campaign.
    * @param {string} experimentName - The campaign name
-   * @returns {Promise<string|null>} The variant value or null if not found
+   * @returns {Promise<number|null>} The variant content view id or null if not found
    * @throws {Error} If AbTest is not initialized
    * @example
-   * const variant = await ResyncBase.getVariant('pricing-experiment', { userId: '123' });
+   * const variant = await ResyncBase.getVariant('pricing-experiment');
    */
   async getVariant(experimentName) {
     if (!this.#appId) {

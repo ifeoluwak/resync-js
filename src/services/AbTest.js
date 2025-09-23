@@ -26,7 +26,7 @@ class AbTest {
   /**
    * Return the variant value and logs the execution of an experiment
    * @param {string} experimentName - The name of the experiment.
-   * @returns {Promise<string|null>} - The variant value or null if the experiment is not found.
+   * @returns {Promise<number|null>} - The variant value or null if the experiment is not found.
    * @description This method returns the variant value for the given experiment and logs the execution.
    * It uses the experiment's assignment function if available, otherwise it uses a random assignment based on the input string.
    */
