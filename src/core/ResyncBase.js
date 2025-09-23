@@ -426,13 +426,12 @@ class ResyncBase {
   async getUserVariants() {
     const userVariants = new Map();
     const variants = await ConfigFetch.fetchUserVariants();
-    console.log("variants are", JSON.stringify(variants, null, 2));
-    // if (variants && Array.isArray(variants)) {
-    //   variants.forEach((variant) => {
-    //     userVariants.set(variant.experiment.id, variant);
-    //   });
-    //   ResyncCache.saveKeyValue("userVariants", userVariants);
-    // }
+    if (variants && Array.isArray(variants)) {
+      variants.forEach((variant) => {
+        userVariants.set(variant.id, variant);
+      });
+      ResyncCache.saveKeyValue("userVariants", userVariants);
+    }
   }
 }
 
