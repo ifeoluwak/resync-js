@@ -186,7 +186,7 @@ class ResyncBase {
     const fetchData = async () => {
       try {
         const response = await fetch(`${API_CONFIG.DEFAULT_URL}${this.#appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
-          method: "PATCH",
+          method: "POST",
           headers: {
             "x-api-key": this.#apiKey,
             "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
