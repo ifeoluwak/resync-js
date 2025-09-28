@@ -136,6 +136,8 @@ class ResyncBase {
     this.#appId = `${appId}`;
     this.#ttl = ttl;
 
+    this.subscribers = new Set();
+
     // storage must have a getItem, setItem, removeItem and clear methods
     // wait for the storage to be initialized
     if (
@@ -159,7 +161,6 @@ class ResyncBase {
     /**
      * @type {Set<Function>}
      */
-    this.subscribers = new Set();
     if (callback && typeof callback === "function") {
       this.subscribe(callback);
     }
@@ -493,7 +494,9 @@ class ResyncBase {
    */
   #notifySubscribers(data) {
     console.log("subscribers are", this.subscribers);
-    this.subscribers.forEach((callback) => callback(data));
+    if (this.subscribers.size > 0) {
+      this.subscribers.forEach((callback) => callback(data));
+    }
   }
 
   async getUserVariants() {
