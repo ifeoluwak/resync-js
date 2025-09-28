@@ -147,22 +147,22 @@ class ResyncBase {
         (method) => typeof storage[method] === "function"
       )
     ) {
+      console.log("ResyncBase using custom storage", storage);
       ResyncCache.init(storage);
       console.log("ResyncBase using custom storage", storage);
-    } else {
-      // this = new ResyncBase();
-      this.#loadAppConfig()
-        .then((data) => {
-          this.ready = true;
-        })
-        .catch((error) => {
-          console.error("Error initializing ResyncBase:", error);
-        });
-      /**
-       * @type {Set<Function>}
-       */
-      this.subscribers = new Set();
     }
+    // this = new ResyncBase();
+    this.#loadAppConfig()
+      .then((data) => {
+        this.ready = true;
+      })
+      .catch((error) => {
+        console.error("Error initializing ResyncBase:", error);
+      });
+    /**
+     * @type {Set<Function>}
+     */
+    this.subscribers = new Set();
     if (callback && typeof callback === "function") {
       this.subscribe(callback);
     }
@@ -411,6 +411,9 @@ class ResyncBase {
     }
 
     const cache = ResyncCache.getCache();
+
+    const generatedSessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+    console.log("Generated Session ID ------:", generatedSessionId);
 
     const sessionId = "3amhexwa89r-1752095355810";
     // ResyncCache.getKeyValue("sessionId") ||
