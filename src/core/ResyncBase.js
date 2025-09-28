@@ -11,7 +11,7 @@ import AppLogger from "../services/AppLogger.js";
 
 /**
  * @typedef {Object} InitOptions
- * @property {string} key - The API key for Banana API
+ * @property {string} key - The API key for ResyncBase API
  * @property {number} appId - The application ID
  * @property {number} [ttl=3600000] - Time-to-live for cache in milliseconds
  * @property {Function} [callback] - Optional callback function when config is loaded
@@ -101,7 +101,7 @@ class ResyncBase {
 
   /**
    * Initializes the ResyncBase class.
-   * Api key is required to use the Banana API.
+   * Api key is required to use the ResyncBase API.
    * @param {InitOptions} options - Initialization options
    * @throws {Error} - Throws an error if the API key is not provided.
    * @throws {Error} - Throws an error if the callback is not a function.
@@ -125,6 +125,11 @@ class ResyncBase {
     }
     if (!appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_REQUIRED);
+    }
+
+    // enforce storage
+    if (!storage) {
+      throw new Error(ERROR_MESSAGES.STORAGE_REQUIRED);
     }
 
     // Update configuration service
@@ -398,8 +403,8 @@ class ResyncBase {
   }
 
   /**
-   * Fetches the app configuration from the Banana API.
-   * This method retrieves the configuration settings for the Banana application.
+   * Fetches the app configuration from the ResyncBase API.
+   * This method retrieves the configuration settings for the ResyncBase application.
    * @returns {Promise<AppConfig>} - Returns a promise that resolves to the app configuration object.
    * @throws {Error} - Throws an error if the API key is not set or if the request fails.
    */

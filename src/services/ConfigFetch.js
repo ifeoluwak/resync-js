@@ -25,7 +25,7 @@ import { API_CONFIG, ERROR_MESSAGES, RETRY_CONFIG } from "../utils/constants.js"
  */
 
 /**
- * ConfigFetch class for fetching application configurations and user variants from the Banana API.
+ * ConfigFetch class for fetching application configurations and user variants from the ResyncBase API.
  * Handles authentication, retry logic, and error handling for API requests.
  * 
  * @class ConfigFetch
@@ -51,7 +51,7 @@ class ConfigFetch {
   }
 
   /**
-   * Fetches the application configuration from the Banana API.
+   * Fetches the application configuration from the ResyncBase API.
    * Implements retry logic with exponential backoff and fallback URL handling.
    * 
    * @returns {Promise<AppConfigResponse>} The application configuration
@@ -119,7 +119,7 @@ class ConfigFetch {
   }
 
   /**
-   * Fetches user variants for A/B test experiments from the Banana API.
+   * Fetches user variants for A/B test experiments from the ResyncBase API.
    * 
    * @returns {Promise<UserVariantResponse>} The user variant assignments
    * @throws {Error} If the API request fails or no experiments are found

@@ -1,10 +1,10 @@
 /**
- * Object representing the configuration for a Banana application.
+ * Object representing the configuration for a ResyncBase application.
  * @typedef {Object} Config
  * @property {string} id - The unique identifier for the configuration.
  * @property {boolean} isCurrent - Indicates whether this configuration is the current one.
  * @property {string} version - The version of the configuration.
- * @property {Object} config - The config values for the Banana application.
+ * @property {Object} config - The config values for the ResyncBase application.
  */
 
 /**
@@ -203,7 +203,7 @@
  */
 
 /**
- * Cache object for storing Banana application configurations.
+ * Cache object for storing ResyncBase application configurations.
  * @typedef {Object} ResyncCacheData
  * @property {Object} configs - Application configuration object
  * @property {Experiment[]} experiments - Array of A/B test experiments

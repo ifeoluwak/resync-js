@@ -72,8 +72,9 @@ export const STORAGE_CONFIG = {
 
 // Error Messages
 export const ERROR_MESSAGES = {
-  API_KEY_REQUIRED: "API key is required to use Banana API.",
-  APP_ID_REQUIRED: "App ID is required to use Banana API.",
+  API_KEY_REQUIRED: "API key is required to use ResyncBase API.",
+  APP_ID_REQUIRED: "App ID is required to use ResyncBase API.",
+  STORAGE_REQUIRED: "Storage is required to use ResyncBase API.",
   API_KEY_NOT_SET: "API key is not set. Please initialize ResyncBase with a valid API key.",
   APP_ID_NOT_SET: "App ID is not set. Please initialize ResyncBase with a valid App ID.",
   API_URL_NOT_SET: "API URL is not set. Please initialize ResyncBase with a valid API URL.",
