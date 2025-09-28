@@ -23,14 +23,15 @@ const DEMO_CONFIG = {
   USER_ID: "demo-user-456",
   CLIENT: "demo-web-app",
   USER_ATTRIBUTES: {
-    device: {
-      type: "mac",
-      name: "John's MacBook Pro",
-      os: "macOS 14.0"
-    },
-    plan: "premium",
-    country: "US",
-    age: 28
+    email: "john.doe@example.com",
+    name: "John Doe",
+    phone: "1234567890",
+    language: "en",
+    attributes: {
+      plan: "premium",
+      country: "US",
+      age: 28
+    }
   }
 };
 
@@ -90,7 +91,7 @@ function setUserContext() {
   
   ResyncBaseAPI.setUserId(DEMO_CONFIG.USER_ID);
   ResyncBaseAPI.setClient(DEMO_CONFIG.CLIENT);
-  ResyncBaseAPI.setAttributes(DEMO_CONFIG.USER_ATTRIBUTES);
+  ResyncBaseAPI.setUserAttributes(DEMO_CONFIG.USER_ATTRIBUTES);
   
   console.log("✅ User context set:", {
     userId: DEMO_CONFIG.USER_ID,
@@ -130,18 +131,15 @@ async function demonstrateABTesting() {
   
   try {
     // Simulate getting a variant for an experiment
-    const variant = await ResyncBaseAPI.getVariant('pricing-experiment', {
-      userId: DEMO_CONFIG.USER_ID,
-      userData: DEMO_CONFIG.USER_ATTRIBUTES
-    });
+    const variant = await ResyncBaseAPI.getVariant('pricing-experiment');
     console.log("✅ A/B test variant retrieved:", variant);
     
     // Simulate recording a conversion
-    ResyncBaseAPI.recordConversion('pricing-experiment', {
-      revenue: 99.99,
-      currency: 'USD',
-      product: 'premium-plan'
-    });
+    // ResyncBaseAPI.recordConversion('pricing-experiment', {
+    //   revenue: 99.99,
+    //   currency: 'USD',
+    //   product: 'premium-plan'
+    // });
     console.log("✅ Conversion recorded for pricing experiment");
     
   } catch (error) {
@@ -157,15 +155,12 @@ function demonstrateContentLogging() {
   
   try {
     // Log a content event
-    ResyncBaseAPI.logContentEvent({
-      contentViewId: 8,
-      itemId: 'hero-banner',
+    ResyncBaseAPI.logEvent({
+      eventId: 'evt-cta-click-234r56',
       logId: 'click-001',
-      action: 'click',
-      type: 'IMPRESSION',
       metadata: {
-        position: 'top',
-        element: 'cta-button'
+        name: 'John Doe',
+        email: 'john.doe@example.com'
       }
     });
     console.log("✅ Content event logged successfully");

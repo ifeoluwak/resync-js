@@ -127,6 +127,7 @@ class AppLogger {
     })
       .then((response) => {
         if (!response.ok) {
+          this.saveLogForLaterUpload(batchEntries);
           return;
         }
         console.log(

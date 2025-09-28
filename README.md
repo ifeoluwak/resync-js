@@ -204,7 +204,7 @@ ResyncBase.recordConversion('pricing-experiment', {
 
 ### Content Logging
 
-#### `ResyncBase.logContentEvent(event)`
+#### `ResyncBase.logEvent(event)`
 
 Log a content interaction event.
 
@@ -219,12 +219,9 @@ Log a content interaction event.
 
 **Example:**
 ```javascript
-ResyncBase.logContentEvent({
+ResyncBase.logEvent({
+  eventId: 'evt_click_3ry5xt',
   contentViewId: 123,
-  itemId: 'hero-banner',
-  logId: 'log-' + Date.now(),
-  action: 'click',
-  type: 'IMPRESSION',
   metadata: { position: 'top', section: 'hero' }
 });
 ```

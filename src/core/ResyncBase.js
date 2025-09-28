@@ -185,11 +185,10 @@ class ResyncBase {
     }
     const fetchData = async () => {
       try {
-        const { appId, apiUrl, apiKey } = configService.getApiConfig();
-        const response = await fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
+        const response = await fetch(`${API_CONFIG.DEFAULT_URL}${this.#appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
           method: "PATCH",
           headers: {
-            "x-api-key": apiKey,
+            "x-api-key": this.#apiKey,
             "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
           },
           body: JSON.stringify({
@@ -199,15 +198,21 @@ class ResyncBase {
         });
 
         if (!response.ok) {
+          console.log("setUserId failed ------:", await response.json());
           return false;
         }
+        console.log("setUserId success ------:", await response.json());
         return true;
       } catch (error) {
-        console.error("Error ------:", error?.message);
+        console.error("setUserId Error ------:", error?.message);
         return false;
       }
     }
-    return fetchData();
+    console.log("setUserId ------:", this.#apiKey, this.#appId);
+    if (this.#apiKey && this.#appId) {
+      return fetchData();
+    }
+    return Promise.resolve(false);
     // // this.getUserVariants();
   }
 
@@ -252,11 +257,10 @@ class ResyncBase {
     this.attributes = JSON.stringify(attributes);
     const fetchData = async () => {
       try {
-        const { appId, apiUrl, apiKey } = configService.getApiConfig();
-        const response = await fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
+        const response = await fetch(`${API_CONFIG.DEFAULT_URL}${this.#appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
           method: "PATCH",
           headers: {
-            "x-api-key": apiKey,
+            "x-api-key": this.#apiKey,
             "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
           },
           body: JSON.stringify({
@@ -270,15 +274,20 @@ class ResyncBase {
         });
 
         if (!response.ok) {
+          console.log("setUserAttributes failed ------:", await response.json());
           return false;
         }
         return true;
       } catch (error) {
-        console.error("Error ------:", error?.message);
+        console.error("setUserAttributes Error ------:", error?.message);
         return false;
       }
     }
-    return fetchData();
+    console.log("setUserAttributes ------:", this.#apiKey, this.#appId);
+    if (this.#apiKey && this.#appId) {
+      return fetchData();
+    }
+    return Promise.resolve(false);
   }
 
   /**
