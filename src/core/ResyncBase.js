@@ -20,10 +20,10 @@ import AppLogger from "../services/AppLogger.js";
 
 /**
  * @typedef {Object} Storage
- * @property {function(string): string|null} getItem - Get item from storage
- * @property {function(string, string): void} setItem - Set item in storage
- * @property {function(string): void} removeItem - Remove item from storage
- * @property {function(): void} clear - Clear all items from storage
+ * @property {function(string): Promise<string|null>} getItem - Get item from storage
+ * @property {function(string, string): Promise<void>} setItem - Set item in storage
+ * @property {function(string): Promise<void>} removeItem - Remove item from storage
+ * @property {function(): Promise<void>} clear - Clear all items from storage
  */
 
 /**
@@ -109,7 +109,7 @@ class ResyncBase {
    * @description This method initializes the ResyncBase class with the provided API key and optional parameters.
    * It sets the API key, time-to-live for the cache, and subscribes to updates if a callback is provided.
    * It also creates an instance of ResyncBase if it does not already exist.
-   * @returns {ResyncBase} - Returns the instance of ResyncBase.
+   * @returns {Promise<ResyncBase>} - Returns the instance of ResyncBase.
    * @example
    * ResyncBase.init({
    *   key: 'your-api-key',
@@ -119,16 +119,12 @@ class ResyncBase {
    *   storage: localStorage
    * });
    */
-  init({ key, appId, ttl = 60 * 60 * 1000, callback, storage }) {
+  async init({ key, appId, ttl = 60 * 60 * 1000, callback, storage }) {
     if (!key) {
       throw new Error(ERROR_MESSAGES.API_KEY_REQUIRED);
     }
     if (!appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_REQUIRED);
-    }
-
-    if (this.ready) {
-      return this;
     }
 
     // Update configuration service
@@ -141,6 +137,7 @@ class ResyncBase {
     this.#ttl = ttl;
 
     // storage must have a getItem, setItem, removeItem and clear methods
+    // wait for the storage to be initialized
     if (
       storage &&
       STORAGE_CONFIG.REQUIRED_METHODS.every(
@@ -148,10 +145,10 @@ class ResyncBase {
       )
     ) {
       console.log("ResyncBase using custom storage", storage);
-      ResyncCache.init(storage);
+      await ResyncCache.init(storage);
       console.log("ResyncBase using custom storage", storage);
     }
-    // this = new ResyncBase();
+    // fetch data from api
     this.#loadAppConfig()
       .then((data) => {
         this.ready = true;
@@ -416,13 +413,10 @@ class ResyncBase {
 
     console.log("Session ID ------:", sessionId);
 
-    // ResyncCache.getKeyValue("sessionId") ||
-    // `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     ResyncCache.saveKeyValue("sessionId", sessionId);
     this.sessionId = sessionId;
-    if (this.userId) {
-      ResyncCache.saveKeyValue("userId", this.userId);
-    }
+
+    console.log("Cache lastFetchTimestamp ------:", cache.lastFetchTimestamp);
 
     if (
       cache?.lastFetchTimestamp &&
@@ -447,10 +441,12 @@ class ResyncBase {
     const lastFetchTimestamp = new Date().toISOString();
 
     if (config) {
-      ResyncCache.saveKeyValue("configs", config.appConfig || {});
-      ResyncCache.saveKeyValue("content", config.content);
-      ResyncCache.saveKeyValue("experiments", config.experiments || []);
-      ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp);
+      Promise.all([
+        ResyncCache.saveKeyValue("configs", config.appConfig || {}),
+        ResyncCache.saveKeyValue("content", config.content),
+        ResyncCache.saveKeyValue("experiments", config.experiments || []),
+        ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp),
+      ]);
       // Always fetch user variants
       await this.getUserVariants();
       AbTest.setExperiments(config.experiments);

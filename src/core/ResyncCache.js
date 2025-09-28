@@ -276,10 +276,10 @@ class ResyncCache {
    *   clear: () => customStorage.clear()
    * });
    */
-  init(storage) {
+  async init(storage) {
     if (storage) {
       this.storage = storage;
-      this.loadFromStorage();
+      await this.loadFromStorage();
     }
   }
 
