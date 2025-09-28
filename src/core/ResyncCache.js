@@ -342,15 +342,17 @@ class ResyncCache {
    * @example
    * ResyncCache.loadFromStorage();
    */
-  loadFromStorage() {
+  async loadFromStorage() {
     if (this.storage) {
       console.log("Loading cache from storage ------:", this.storage);
        try {
-        const data = this.storage.getItem(STORAGE_KEY);
-        console.log("Storage Data ------:", data);
-        const parsedData = JSON.parse(data);
-        // Restore the cache state from the parsed data
-        this.cache = parsedData;
+        const data = await this.storage.getItem(STORAGE_KEY);
+        if (data) {
+          console.log("Storage Data ------:", data);
+          const parsedData = JSON.parse(data);
+          // Restore the cache state from the parsed data
+          this.cache = parsedData;
+        }
        } catch (error) {
         console.error("Error loading cache from storage:", error);
        }
