@@ -217,10 +217,10 @@
 /**
  * Storage interface for cache persistence.
  * @typedef {Object} StorageInterface
- * @property {function(string): string|null} getItem - Get item from storage
- * @property {function(string, string): void} setItem - Set item in storage
- * @property {function(string): void} removeItem - Remove item from storage
- * @property {function(): void} clear - Clear all items from storage
+ * @property {function(string): Promise<string|null>} getItem - Get item from storage
+ * @property {function(string, string): Promise<void>} setItem - Set item in storage
+ * @property {function(string): Promise<void>} removeItem - Remove item from storage
+ * @property {function(): Promise<void>} clear - Clear all items from storage
  */
 
 import { STORAGE_CONFIG } from "../utils/constants.js";
@@ -333,7 +333,9 @@ class ResyncCache {
   saveKeyValue(key, value) {
     this.cache[key] = value;
     if (this.storage) {
-      this.storage.setItem(STORAGE_KEY, JSON.stringify(this.cache));
+      this.storage.setItem(STORAGE_KEY, JSON.stringify(this.cache)).catch((error) => {
+        console.error("Error saving cache to storage:", error);
+      });
     }
   }
 

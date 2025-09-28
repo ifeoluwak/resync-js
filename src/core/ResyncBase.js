@@ -412,10 +412,10 @@ class ResyncBase {
 
     const cache = ResyncCache.getCache();
 
-    const generatedSessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
-    console.log("Generated Session ID ------:", generatedSessionId);
+    const sessionId = cache?.sessionId || `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
 
-    const sessionId = "3amhexwa89r-1752095355810";
+    console.log("Session ID ------:", sessionId);
+
     // ResyncCache.getKeyValue("sessionId") ||
     // `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     ResyncCache.saveKeyValue("sessionId", sessionId);
@@ -429,6 +429,7 @@ class ResyncBase {
       Date.now() - new Date(cache.lastFetchTimestamp).getTime() <
         this.#ttl
     ) {
+      console.log("Cache is still valid ------:", cache);
       // Create AppConfig-like object from cache
       const appConfig = {
         appConfig: cache.configs || {},
