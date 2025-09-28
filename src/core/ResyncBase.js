@@ -193,6 +193,7 @@ class ResyncBase {
           },
           body: JSON.stringify({
             userId,
+            appId: Number(this.#appId),
             ...metadata,
           }),
         });
@@ -265,6 +266,7 @@ class ResyncBase {
           },
           body: JSON.stringify({
             userId: this.userId,
+            appId: Number(this.#appId),
             email,
             name,
             phone,
