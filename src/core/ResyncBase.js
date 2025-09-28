@@ -7,7 +7,7 @@ import {
   ERROR_MESSAGES,
   STORAGE_CONFIG,
 } from "../utils/constants.js";
-import ContentLogger from "../services/ContentLogger.js";
+import AppLogger from "../services/AppLogger.js";
 
 /**
  * @typedef {Object} InitOptions
@@ -172,15 +172,42 @@ class ResyncBase {
   /**
    * Sets the user ID for tracking and variant assignment.
    * @param {string|number} userId - The user ID to set
+   * @param {{ email: string, name: string, phone: string, language: string }} metadata - The metadata to set
+   * @returns {Promise<boolean>} - Returns true if the user ID is set successfully, false otherwise.
    * @example
    * ResyncBase.setUserId('user123');
-   * ResyncBase.setUserId(12345);
+   * ResyncBase.setUserId('12345', { email: 'test@test.com', name: 'Test User', phone: '1234567890', language: 'en' });
    */
-  setUserId(userId) {
+  setUserId(userId, metadata = null) {
     this.userId = `${userId}`;
     if (ResyncCache) {
       ResyncCache.saveKeyValue("userId", `${userId}`);
     }
+    const fetchData = async () => {
+      try {
+        const { appId, apiUrl, apiKey } = configService.getApiConfig();
+        const response = await fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
+          method: "PATCH",
+          headers: {
+            "x-api-key": apiKey,
+            "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
+          },
+          body: JSON.stringify({
+            userId,
+            ...metadata,
+          }),
+        });
+
+        if (!response.ok) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error("Error ------:", error?.message);
+        return false;
+      }
+    }
+    return fetchData();
     // // this.getUserVariants();
   }
 
@@ -200,20 +227,58 @@ class ResyncBase {
 
   /**
    * Sets user attributes for tracking and targeting.
-   * @param {Object} attributes - User attributes object
-   * @throws {Error} If attributes is not an object
+   * @param {{ email: string, name: string, phone: string, language: string, attributes: Object }} attributes - User attributes object
+   * @returns {Promise<boolean>} - Returns true if the attributes are set successfully, false otherwise.
    * @example
-   * ResyncBase.setAttributes({
-   *   country: 'US',
-   *   plan: 'premium',
-   *   age: 25
+   * ResyncBase.setUserAttributes({
+   *   email: 'test@test.com',
+   *   name: 'Test User',
+   *   phone: '1234567890',
+   *   language: 'en',
+   *   attributes: {
+   *     country: 'US',
+   *     plan: 'premium',
+   *     age: 25
+   *   }
    * });
    */
-  setAttributes(attributes) {
-    if (typeof attributes !== "object") {
-      throw new Error(ERROR_MESSAGES.ATTRIBUTES_MUST_BE_OBJECT);
+  setUserAttributes({ email, name, phone, language, attributes }) {
+    // if (typeof attributes !== "object") {
+    //   throw new Error(ERROR_MESSAGES.ATTRIBUTES_MUST_BE_OBJECT);
+    // }
+    if (!this.userId) {
+      throw new Error(ERROR_MESSAGES.USER_ID_NOT_SET);
     }
     this.attributes = JSON.stringify(attributes);
+    const fetchData = async () => {
+      try {
+        const { appId, apiUrl, apiKey } = configService.getApiConfig();
+        const response = await fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
+          method: "PATCH",
+          headers: {
+            "x-api-key": apiKey,
+            "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
+          },
+          body: JSON.stringify({
+            userId: this.userId,
+            email,
+            name,
+            phone,
+            language,
+            attributes,
+          }),
+        });
+
+        if (!response.ok) {
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error("Error ------:", error?.message);
+        return false;
+      }
+    }
+    return fetchData();
   }
 
   /**
@@ -265,33 +330,30 @@ class ResyncBase {
   }
 
   /**
-   * Logs a content event.
-   * @param {Object} event - The content event object
-   * @throws {Error} If App ID is not set or ContentLogger is not initialized
+   * Logs an event.
+   * @param {{eventId: string, logId?: string, metadata?: Record<string, unknown>}} event - The event object
+   * @throws {Error} If App ID is not set or AppLogger is not initialized
    * @example
-   * ResyncBase.logContentEvent({
-   *   contentViewId: 8,
-   *   itemId: 'hero-banner',
+   * ResyncBase.logEvent({
+   *   eventId: 'evt-cta-click-234r56',
    *   logId: 'click-001',
-   *   action: 'click',
-   *   type: 'IMPRESSION',
-   *   metadata: { position: 'top', element: 'cta-button' }
+   *   metadata: { name: 'John Doe', email: 'john.doe@example.com' }
    * });
    */
-  logContentEvent(event) {
+  logEvent(event) {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
-    if (!ContentLogger) {
+    if (!AppLogger) {
       throw new Error(ERROR_MESSAGES.CONTENT_LOGGER_NOT_INITIALIZED);
     }
-    console.log("===================Trying to log content event", event);
-    ContentLogger.logContentEvent(event);
+    console.log("===================Trying to log an event", event);
+    AppLogger.logEvent(event);
   }
 
   /**
    * Submits a form to the backend API.
-   * @param {{itemId: string, contentViewId: number, data: Record<string, unknown>}} formData - The form data to submit.
+   * @param {{contentViewId: number, data: Record<string, unknown>}} formData - The form data to submit.
    * @returns {Promise<boolean | Error>} - Returns true if the form is submitted successfully, false otherwise.
    * @description This method sends a form data to the backend API for storage.
    */
@@ -299,11 +361,11 @@ class ResyncBase {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
-    if (!ContentLogger) {
+    if (!AppLogger) {
       throw new Error(ERROR_MESSAGES.CONTENT_LOGGER_NOT_INITIALIZED);
     }
     console.log("===================Trying to submit form", formData);
-    return ContentLogger.submitForm(formData);
+    return AppLogger.submitForm(formData);
   }
 
   /**
@@ -434,21 +496,6 @@ class ResyncBase {
     }
   }
 }
-
-// /**
-//  * Initializes the ResyncBase class.
-//  * @param {InitOptions} options - Initialization options
-//  * @returns {ResyncBase} - Returns the instance of ResyncBase.
-//  * @example
-//  * ResyncBaseInit({
-//  *   key: 'your-api-key',
-//  *   appId: 'your-app-id',
-//  *   callback: (config) => console.log('Config loaded')
-//  * });
-//  */
-// export const ResyncBaseInit = (options) => {
-//   return ResyncBase.init(options);
-// };
 
 // Export the class as default
 export default ResyncBase;

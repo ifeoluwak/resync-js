@@ -11,7 +11,7 @@ import { API_CONFIG, ERROR_MESSAGES, RETRY_CONFIG, TIMING_CONFIG } from "../util
  * It uses the ResyncBase for configuration and logging.
  * It also handles retry logic for fetching data and logging.
  */
-class ContentLogger {
+class AppLogger {
   constructor() {
     this.logs = [];
     this.retryCount = 0;
@@ -19,22 +19,28 @@ class ContentLogger {
   }
 
 
-  logContentEvent({
-    contentViewId,
-    itemId,
-    logId,
-    action,
-    type,
-    metadata
+  /**
+   * Logs an event.
+   * @param {{eventId: string, logId?: string, metadata?: Record<string, unknown>}} event - The content event object
+   * @throws {Error} If App ID is not set or ContentLogger is not initialized
+   * @example
+   * ResyncBase.logEvent({
+   *   eventId: 'evt-cta-click-234r56',
+   *   logId: 'click-001',
+   *   metadata: { name: 'John Doe', email: 'john.doe@example.com' }
+   * });
+   */
+  logEvent({
+    eventId = null,
+    logId = null,
+    metadata = null,
   }) {
     const logEntry = {
-      type,
-      action,
-      contentViewId,
+      eventId,
       logId,
-      itemId,
+      appId: configService.getApiConfig().appId,
       sessionId: ResyncCache.getKeyValue("sessionId"),
-      userId: ResyncCache.getKeyValue("userId"),
+      appCustomerId: ResyncCache.getKeyValue("userId"),
       timestamp: new Date().toISOString(),
       client: ResyncCache.getKeyValue("client"),
       metadata: metadata || ResyncCache.getKeyValue("attributes"),
@@ -111,7 +117,7 @@ class ContentLogger {
       );
       return;
     }
-    fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.LOG_CONTENT_EVENTS}`, {
+    fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.LOG_EVENTS_BATCH}`, {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -139,7 +145,7 @@ class ContentLogger {
 
   /**
    * Submits a form to the backend API.
-   * @param {{itemId: string, contentViewId: number, data: Record<string, unknown>}} formData - The form data to submit.
+   * @param {{contentViewId: number, data: Record<string, unknown>}} formData - The form data to submit.
    * @returns {Promise<boolean>} - Returns true if the form is submitted successfully, false otherwise.
    * @description This method sends a form data to the backend API for storage.
    */
@@ -179,4 +185,4 @@ class ContentLogger {
   }
 }
 
-export default new ContentLogger();
+export default new AppLogger();

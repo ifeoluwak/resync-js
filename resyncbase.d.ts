@@ -395,17 +395,11 @@ export interface UserVariant {
 /**
  * Content event logging parameters
  */
-export interface ContentEvent {
-  /** Content view ID */
-  contentViewId: number;
-  /** Item ID */
-  itemId: string;
-  /** Log ID */
+export interface AppEvent {
+  /** Event ID */
+  eventId: string;
+  /** External Log ID */
   logId?: string;
-  /** Action type */
-  action?: 'view' | 'click';
-  /** Event type */
-  type?: 'IMPRESSION' | 'CONVERSION';
   /** Additional metadata */
   metadata?: Record<string, any>;
 }
@@ -458,8 +452,10 @@ declare class ResyncBaseAPI {
   /**
    * Set the user ID for tracking and variant assignment
    * @param userId - The user ID to set
+   * @param {{ email?: string, name?: string, phone?: string, language?: string }} metadata - The metadata to set
+   * @returns {Promise<boolean>} - Returns true if the user ID is set successfully, false otherwise.
    */
-  setUserId(userId: string | number): void;
+  setUserId(userId: string | number, metadata?: { email?: string, name?: string, phone?: string, language?: string }): Promise<boolean>;
 
   /**
    * Set the client identifier for tracking
@@ -469,9 +465,10 @@ declare class ResyncBaseAPI {
 
   /**
    * Set user attributes for tracking and targeting
-   * @param attributes - User attributes object
+   * @param {{ email?: string, name?: string, phone?: string, language?: string, attributes?: Record<string, unknown> }} attributes - User attributes object
+   * @returns {Promise<boolean>} - Returns true if the user attributes are set successfully, false otherwise.
    */
-  setAttributes(attributes: object): void;
+  setUserAttributes({ email, name, phone, language, attributes }: { email?: string, name?: string, phone?: string, language?: string, attributes?: Record<string, unknown> }): Promise<boolean>;
 
   /**
    * Get a variant for an A/B test experiment
@@ -495,23 +492,23 @@ declare class ResyncBaseAPI {
 
   /**
    * Log a content event
-   * @param event - Content event parameters
+   * @param {{eventId: string, logId?: string, metadata?: Record<string, unknown>}} event - Content event parameters
    */
-  logContentEvent(event: ContentEvent): void;
+  logEvent(event: {eventId: string, logId?: string, metadata?: Record<string, unknown>}): void;
 
   /**
    * Submit a form to the backend API.
-   * @param formData - Form data to submit.
+   * @param {{contentViewId: number, data: Record<string, unknown>}} formData - Form data to submit.
    * @returns {Promise<boolean | Error>} - Returns true if the form is submitted successfully, false otherwise.
    */
-  submitForm(formData: { itemId: string, contentViewId: number, data: Record<string, unknown> }): Promise<boolean | Error>;
+  submitForm(formData: { contentViewId: number, data: Record<string, unknown> }): Promise<boolean | Error>;
 
   /**
    * Record a conversion for an A/B test experiment
    * @param campaignName - The campaign name
    * @param metadata - Additional metadata for the conversion
    */
-  recordConversion(campaignName: string, metadata?: object): any;
+  // recordConversion(campaignName: string, metadata?: object): any;
 
   /** Subscribers to configuration updates */
   subscribers: Set<Function>;

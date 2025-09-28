@@ -16,7 +16,9 @@ export const API_CONFIG = {
     LOG_CAMPAIGN_EVENT: "/log-campaign-event",
     LOG_CAMPAIGN_EVENT_BATCH: "/log-campaign-event/batch",
     LOG_CONTENT_EVENTS: "/log-content-events",
-    SUBMIT_FORM: "/submit-form"
+    LOG_EVENTS_BATCH: "/log-events-batch",
+    SUBMIT_FORM: "/submit-form",
+    CUSTOMER: "/customers"
   },
   HEADERS: {
     CONTENT_TYPE: "application/json",
@@ -86,7 +88,7 @@ export const ERROR_MESSAGES = {
   NO_VARIANT_FOUND: (id) => `No variant found for experiment ID "${id}".`,
   EXPERIMENT_ID_REQUIRED: "Experiment ID and variant value are required",
   ABTEST_NOT_INITIALIZED: "AbTest is not initialized. Please initialize ResyncBase first.",
-  CONTENT_LOGGER_NOT_INITIALIZED: "ContentLogger is not initialized. Please initialize ResyncBase first.",
+  CONTENT_LOGGER_NOT_INITIALIZED: "AppLogger is not initialized. Please initialize ResyncBase first.",
   UNKNOWN_SYSTEM_FUNCTION: (id) => `Unknown system function ID: ${id}`,
   FAILED_FETCH_APP_CONFIG: "Failed to fetch app config after multiple attempts.",
   FAILED_FETCH_USER_VARIANTS: "Failed to fetch user variants:",
