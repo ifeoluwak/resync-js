@@ -327,10 +327,11 @@ class ResyncBase {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
     const configs = ResyncCache.getKeyValue("configs");
-    console.log("configs ------------------:\n\n", Object.keys(configs || {}));
+    console.log("configs ------------------:\n\n", Object.keys(configs?.config || {}));
     console.log("tpye of conf ---------------:\n\n", typeof configs);
-    if (configs && key in configs?.config) {
-      return configs?.config[key];
+    const config = configs?.config || {};
+    if (config && key in config) {
+      return config[key];
     }
     return null;
     // throw new Error(ERROR_MESSAGES.CONFIG_NOT_FOUND(key));
