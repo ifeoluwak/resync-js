@@ -72,6 +72,9 @@ class ResyncBase {
    */
   constructor() {}
 
+  /** @type {Array<{method: Function, args: Array, resolve: Function, reject: Function}>} */
+  pendingOperations = [];
+
   /** @type {string|null} */
   #apiKey = null;
 
@@ -160,7 +163,6 @@ class ResyncBase {
     ) {
       console.log("ResyncBase using custom storage", storage);
       await ResyncCache.init(storage);
-      console.log("ResyncBase using custom storage", storage);
     }
     // fetch data from api
     this.#loadAppConfig()
@@ -183,6 +185,10 @@ class ResyncBase {
    * ResyncBase.setUserId('12345', { email: 'test@test.com', name: 'Test User', phone: '1234567890', language: 'en' });
    */
   setUserId(userId, metadata = null) {
+    return this.#queueMethod(this.#setUserId, userId, metadata);
+    // // this.getUserVariants();
+  }
+  #setUserId(userId, metadata = null) {
     this.userId = `${userId}`;
     if (ResyncCache) {
       ResyncCache.saveKeyValue("userId", `${userId}`);
@@ -203,17 +209,14 @@ class ResyncBase {
         });
 
         if (!response.ok) {
-          console.log("setUserId failed ------:", await response.json());
           return false;
         }
-        console.log("setUserId success ------:", await response.json());
         return true;
       } catch (error) {
         console.error("setUserId Error ------:", error?.message);
         return false;
       }
     }
-    console.log("setUserId ------:", this.#apiKey, this.#appId);
     if (this.#apiKey && this.#appId) {
       return fetchData();
     }
@@ -229,6 +232,9 @@ class ResyncBase {
    * ResyncBase.setClient('web-app');
    */
   setClient(client) {
+    return this.#queueMethod(this.#setClient, client);
+  }
+  #setClient(client) {
     if (typeof client !== "string") {
       throw new Error(ERROR_MESSAGES.CLIENT_MUST_BE_STRING);
     }
@@ -253,6 +259,9 @@ class ResyncBase {
    * });
    */
   setUserAttributes({ email, name, phone, language, attributes }) {
+    return this.#queueMethod(this.#setUserAttributes, { email, name, phone, language, attributes });
+  }
+  #setUserAttributes({ email, name, phone, language, attributes }) {
     // if (typeof attributes !== "object") {
     //   throw new Error(ERROR_MESSAGES.ATTRIBUTES_MUST_BE_OBJECT);
     // }
@@ -305,6 +314,9 @@ class ResyncBase {
    * const variant = await ResyncBase.getVariant('pricing-experiment');
    */
   async getVariant(experimentName) {
+    return this.#queueMethod(this.#getVariant, experimentName);
+  }
+  async #getVariant(experimentName) {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
@@ -323,12 +335,13 @@ class ResyncBase {
    * const featureFlag = ResyncBase.getConfig('new-feature');
    */
   getConfig(key) {
+    return this.#queueMethod(this.#getConfig, key);
+  }
+  #getConfig(key) {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
     const configs = ResyncCache.getKeyValue("configs");
-    console.log("configs ------------------:\n\n", Object.keys(configs?.config || {}));
-    console.log("tpye of conf ---------------:\n\n", typeof configs);
     const config = configs?.config || {};
     if (config && key in config) {
       return config[key];
@@ -338,6 +351,9 @@ class ResyncBase {
   }
 
   getContent() {
+    return this.#queueMethod(this.#getContent);
+  }
+  #getContent() {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
@@ -360,6 +376,9 @@ class ResyncBase {
    * });
    */
   logEvent(event) {
+    return this.#queueMethod(this.#logEvent, event);
+  }
+  #logEvent(event) {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
@@ -400,11 +419,11 @@ class ResyncBase {
    * });
    */
   recordConversion(experimentName, metadata = {}) {
-    if (!experimentName) {
-      throw new Error(ERROR_MESSAGES.EXPERIMENT_ID_REQUIRED);
-    }
-    // Record the conversion event
-    return AbTest.recordConversion(experimentName, metadata);
+    // if (!experimentName) {
+    //   throw new Error(ERROR_MESSAGES.EXPERIMENT_ID_REQUIRED);
+    // }
+    // // Record the conversion event
+    // return AbTest.recordConversion(experimentName, metadata);
   }
 
   /**
@@ -422,12 +441,8 @@ class ResyncBase {
 
     const sessionId = cache?.sessionId || `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
 
-    console.log("Session ID ------:", sessionId);
-
     ResyncCache.saveKeyValue("sessionId", sessionId);
     this.sessionId = sessionId;
-
-    console.log("Cache lastFetchTimestamp ------:", cache.lastFetchTimestamp);
 
     if (
       cache?.lastFetchTimestamp &&
@@ -520,6 +535,25 @@ class ResyncBase {
       ResyncCache.saveKeyValue("userVariants", userVariants);
     }
   }
+
+    // Generic method queuer
+    #queueMethod(method, ...args) {
+      if (this.ready) {
+        // If ready, execute immediately
+        return method.apply(this, args);
+      }
+  
+      console.log("Queueing method ------:", method, args);
+      // If not ready, queue the method call
+      return new Promise((resolve, reject) => {
+        this.pendingOperations.push({
+          method,
+          args,
+          resolve,
+          reject
+        });
+      });
+    }
 }
 
 // Export the class as default
