@@ -325,11 +325,12 @@ class ResyncBase {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
-    const config = ResyncCache.getKeyValue("configs");
-    if (config && key in config) {
-      return config[key];
+    const configs = ResyncCache.getKeyValue("configs");
+    if (configs && key in configs?.config) {
+      return configs?.config[key];
     }
-    throw new Error(ERROR_MESSAGES.CONFIG_NOT_FOUND(key));
+    return null;
+    // throw new Error(ERROR_MESSAGES.CONFIG_NOT_FOUND(key));
   }
 
   getContent() {
