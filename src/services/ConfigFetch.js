@@ -179,9 +179,10 @@ class ConfigFetch {
         if (data) {
           return data;
         }
+        return null;
       } catch (error) {
         console.error("Error fetching user variants:", JSON.stringify(error));
-        throw error; // Re-throw the error to handle it in the retry logic
+        return null;
       }
   }
 }

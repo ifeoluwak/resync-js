@@ -143,6 +143,13 @@ class ResyncBase {
 
     this.subscribers = new Set();
 
+    /**
+     * @type {Set<Function>}
+     */
+    if (callback && typeof callback === "function") {
+      this.subscribe(callback);
+    }
+
     // storage must have a getItem, setItem, removeItem and clear methods
     // wait for the storage to be initialized
     if (
@@ -163,12 +170,6 @@ class ResyncBase {
       .catch((error) => {
         console.error("Error initializing ResyncBase:", error);
       });
-    /**
-     * @type {Set<Function>}
-     */
-    if (callback && typeof callback === "function") {
-      this.subscribe(callback);
-    }
     return this;
   }
 
@@ -326,6 +327,8 @@ class ResyncBase {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
     const configs = ResyncCache.getKeyValue("configs");
+    console.log("configs ------------------:\n\n", Object.keys(configs || {}));
+    console.log("tpye of conf ---------------:\n\n", typeof configs);
     if (configs && key in configs?.config) {
       return configs?.config[key];
     }
@@ -437,10 +440,10 @@ class ResyncBase {
         experiments: cache.experiments || [],
         content: cache.content || [],
       };
+      AbTest.setExperiments(appConfig.experiments);
       this.#notifySubscribers(appConfig);
-      this.sessionId = cache.sessionId;
       // Always fetch user variants
-      await this.getUserVariants();
+      this.getUserVariants();
       return appConfig;
     }
 
@@ -454,10 +457,11 @@ class ResyncBase {
         ResyncCache.saveKeyValue("experiments", config.experiments || []),
         ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp),
       ]);
-      // Always fetch user variants
-      await this.getUserVariants();
+      
       AbTest.setExperiments(config.experiments);
       this.#notifySubscribers(config);
+      // Always fetch user variants
+      this.getUserVariants();
       return config;
     }
   }
