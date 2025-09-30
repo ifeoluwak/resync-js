@@ -28,7 +28,7 @@ import AppLogger from "../services/AppLogger.js";
 
 /**
  * @typedef {Object} AppConfig
- * @property {Object} appConfig - Application configuration
+ * @property {Object} configs - Application configuration
  * @property {Array} experiments - A/B test experiments
  * @property {Array} [content] - Content views
  */
@@ -165,14 +165,14 @@ class ResyncBase {
       await ResyncCache.init(storage);
     }
     // fetch data from api
-    this.#loadAppConfig()
+    await this.#loadAppConfig()
       .then((data) => {
         this.ready = true;
       })
       .catch((error) => {
         console.error("Error initializing ResyncBase:", error);
       });
-    return this;
+    // return this;
   }
 
   /**
@@ -342,9 +342,8 @@ class ResyncBase {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
     const configs = ResyncCache.getKeyValue("configs");
-    const config = configs?.config || {};
-    if (config && key in config) {
-      return config[key];
+    if (configs && key in configs) {
+      return configs[key];
     }
     return null;
     // throw new Error(ERROR_MESSAGES.CONFIG_NOT_FOUND(key));
@@ -429,7 +428,7 @@ class ResyncBase {
   /**
    * Fetches the app configuration from the ResyncBase API.
    * This method retrieves the configuration settings for the ResyncBase application.
-   * @returns {Promise<AppConfig>} - Returns a promise that resolves to the app configuration object.
+   * @returns {Promise<void>} - Returns a promise that resolves to the app configuration object.
    * @throws {Error} - Throws an error if the API key is not set or if the request fails.
    */
   async #loadAppConfig() {
@@ -452,7 +451,7 @@ class ResyncBase {
       console.log("Cache is still valid ------:", cache);
       // Create AppConfig-like object from cache
       const appConfig = {
-        appConfig: cache.configs || {},
+        configs: cache.configs || {},
         experiments: cache.experiments || [],
         content: cache.content || [],
       };
@@ -460,7 +459,7 @@ class ResyncBase {
       this.#notifySubscribers(appConfig);
       // Always fetch user variants
       this.getUserVariants();
-      return appConfig;
+      // return appConfig;
     }
 
     const config = await ConfigFetch.fetchAppConfig();
@@ -475,10 +474,14 @@ class ResyncBase {
       ]);
       
       AbTest.setExperiments(config.experiments);
-      this.#notifySubscribers(config);
+      this.#notifySubscribers({
+        configs: config.appConfig || {},
+        experiments: config.experiments || [],
+        content: config.content || [],
+      });
       // Always fetch user variants
       this.getUserVariants();
-      return config;
+      // return config;
     }
   }
 
