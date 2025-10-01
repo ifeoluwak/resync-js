@@ -86,8 +86,6 @@ class AppLogger {
       return;
     }
 
-    console.log("******** Content. Flushing logs:", this.logs);
-
     if (this.retryCount > RETRY_CONFIG.MAX_RETRIES) {
       console.warn(ERROR_MESSAGES.TOO_MANY_RETRIES);
       clearInterval(this.timeoutId);
@@ -112,9 +110,6 @@ class AppLogger {
   sendLogsToBackend(batchEntries) {
     const { apiKey, appId, apiUrl } = configService.getApiConfig();
     if (!apiKey || !appId || !apiUrl) {
-      console.warn(
-        "API key, App ID, or App URL not set. Skipping log exposure."
-      );
       return;
     }
     fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.LOG_EVENTS_BATCH}`, {
@@ -153,9 +148,6 @@ class AppLogger {
   async submitForm(formData) {
     const { apiKey, appId, apiUrl } = configService.getApiConfig();
     if (!apiKey || !appId || !apiUrl) {
-      console.warn(
-        "API key, App ID, or App URL not set. Skipping form submission."
-      );
       return Promise.resolve(false);
     }
 

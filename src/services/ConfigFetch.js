@@ -88,13 +88,9 @@ class ConfigFetch {
       } catch (error) {
         console.error(`Attempt ${i + 1} failed:`, error);
         if (i < numOfRetries - 1) {
-            if (i === 2) {
-              path = `${appId}${API_CONFIG.ENDPOINTS.APP_DATA}`;
-              console.log("Switching to correct API URL", path);
-            }
             await new Promise((resolve) => setTimeout(resolve, retryDelay));
           } else {
-            throw new Error(ERROR_MESSAGES.FAILED_FETCH_APP_CONFIG);
+            throw error;
           }
       }
     }

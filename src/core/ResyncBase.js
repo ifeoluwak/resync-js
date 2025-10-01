@@ -163,6 +163,8 @@ class ResyncBase {
     ) {
       console.log("ResyncBase using custom storage", storage);
       await ResyncCache.init(storage);
+    } else {
+      throw new Error(ERROR_MESSAGES.STORAGE_REQUIRED);
     }
     // fetch data from api
     await this.#loadAppConfig()
@@ -560,7 +562,6 @@ class ResyncBase {
    * @param {AppConfig} data - The data to notify subscribers with
    */
   #notifySubscribers(data) {
-    console.log("subscribers are", this.subscribers);
     if (this.subscribers.size > 0) {
       this.subscribers.forEach((callback) => callback(data));
     }
@@ -589,7 +590,6 @@ class ResyncBase {
         return method.apply(this, args);
       }
   
-      console.log("Queueing method ------:", method, args);
       // If not ready, queue the method call
       return new Promise((resolve, reject) => {
         this.pendingOperations.push({
