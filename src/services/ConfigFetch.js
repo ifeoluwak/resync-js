@@ -3,28 +3,6 @@ import ResyncCache from "../core/ResyncCache.js";
 import { API_CONFIG, ERROR_MESSAGES, RETRY_CONFIG } from "../utils/constants.js";
 
 /**
- * @typedef {Object} AppConfigResponse
- * @property {Object} appConfig - The application configuration
- * @property {import("../core/ResyncCache.js").Experiment[]} experiments - A/B test experiments
- * @property {import("../core/ResyncCache.js").ContentView[]} content - Content
- */
-
-/**
- * @typedef {Object} UserVariantRequest
- * @property {string} userId - The user ID
- * @property {string} sessionId - The session ID
- * @property {string[]} experimentIds - Array of experiment IDs
- * @property {string} appId - The application ID
- */
-
-/**
- * @typedef {Object} UserVariantResponse
- * @property {Object} variants - User variant assignments
- * @property {string} userId - The user ID
- * @property {string} sessionId - The session ID
- */
-
-/**
  * ConfigFetch class for fetching application configurations and user variants from the ResyncBase API.
  * Handles authentication, retry logic, and error handling for API requests.
  * 
@@ -76,12 +54,16 @@ class ConfigFetch {
      */
     const fetchData = async () => {
       try {
-        const response = await fetch(`${apiUrl}${path}`, {
-          method: "GET",
+        const userId = ResyncCache.getKeyValue("userId") // user has been set
+        const sessionId = ResyncCache.getKeyValue("sessionId"); // for no user data
+        const fullPath = userId ? `${apiUrl}${path}` : `${apiUrl}${path}?sessionId=${sessionId}`;
+        const response = await fetch(fullPath, {
+          method: userId ? "POST" : "GET",
           headers: {
             "x-api-key": apiKey,
             "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
           },
+          body: userId ? JSON.stringify({ userId }) : undefined,
         });
 
         if (!response.ok) {

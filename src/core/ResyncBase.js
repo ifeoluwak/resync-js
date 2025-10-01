@@ -166,7 +166,7 @@ class ResyncBase {
     }
     // fetch data from api
     await this.#loadAppConfig()
-      .then((data) => {
+      .then(() => {
         this.ready = true;
       })
       .catch((error) => {
@@ -174,6 +174,16 @@ class ResyncBase {
       });
     // return this;
   }
+
+  // async reset() {
+  //   this.userId = null;
+  //   this.sessionId = null;
+  //   this.userVariants = new Map();
+  //   this.ready = false;
+  //   await ResyncCache.clearCache();
+  //   // we need to reload the app config
+  //   await this.#loadAppConfig();
+  // }
 
   /**
    * Sets the user ID for tracking and variant assignment.
@@ -186,12 +196,27 @@ class ResyncBase {
    */
   setUserId(userId, metadata = null) {
     return this.#queueMethod(this.#setUserId, userId, metadata);
-    // // this.getUserVariants();
   }
   #setUserId(userId, metadata = null) {
-    this.userId = `${userId}`;
     if (ResyncCache) {
-      ResyncCache.saveKeyValue("userId", `${userId}`);
+      const existingUserId = ResyncCache.getKeyValue("userId");
+      if (existingUserId) {
+        // check if userId is same as existing userId
+        if (existingUserId === `${userId}`) {
+          console.log("userId is same as existing userId");
+          return true;
+        } else {
+          console.log("userId is different from existing userId.");
+          // reset the cache
+          this.userId = `${userId}`;
+          this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+          ResyncCache.saveKeyValue("userId", `${userId}`);
+          ResyncCache.saveKeyValue("sessionId", this.sessionId);
+        }
+      } else {
+        this.userId = `${userId}`;
+        ResyncCache.saveKeyValue("userId", `${userId}`);
+      }
     }
     const fetchData = async () => {
       try {
@@ -291,6 +316,17 @@ class ResyncBase {
         if (!response.ok) {
           console.log("setUserAttributes failed ------:", await response.json());
           return false;
+        }
+        // update local user
+        const oldUser = ResyncCache.getKeyValue("user");
+        if (oldUser) {
+          ResyncCache.saveKeyValue("user", {
+            ...oldUser,
+            attributes: {
+              ...oldUser.attributes,
+              ...attributes,
+            }
+          });
         }
         return true;
       } catch (error) {
@@ -457,9 +493,7 @@ class ResyncBase {
       };
       AbTest.setExperiments(appConfig.experiments);
       this.#notifySubscribers(appConfig);
-      // Always fetch user variants
-      this.getUserVariants();
-      // return appConfig;
+      return true;
     }
 
     const config = await ConfigFetch.fetchAppConfig();
@@ -472,6 +506,12 @@ class ResyncBase {
         ResyncCache.saveKeyValue("experiments", config.experiments || []),
         ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp),
       ]);
+      if (config.user) {
+        ResyncCache.saveKeyValue("user", config.user);
+      }
+      if (config.userEvents) {
+        this.setUserVariants(config.userEvents);
+      }
       
       AbTest.setExperiments(config.experiments);
       this.#notifySubscribers({
@@ -479,9 +519,7 @@ class ResyncBase {
         experiments: config.experiments || [],
         content: config.content || [],
       });
-      // Always fetch user variants
-      this.getUserVariants();
-      // return config;
+      return true;
     }
   }
 
@@ -528,9 +566,14 @@ class ResyncBase {
     }
   }
 
-  async getUserVariants() {
+  /**
+   * Gets user variants from the cache or fetches them from the API.
+   * @param {UserVariantResponse} variants - The user variants to set
+   * @returns {Promise<void>} - Returns a promise that resolves when the user variants are set
+   */
+  async setUserVariants(variants) {
     const userVariants = new Map();
-    const variants = await ConfigFetch.fetchUserVariants();
+    // const variants = await ConfigFetch.fetchUserVariants();
     if (variants && Array.isArray(variants)) {
       variants.forEach((variant) => {
         userVariants.set(variant.id, variant);
