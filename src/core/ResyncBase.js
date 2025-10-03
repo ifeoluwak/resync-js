@@ -9,40 +9,6 @@ import {
 } from "../utils/constants.js";
 import AppLogger from "../services/AppLogger.js";
 
-/**
- * @typedef {Object} InitOptions
- * @property {string} key - The API key for ResyncBase API
- * @property {number} appId - The application ID
- * @property {number} [ttl=3600000] - Time-to-live for cache in milliseconds
- * @property {Function} [callback] - Optional callback function when config is loaded
- * @property {Storage} [storage] - Optional storage object for caching
- */
-
-/**
- * @typedef {Object} Storage
- * @property {function(string): Promise<string|null>} getItem - Get item from storage
- * @property {function(string, string): Promise<void>} setItem - Set item in storage
- * @property {function(string): Promise<void>} removeItem - Remove item from storage
- * @property {function(): Promise<void>} clear - Clear all items from storage
- */
-
-/**
- * @typedef {Object} AppConfig
- * @property {Object} configs - Application configuration
- * @property {Array} experiments - A/B test experiments
- * @property {Array} [content] - Content views
- */
-
-/**
- * @typedef {Object} UserVariant
- * @property {string} experimentId - The experiment ID
- * @property {Object} variant - The assigned variant
- * @property {string} sessionId - The session ID
- * @property {string} userId - The user ID
- * @property {string} timestamp - ISO timestamp
- * @property {string} client - The client identifier
- * @property {Object} metadata - Additional metadata
- */
 
 /**
  * Main ResyncBase class for configuration management and A/B testing.
@@ -161,7 +127,6 @@ class ResyncBase {
         (method) => typeof storage[method] === "function"
       )
     ) {
-      console.log("ResyncBase using custom storage", storage);
       await ResyncCache.init(storage);
     } else {
       throw new Error(ERROR_MESSAGES.STORAGE_REQUIRED);
@@ -205,10 +170,8 @@ class ResyncBase {
       if (existingUserId) {
         // check if userId is same as existing userId
         if (existingUserId === `${userId}`) {
-          console.log("userId is same as existing userId");
           return true;
         } else {
-          console.log("userId is different from existing userId.");
           // reset the cache
           this.userId = `${userId}`;
           this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
@@ -240,7 +203,6 @@ class ResyncBase {
         }
         return true;
       } catch (error) {
-        console.error("setUserId Error ------:", error?.message);
         return false;
       }
     }
@@ -316,7 +278,6 @@ class ResyncBase {
         });
 
         if (!response.ok) {
-          console.log("setUserAttributes failed ------:", await response.json());
           return false;
         }
         // update local user
@@ -332,11 +293,9 @@ class ResyncBase {
         }
         return true;
       } catch (error) {
-        console.error("setUserAttributes Error ------:", error?.message);
         return false;
       }
     }
-    console.log("setUserAttributes ------:", this.#apiKey, this.#appId);
     if (this.#apiKey && this.#appId) {
       return fetchData();
     }
@@ -422,7 +381,6 @@ class ResyncBase {
     if (!AppLogger) {
       throw new Error(ERROR_MESSAGES.CONTENT_LOGGER_NOT_INITIALIZED);
     }
-    console.log("===================Trying to log an event", event);
     AppLogger.logEvent(event);
   }
 
@@ -439,7 +397,6 @@ class ResyncBase {
     if (!AppLogger) {
       throw new Error(ERROR_MESSAGES.CONTENT_LOGGER_NOT_INITIALIZED);
     }
-    console.log("===================Trying to submit form", formData);
     return AppLogger.submitForm(formData);
   }
 
@@ -486,7 +443,6 @@ class ResyncBase {
       Date.now() - new Date(cache.lastFetchTimestamp).getTime() <
         this.#ttl
     ) {
-      console.log("Cache is still valid ------:", cache);
       // Create AppConfig-like object from cache
       const appConfig = {
         configs: cache.configs || {},

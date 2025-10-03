@@ -1,6 +1,6 @@
 import { configService } from "../core/ConfigService.js";
 import ResyncCache from "../core/ResyncCache.js";
-import { API_CONFIG, ERROR_MESSAGES, RETRY_CONFIG } from "../utils/constants.js";
+import { API_CONFIG, RETRY_CONFIG } from "../utils/constants.js";
 
 /**
  * ConfigFetch class for fetching application configurations and user variants from the ResyncBase API.
@@ -67,13 +67,12 @@ class ConfigFetch {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to fetch app config: ${response.statusText}`);
+          throw new Error(`Failed to fetch app config: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
         return data;
       } catch (error) {
-        console.error("Error fetching app config:", error);
         throw error; // Re-throw the error to handle it in the retry logic
       }
     };
@@ -86,7 +85,6 @@ class ConfigFetch {
           return data;
         }
       } catch (error) {
-        console.error(`Attempt ${i + 1} failed:`, error);
         if (i < numOfRetries - 1) {
             await new Promise((resolve) => setTimeout(resolve, retryDelay));
           } else {
@@ -109,8 +107,7 @@ class ConfigFetch {
     const experiments = ResyncCache.getKeyValue("experiments") || [];
     const experimentIds = experiments.map((experiment) => experiment.id);
     if (!experimentIds || !Array.isArray(experimentIds) || experimentIds.length === 0) {
-      console.warn("No experiments found or experiment IDs are invalid.");
-      return
+      return;
     }
     this.validateEnv();
     const { appId, apiUrl, apiKey } = configService.getApiConfig();
@@ -148,7 +145,6 @@ class ConfigFetch {
         const data = await response.json();
         return data;
       } catch (error) {
-        console.error("Error ------:", error?.message);
         throw error; // Re-throw the error to handle it in the retry logic
       }
     }
@@ -159,7 +155,6 @@ class ConfigFetch {
         }
         return null;
       } catch (error) {
-        console.error("Error fetching user variants:", JSON.stringify(error));
         return null;
       }
   }

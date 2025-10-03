@@ -5,11 +5,11 @@ import { API_CONFIG, ERROR_MESSAGES, RETRY_CONFIG, TIMING_CONFIG } from "../util
 // Remove duplicate constants - using from constants.js
 
 /**
- * ContentLogger class for managing content events.
- * @description This class provides methods to get variant values for content views,
- * log content events, and handle logging functionality.
+ * ContentLogger class for logging events.
+ * @description This class provides methods to log events, form submissions and handle logging functionality.
  * It uses the ResyncBase for configuration and logging.
  * It also handles retry logic for fetching data and logging.
+ * @class AppLogger
  */
 class AppLogger {
   constructor() {
@@ -55,14 +55,12 @@ class AppLogger {
    * @description This method saves log entries for later upload if the backend API is unreachable or returns an error.
    */
   saveLogForLaterUpload(logEntrys) {
-    console.log("******** Content. Saving logs for later upload:", logEntrys);
     // Add to logs (circular buffer for memory safety)
     this.logs.unshift(...logEntrys);
     if (this.logs.length > RETRY_CONFIG.MAX_LOG_BUFFER) {
       this.logs.pop();
     }
     if (!this.timeoutId) {
-      console.log("No timeout set, setting a new one");
       this.timeoutId = setTimeout(() => this.flushLogs(), TIMING_CONFIG.FLUSH_INTERVAL);
     }
   }
@@ -76,11 +74,6 @@ class AppLogger {
    */
   async flushLogs() {
     if (this.logs.length === 0) {
-      console.log(
-        "Content. No stats to flush",
-        { timeoutId: this.timeoutId },
-        this.logs
-      );
       clearInterval(this.timeoutId);
       this.timeoutId = null;
       return;
@@ -109,9 +102,6 @@ class AppLogger {
    */
   sendLogsToBackend(batchEntries) {
     const { apiKey, appId, apiUrl } = configService.getApiConfig();
-    if (!apiKey || !appId || !apiUrl) {
-      return;
-    }
     fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.LOG_EVENTS_BATCH}`, {
       method: "POST",
       headers: {
@@ -125,16 +115,11 @@ class AppLogger {
           this.saveLogForLaterUpload(batchEntries);
           return;
         }
-        console.log(
-          "Content. Log entry sent successfully 33333:",
-          batchEntries.length
-        );
         this.logs = this.logs.filter(
           (log) => !batchEntries.some((entry) => entry.id === log.id)
         );
       })
       .catch((error) => {
-        console.error("Content. Logging failed:", error);
         this.saveLogForLaterUpload(batchEntries);
       });
   }
@@ -147,10 +132,6 @@ class AppLogger {
    */
   async submitForm(formData) {
     const { apiKey, appId, apiUrl } = configService.getApiConfig();
-    if (!apiKey || !appId || !apiUrl) {
-      return Promise.resolve(false);
-    }
-
     return fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.SUBMIT_FORM}`, {
       method: "POST",
       headers: {
@@ -164,15 +145,12 @@ class AppLogger {
       }),
     })
     .then((response) => {
-      console.log("Content. Form submission response:", response);
       if (response.ok) {
         return Promise.resolve(true);
       }
       return Promise.resolve(false);
     })
     .catch((error) => {
-      console.error("Content. Form submission failed:", error);
-      // throw error;
       return Promise.resolve(false);
     });
   }

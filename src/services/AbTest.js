@@ -1,6 +1,6 @@
 import { configService } from "../core/ConfigService.js";
 import ResyncCache from "../core/ResyncCache.js";
-import { backendSystemTemplatesIds, featureFlagRolloutTemplate, getTimeVariant, weightedRandom, weightedRolloutTemplate } from "../templates/AbSystemTemplate.js";
+import { weightedRolloutTemplate } from "../templates/AbSystemTemplate.js";
 import { API_CONFIG, ERROR_MESSAGES, LOG_TYPES, RETRY_CONFIG, TIMING_CONFIG } from "../utils/constants.js";
 
 const LogType = LOG_TYPES;
@@ -85,20 +85,10 @@ class AbTest {
           return data;
         } else {
           console.error("Failed to fetch system variant:", response.statusText);
-          // TODO: Handle error appropriately
-          // return control variant
           return experiment.controlContentId;
         }
       } catch (error) {
         console.error("Failed to fetch system variant:", error);
-        // TODO: Handle error appropriately
-        // If the backend call fails, choose a random variant
-        // const randomIndex = Math.floor(
-        //   this.#hashString(ResyncBase.userId + experiment.id) % experiment.variants.length
-        // );
-        // const variant = experiment.variants[randomIndex];
-        // this.logExperiment(experiment.id, variant, LogType.IMPRESSION);
-        // return variant.value;
         return experiment.controlContentId;
       }
     } else {
@@ -125,25 +115,17 @@ class AbTest {
    */
   logExperiment(campaignId, contentViewId, eventType, metadata = null) {
     const { apiKey, appId, apiUrl } = configService.getApiConfig();
-    if (!apiKey || !appId || !apiUrl) {
-      console.warn(
-        "API key, App ID, or App URL not set. Skipping log exposure."
-      );
-      return;
-    }
     const logEntry = {
       eventType,
       campaignId,
       contentViewId,
       sessionId: ResyncCache.getKeyValue("sessionId"),
       userId: ResyncCache.getKeyValue("userId"),
-      // timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
       client: ResyncCache.getKeyValue("client") || '',
       metadata: metadata || ResyncCache.getKeyValue("attributes"),
     };
     if (eventType === LogType.IMPRESSION) {
-      // also log to userVariants
-      // ResyncBase.userVariants.set(experimentId, logEntry);
       const variantCaches = ResyncCache.getKeyValue("userVariants") || new Map();
       variantCaches.set(campaignId, logEntry);
       ResyncCache.saveKeyValue("userVariants", variantCaches);
@@ -184,12 +166,10 @@ class AbTest {
       throw new Error(ERROR_MESSAGES.NO_IMPRESSION_LOGGED(experimentName));
     }
     const variant = userVariants.get(campaignId);
-    console.log("Recording conversion for userVariants:", userVariants);
     if (!variant) {
       throw new Error(ERROR_MESSAGES.NO_VARIANT_FOUND(campaignId));
     }
-    console.log("found conversion for variant:", variant);
-    // // Log the conversion
+    // Log the conversion
     this.logExperiment(campaignId, variant.contentViewId, LogType.CONVERSION, metadata);
   }
 
@@ -219,11 +199,6 @@ class AbTest {
    */
   async flushLogs() {
     if (this.logs.length === 0) {
-      console.log(
-        "A/B No stats to flush",
-        { timeoutId: this.timeoutId },
-        this.logs
-      );
       clearInterval(this.timeoutId);
       this.timeoutId = null;
       return;
@@ -252,12 +227,6 @@ class AbTest {
    */
   sendLogsToBackend(batchEntries) {
     const { apiKey, appId, apiUrl } = configService.getApiConfig();
-    if (!apiKey || !appId || !apiUrl) {
-      console.warn(
-        "API key, App ID, or App URL not set. Skipping log exposure."
-      );
-      return;
-    }
     fetch(`${apiUrl}${appId}${API_CONFIG.ENDPOINTS.LOG_CAMPAIGN_EVENT_BATCH}`, {
       method: "POST",
       headers: {
@@ -268,20 +237,14 @@ class AbTest {
     })
       .then((response) => {
         if (!response.ok) {
-          console.error("1---- A/B Failed to send batch log entry:", response.statusText);
           this.saveLogForLaterUpload(batchEntries);
           return;
         }
-        console.log(
-          "A/B Log entry sent successfully 33333:",
-          batchEntries.length
-        );
         this.logs = this.logs.filter(
           (log) => !batchEntries.some((entry) => entry.id === log.id)
         );
       })
       .catch((error) => {
-        console.error("A/B Failed to send batch log entry:", error);
         this.saveLogForLaterUpload(batchEntries);
       });
   }
@@ -293,7 +256,6 @@ class AbTest {
         this.logExperiment(experiment.id, variant, LogType.IMPRESSION, {
           timestamp: new Date().toISOString(),
         });
-        console.log("Weighted rollout variant:", variant);
         return variant;
       default:
         console.warn(`No handler for system function ID: ${experiment.systemFunctionId}`);

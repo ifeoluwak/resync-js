@@ -21,7 +21,6 @@ function assignVariant(userId, variants) {
     variant: v.variant,
     weight: v.weight / totalWeight,
   })).filter(v => v.variant !== null);
-  console.log("normalizedVariants ===>", normalizedVariants);
   const hashValue = hashUserId(userId);
   let cumulative = 0;
   for (const v of normalizedVariants) {
@@ -104,9 +103,7 @@ export const getTimeVariant = (experiment) => {
 // Map of system template IDs to their respective functions to be called locally
 export const systemTemplatesIdMap = {
   "weighted-rollout": 'weightedRolloutTemplate',
-  "feature-flag-rollout": 'featureFlagRolloutTemplate',
   "weighted-random": 'weightedRandom',
-  "time-based": 'getTimeVariant',
 };
 
 // Require api calls to determine variant

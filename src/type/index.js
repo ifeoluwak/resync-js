@@ -259,3 +259,30 @@
  * @property {string} userId - The user ID
  * @property {string} sessionId - The session ID
  */
+
+/**
+ * @typedef {Object} InitOptions
+ * @property {string} key - The API key for ResyncBase API
+ * @property {number} appId - The application ID
+ * @property {number} [ttl=3600000] - Time-to-live for cache in milliseconds
+ * @property {Function} [callback] - Optional callback function when config is loaded
+ * @property {StorageInterface} [storage] - Optional storage object for caching
+ */
+
+/**
+ * @typedef {Object} AppConfig
+ * @property {Object} configs - Application configuration
+ * @property {Array} experiments - A/B test experiments
+ * @property {Array} [content] - Content views
+ */
+
+/**
+ * @typedef {Object} UserVariant
+ * @property {string} experimentId - The experiment ID
+ * @property {Object} variant - The assigned variant
+ * @property {string} sessionId - The session ID
+ * @property {string} userId - The user ID
+ * @property {string} timestamp - ISO timestamp
+ * @property {string} client - The client identifier
+ * @property {Object} metadata - Additional metadata
+ */
