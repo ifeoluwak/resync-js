@@ -79,6 +79,8 @@ class AppLogger {
       return;
     }
 
+    console.log('flushing logs', this.logs);
+
     if (this.retryCount > RETRY_CONFIG.MAX_RETRIES) {
       console.warn(ERROR_MESSAGES.TOO_MANY_RETRIES);
       clearInterval(this.timeoutId);
@@ -111,6 +113,7 @@ class AppLogger {
       body: JSON.stringify(batchEntries),
     })
       .then((response) => {
+        console.log('log response', response);
         if (!response.ok) {
           this.saveLogForLaterUpload(batchEntries);
           return;
@@ -120,6 +123,7 @@ class AppLogger {
         );
       })
       .catch((error) => {
+        console.error('Error sending logs to backend', error);
         this.saveLogForLaterUpload(batchEntries);
       });
   }
