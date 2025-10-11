@@ -1,18 +1,18 @@
 {
-  "name": "resyncbase",
-  "version": "0.1.0",
-  "description": "Javascript client library for Resyncbase config",
+  "name": "resync",
+  "version": "0.0.1",
+  "description": "Javascript client library for Resync Content Management System",
   "main": "index.js",
   "module": "index.js",
   "react-native": "index.js",
   "browser": "index.js",
   "type": "module",
-  "types": "resyncbase.d.ts",
+  "types": "resync.d.ts",
   "exports": {
     ".": {
       "react-native": "./index.js",
       "default": "./index.js",
-      "types": "./resyncbase.d.ts"
+      "types": "./resync.d.ts"
     }
   },
   "files": [
@@ -24,17 +24,19 @@
     "test": "npm test"
   },
   "keywords": [
-    "resyncbase",
+    "resync",
     "content-management",
     "cms",
     "config",
     "client",
     "javascript",
-    "react-native"
+    "react-native",
+    "expo",
+    "cross-platform"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/resyncbase/resyncbase-js.git"
+    "url": "https://github.com/ifeoluwak/resync-js.git"
   },
   "author": "ifeoluwa",
   "license": "MIT"

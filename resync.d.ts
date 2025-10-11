@@ -1,4 +1,4 @@
-// TypeScript declarations for ResyncBase library
+// TypeScript declarations for Resync library
 // Public API only - Internal types are not exposed
 
 // ============================================================================
@@ -6,10 +6,10 @@
 // ============================================================================
 
 /**
- * Configuration options for initializing ResyncBase
+ * Configuration options for initializing Resync
  */
 export interface InitOptions {
-  /** The API key for ResyncBase API */
+  /** The API key for Resync API */
   key: string;
   /** The application ID */
   appId: number;
@@ -32,7 +32,7 @@ export interface Storage {
 }
 
 /**
- * Application configuration returned by ResyncBase
+ * Application configuration returned by Resync
  */
 export interface AppConfig {
   /** Application configuration object */
@@ -409,9 +409,9 @@ export interface AppEvent {
 // ============================================================================
 
 /**
- * Main ResyncBase class for configuration management and A/B testing
+ * Main Resync class for configuration management and A/B testing
  */
-declare class ResyncBaseAPI {
+declare class ResyncAPI {
   ready: boolean;
   /** Current user ID */
   userId: string | null;
@@ -425,11 +425,11 @@ declare class ResyncBaseAPI {
   userVariants: Map<string, UserVariant>;
 
   /**
-   * Initialize ResyncBase
+   * Initialize Resync
    * @param options - Initialization options
-   * @returns ResyncBase instance
+   * @returns Resync instance
    */
-  init(options: InitOptions): ResyncBaseAPI;
+  init(options: InitOptions): ResyncAPI;
 
   /**
    * Get the current API key
@@ -526,6 +526,6 @@ declare class ResyncBaseAPI {
   unsubscribe(callback: (config: AppConfig) => void): void;
 }
 
-// Export the ResyncBaseAPI instance as default (matches the actual JavaScript export)
-declare const instance: ResyncBaseAPI;
+// Export the ResyncAPI instance as default (matches the actual JavaScript export)
+declare const instance: ResyncAPI;
 export default instance;

@@ -11,28 +11,28 @@ import AppLogger from "../services/AppLogger.js";
 
 
 /**
- * Main ResyncBase class for configuration management and A/B testing.
+ * Main Resync class for configuration management and A/B testing.
  * Provides functionality for fetching app configurations, executing functions,
  * and managing A/B test experiments.
  *
- * @class ResyncBase
+ * @class Resync
  * @example
- * // Initialize ResyncBase
- * ResyncBase.init({
+ * // Initialize Resync
+ * Resync.init({
  *   key: 'your-api-key',
  *   appId: 'your-app-id',
  *   callback: (config) => console.log('Config loaded:', config)
  * });
  *
  * // Get configuration value
- * const value = ResyncBase.getConfig('feature-flag');
+ * const value = Resync.getConfig('feature-flag');
  *
  * // Get A/B test variant
- * const variant = await ResyncBase.getVariant('experiment-name', payload);
+ * const variant = await Resync.getVariant('experiment-name', payload);
  */
-class ResyncBase {
+class Resync {
   /**
-   * Creates a new ResyncBase instance.
+   * Creates a new Resync instance.
    * @constructor
    * @throws {Error} If initialization fails
    */
@@ -69,18 +69,18 @@ class ResyncBase {
   userVariants = new Map();
 
   /**
-   * Initializes the ResyncBase class.
-   * Api key is required to use the ResyncBase API.
+   * Initializes the Resync class.
+   * Api key is required to use the Resync API.
    * @param {InitOptions} options - Initialization options
    * @throws {Error} - Throws an error if the API key is not provided.
    * @throws {Error} - Throws an error if the callback is not a function.
    * @throws {Error} - Throws an error if the storage is not a valid Storage object.
-   * @description This method initializes the ResyncBase class with the provided API key and optional parameters.
+   * @description This method initializes the Resync class with the provided API key and optional parameters.
    * It sets the API key, time-to-live for the cache, and subscribes to updates if a callback is provided.
-   * It also creates an instance of ResyncBase if it does not already exist.
-   * @returns {Promise<ResyncBase>} - Returns the instance of ResyncBase.
+   * It also creates an instance of Resync if it does not already exist.
+   * @returns {Promise<Resync>} - Returns the instance of Resync.
    * @example
-   * ResyncBase.init({
+   * Resync.init({
    *   key: 'your-api-key',
    *   appId: 'your-app-id',
    *   ttl: 1800000, // 30 minutes
@@ -137,7 +137,7 @@ class ResyncBase {
         this.ready = true;
       })
       .catch((error) => {
-        console.error("Error initializing ResyncBase:", error);
+        console.error("Error initializing Resync:", error);
       });
     // return this;
   }
@@ -158,8 +158,8 @@ class ResyncBase {
    * @param {{ email: string, name: string, phone: string, language: string }} metadata - The metadata to set
    * @returns {Promise<boolean>} - Returns true if the user ID is set successfully, false otherwise.
    * @example
-   * ResyncBase.setUserId('user123');
-   * ResyncBase.setUserId('12345', { email: 'test@test.com', name: 'Test User', phone: '1234567890', language: 'en' });
+   * Resync.setUserId('user123');
+   * Resync.setUserId('12345', { email: 'test@test.com', name: 'Test User', phone: '1234567890', language: 'en' });
    */
   setUserId(userId, metadata = null) {
     return this.#queueMethod(this.#setUserId, userId, metadata);
@@ -218,7 +218,7 @@ class ResyncBase {
    * @param {string} client - The client identifier
    * @throws {Error} If client is not a string
    * @example
-   * ResyncBase.setClient('web-app');
+   * Resync.setClient('web-app');
    */
   setClient(client) {
     return this.#queueMethod(this.#setClient, client);
@@ -235,7 +235,7 @@ class ResyncBase {
    * @param {{ email: string, name: string, phone: string, language: string, attributes: Object }} attributes - User attributes object
    * @returns {Promise<boolean>} - Returns true if the attributes are set successfully, false otherwise.
    * @example
-   * ResyncBase.setUserAttributes({
+   * Resync.setUserAttributes({
    *   email: 'test@test.com',
    *   name: 'Test User',
    *   phone: '1234567890',
@@ -308,7 +308,7 @@ class ResyncBase {
    * @returns {Promise<number|null>} The variant content view id or null if not found
    * @throws {Error} If AbTest is not initialized
    * @example
-   * const variant = await ResyncBase.getVariant('pricing-experiment');
+   * const variant = await Resync.getVariant('pricing-experiment');
    */
   async getVariant(experimentName) {
     return this.#queueMethod(this.#getVariant, experimentName);
@@ -329,7 +329,7 @@ class ResyncBase {
    * @returns {*} The configuration value
    * @throws {Error} If App ID is not set or configuration not found
    * @example
-   * const featureFlag = ResyncBase.getConfig('new-feature');
+   * const featureFlag = Resync.getConfig('new-feature');
    */
   getConfig(key) {
     return this.#queueMethod(this.#getConfig, key);
@@ -365,7 +365,7 @@ class ResyncBase {
    * @param {{eventId: string, logId?: string, metadata?: Record<string, unknown>}} event - The event object
    * @throws {Error} If App ID is not set or AppLogger is not initialized
    * @example
-   * ResyncBase.logEvent({
+   * Resync.logEvent({
    *   eventId: 'evt-cta-click-234r56',
    *   logId: 'click-001',
    *   metadata: { name: 'John Doe', email: 'john.doe@example.com' }
@@ -407,7 +407,7 @@ class ResyncBase {
    * @returns {*} The result of recording the conversion
    * @throws {Error} If experiment ID is not provided
    * @example
-   * ResyncBase.recordConversion('pricing-experiment', {
+   * Resync.recordConversion('pricing-experiment', {
    *   revenue: 99.99,
    *   currency: 'USD'
    * });
@@ -421,8 +421,8 @@ class ResyncBase {
   }
 
   /**
-   * Fetches the app configuration from the ResyncBase API.
-   * This method retrieves the configuration settings for the ResyncBase application.
+   * Fetches the app configuration from the Resync API.
+   * This method retrieves the configuration settings for the Resync application.
    * @returns {Promise<void>} - Returns a promise that resolves to the app configuration object.
    * @throws {Error} - Throws an error if the API key is not set or if the request fails.
    */
@@ -559,7 +559,7 @@ class ResyncBase {
 }
 
 // Export the class as default
-export default ResyncBase;
+export default Resync;
 
 // Also export an instance for convenience
-export const ResyncBaseAPI = new ResyncBase();
+export const ResyncAPI = new Resync();

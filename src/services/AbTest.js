@@ -12,7 +12,7 @@ const LogType = LOG_TYPES;
  * @param {Array} experiments - The list of experiments to manage.
  * @description This class provides methods to get variant values for experiments,
  * log experiment exposures, and handle logging functionality.
- * It uses the ResyncBase for configuration and logging.
+ * It uses the Resync for configuration and logging.
  * It also handles retry logic for fetching data and logging.
  */
 class AbTest {

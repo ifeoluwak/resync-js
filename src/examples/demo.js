@@ -1,16 +1,16 @@
 /**
- * ResyncBaseAPI Demo - Showcasing the improved library functionality
- * This demo demonstrates all the key features of the ResyncBaseAPI library
+ * ResyncAPI Demo - Showcasing the improved library functionality
+ * This demo demonstrates all the key features of the ResyncAPI library
  * with the new architecture and constants system.
  */
 
-import ResyncBaseAPI from "../../index.js";
+import ResyncAPI from "../../index.js";
 
 
-// Make ResyncBaseAPI available globally in browser environments
+// Make ResyncAPI available globally in browser environments
 if (typeof window !== "undefined") {
   // @ts-ignore - Adding to global window object
-  window.ResyncBaseAPI = ResyncBaseAPI;
+  window.ResyncAPI = ResyncAPI;
 }
 
 /**
@@ -36,13 +36,13 @@ const DEMO_CONFIG = {
 };
 
 /**
- * Initialize ResyncBaseAPI with comprehensive configuration
+ * Initialize ResyncAPI with comprehensive configuration
  */
-function initializeResyncBaseAPI() {
-  console.log("🚀 Initializing ResyncBaseAPI with new architecture...");
+function initializeResyncAPI() {
+  console.log("🚀 Initializing ResyncAPI with new architecture...");
   
   try {
-    ResyncBaseAPI.init({
+    ResyncAPI.init({
       key: DEMO_CONFIG.API_KEY,
       appId: DEMO_CONFIG.APP_ID,
       ttl: DEMO_CONFIG.TTL,
@@ -50,9 +50,9 @@ function initializeResyncBaseAPI() {
       storage: typeof window !== "undefined" ? window.localStorage : null
     });
     
-    console.log("✅ ResyncBaseAPI initialized successfully!");
+    console.log("✅ ResyncAPI initialized successfully!");
   } catch (error) {
-    console.error("❌ Failed to initialize ResyncBaseAPI:", error.message);
+    console.error("❌ Failed to initialize ResyncAPI:", error.message);
   }
 }
 
@@ -89,9 +89,9 @@ async function onConfigLoaded(config) {
 function setUserContext() {
   console.log("👤 Setting user context...");
   
-  ResyncBaseAPI.setUserId(DEMO_CONFIG.USER_ID);
-  ResyncBaseAPI.setClient(DEMO_CONFIG.CLIENT);
-  ResyncBaseAPI.setUserAttributes(DEMO_CONFIG.USER_ATTRIBUTES);
+  ResyncAPI.setUserId(DEMO_CONFIG.USER_ID);
+  ResyncAPI.setClient(DEMO_CONFIG.CLIENT);
+  ResyncAPI.setUserAttributes(DEMO_CONFIG.USER_ATTRIBUTES);
   
   console.log("✅ User context set:", {
     userId: DEMO_CONFIG.USER_ID,
@@ -108,7 +108,7 @@ function demonstrateConfigAccess() {
   
   try {
     // Try to get a configuration value
-    const featureFlag = ResyncBaseAPI.getConfig('new-feature');
+    const featureFlag = ResyncAPI.getConfig('new-feature');
     console.log("✅ Feature flag retrieved:", featureFlag);
   } catch (error) {
     console.log("ℹ️ Configuration key not found (expected in demo):", error.message);
@@ -116,7 +116,7 @@ function demonstrateConfigAccess() {
   
   try {
     // Try to get content
-    const content = ResyncBaseAPI.getContent();
+    const content = ResyncAPI.getContent();
     console.log("✅ Content retrieved:", content);
   } catch (error) {
     console.log("ℹ️ No content available (expected in demo):", error.message);
@@ -131,11 +131,11 @@ async function demonstrateABTesting() {
   
   try {
     // Simulate getting a variant for an experiment
-    const variant = await ResyncBaseAPI.getVariant('pricing-experiment');
+    const variant = await ResyncAPI.getVariant('pricing-experiment');
     console.log("✅ A/B test variant retrieved:", variant);
     
     // Simulate recording a conversion
-    // ResyncBaseAPI.recordConversion('pricing-experiment', {
+    // ResyncAPI.recordConversion('pricing-experiment', {
     //   revenue: 99.99,
     //   currency: 'USD',
     //   product: 'premium-plan'
@@ -155,7 +155,7 @@ function demonstrateContentLogging() {
   
   try {
     // Log a content event
-    ResyncBaseAPI.logEvent({
+    ResyncAPI.logEvent({
       eventId: 'evt-cta-click-234r56',
       logId: 'click-001',
       metadata: {
@@ -184,12 +184,12 @@ function demonstrateSubscriptionSystem() {
     });
   };
   
-  ResyncBaseAPI.subscribe(updateCallback);
+  ResyncAPI.subscribe(updateCallback);
   console.log("✅ Subscribed to configuration updates");
   
   // Simulate unsubscribing after 5 seconds
   setTimeout(() => {
-    ResyncBaseAPI.unsubscribe(updateCallback);
+    ResyncAPI.unsubscribe(updateCallback);
     console.log("✅ Unsubscribed from configuration updates");
   }, 5000);
 }
@@ -202,7 +202,7 @@ function demonstrateErrorHandling() {
   
   // Try to get config without initialization
   try {
-    ResyncBaseAPI.getConfig('test-key');
+    ResyncAPI.getConfig('test-key');
   } catch (error) {
     console.log("✅ Error handling works:", error.message);
   }
@@ -210,7 +210,7 @@ function demonstrateErrorHandling() {
   // Try to set invalid client
   try {
     // @ts-ignore - Intentionally passing wrong type to test validation
-    ResyncBaseAPI.setClient(123); // Should be string - this will cause an error
+    ResyncAPI.setClient(123); // Should be string - this will cause an error
   } catch (error) {
     console.log("✅ Validation works:", error.message);
   }
@@ -220,11 +220,11 @@ function demonstrateErrorHandling() {
  * Run the complete demo
  */
 function runDemo() {
-  console.log("🎯 Starting ResyncBaseAPI Demo");
+  console.log("🎯 Starting ResyncAPI Demo");
   console.log("=" .repeat(50));
   
-  // Initialize ResyncBaseAPI
-  initializeResyncBaseAPI();
+  // Initialize ResyncAPI
+  initializeResyncAPI();
   
   // Demonstrate error handling
   setTimeout(() => {
@@ -234,7 +234,7 @@ function runDemo() {
   // Show library status
   setTimeout(() => {
     console.log("📊 Library Status:", {
-      ready: ResyncBaseAPI.ready,
+      ready: ResyncAPI.ready,
     });
   }, 3000);
 }
@@ -248,5 +248,5 @@ if (typeof window !== "undefined") {
   runDemo();
 } else {
   // Export for Node.js usage
-  console.log("ResyncBaseAPI Demo loaded. Call runDemo() to start the demonstration.");
+  console.log("ResyncAPI Demo loaded. Call runDemo() to start the demonstration.");
 }

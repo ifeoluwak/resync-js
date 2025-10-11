@@ -1,5 +1,5 @@
 /**
- * Constants for ResyncBase library
+ * Constants for Resync library
  * Centralized configuration and magic numbers
  */
 
@@ -66,18 +66,18 @@ export const BACKEND_SYSTEM_TEMPLATES = [
 
 // Storage Configuration
 export const STORAGE_CONFIG = {
-  CACHE_KEY: "resyncbase_cache",
+  CACHE_KEY: "resync_cache",
   REQUIRED_METHODS: ["getItem", "setItem", "removeItem", "clear"]
 };
 
 // Error Messages
 export const ERROR_MESSAGES = {
-  API_KEY_REQUIRED: "API key is required to use ResyncBase API.",
-  APP_ID_REQUIRED: "App ID is required to use ResyncBase API.",
-  STORAGE_REQUIRED: "Storage is required to use ResyncBase API.",
-  API_KEY_NOT_SET: "API key is not set. Please initialize ResyncBase with a valid API key.",
-  APP_ID_NOT_SET: "App ID is not set. Please initialize ResyncBase with a valid App ID.",
-  API_URL_NOT_SET: "API URL is not set. Please initialize ResyncBase with a valid API URL.",
+  API_KEY_REQUIRED: "API key is required to use Resync API.",
+  APP_ID_REQUIRED: "App ID is required to use Resync API.",
+  STORAGE_REQUIRED: "Storage is required to use Resync API.",
+  API_KEY_NOT_SET: "API key is not set. Please initialize Resync with a valid API key.",
+  APP_ID_NOT_SET: "App ID is not set. Please initialize Resync with a valid App ID.",
+  API_URL_NOT_SET: "API URL is not set. Please initialize Resync with a valid API URL.",
   CLIENT_MUST_BE_STRING: "Client must be a string",
   ATTRIBUTES_MUST_BE_OBJECT: "Attributes must be an object",
   CALLBACK_MUST_BE_FUNCTION: "Callback must be a function",
@@ -88,8 +88,8 @@ export const ERROR_MESSAGES = {
   NO_IMPRESSION_LOGGED: (name) => `No impression logged for experiment "${name}".`,
   NO_VARIANT_FOUND: (id) => `No variant found for experiment ID "${id}".`,
   EXPERIMENT_ID_REQUIRED: "Experiment ID and variant value are required",
-  ABTEST_NOT_INITIALIZED: "AbTest is not initialized. Please initialize ResyncBase first.",
-  CONTENT_LOGGER_NOT_INITIALIZED: "AppLogger is not initialized. Please initialize ResyncBase first.",
+  ABTEST_NOT_INITIALIZED: "AbTest is not initialized. Please initialize Resync first.",
+  CONTENT_LOGGER_NOT_INITIALIZED: "AppLogger is not initialized. Please initialize Resync first.",
   UNKNOWN_SYSTEM_FUNCTION: (id) => `Unknown system function ID: ${id}`,
   FAILED_FETCH_APP_CONFIG: "Failed to fetch app config after multiple attempts.",
   FAILED_FETCH_USER_VARIANTS: "Failed to fetch user variants:",

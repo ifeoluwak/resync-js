@@ -1,5 +1,5 @@
 /**
- * Configuration service for ResyncBase
+ * Configuration service for Resync
  * Centralizes configuration management to avoid circular dependencies
  * @class ConfigService
  */

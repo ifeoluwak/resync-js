@@ -3,7 +3,7 @@ import ResyncCache from "../core/ResyncCache.js";
 import { API_CONFIG, RETRY_CONFIG } from "../utils/constants.js";
 
 /**
- * ConfigFetch class for fetching application configurations and user variants from the ResyncBase API.
+ * ConfigFetch class for fetching application configurations and user variants from the Resync API.
  * Handles authentication, retry logic, and error handling for API requests.
  * 
  * @class ConfigFetch
@@ -29,7 +29,7 @@ class ConfigFetch {
   }
 
   /**
-   * Fetches the application configuration from the ResyncBase API.
+   * Fetches the application configuration from the Resync API.
    * Implements retry logic with exponential backoff and fallback URL handling.
    * 
    * @returns {Promise<AppConfigResponse>} The application configuration
@@ -95,7 +95,7 @@ class ConfigFetch {
   }
 
   /**
-   * Fetches user variants for A/B test experiments from the ResyncBase API.
+   * Fetches user variants for A/B test experiments from the Resync API.
    * 
    * @returns {Promise<UserVariantResponse>} The user variant assignments
    * @throws {Error} If the API request fails or no experiments are found

@@ -1,10 +1,10 @@
 /**
- * Object representing the configuration for a ResyncBase application.
+ * Object representing the configuration for a Resync application.
  * @typedef {Object} Config
  * @property {string} id - The unique identifier for the configuration.
  * @property {boolean} isCurrent - Indicates whether this configuration is the current one.
  * @property {string} version - The version of the configuration.
- * @property {Object} config - The config values for the ResyncBase application.
+ * @property {Object} config - The config values for the Resync application.
  */
 
 /**
@@ -215,7 +215,7 @@
  */
 
 /**
- * Cache object for storing ResyncBase application configurations.
+ * Cache object for storing Resync application configurations.
  * @typedef {Object} ResyncCacheData
  * @property {Object} configs - Application configuration object
  * @property {Experiment[]} experiments - Array of A/B test experiments
@@ -262,7 +262,7 @@
 
 /**
  * @typedef {Object} InitOptions
- * @property {string} key - The API key for ResyncBase API
+ * @property {string} key - The API key for Resync API
  * @property {number} appId - The application ID
  * @property {number} [ttl=3600000] - Time-to-live for cache in milliseconds
  * @property {Function} [callback] - Optional callback function when config is loaded

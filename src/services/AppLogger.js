@@ -7,7 +7,7 @@ import { API_CONFIG, ERROR_MESSAGES, RETRY_CONFIG, TIMING_CONFIG } from "../util
 /**
  * ContentLogger class for logging events.
  * @description This class provides methods to log events, form submissions and handle logging functionality.
- * It uses the ResyncBase for configuration and logging.
+ * It uses the Resync for configuration and logging.
  * It also handles retry logic for fetching data and logging.
  * @class AppLogger
  */
@@ -24,7 +24,7 @@ class AppLogger {
    * @param {{eventId: string, logId?: string, metadata?: Record<string, unknown>}} event - The content event object
    * @throws {Error} If App ID is not set or ContentLogger is not initialized
    * @example
-   * ResyncBase.logEvent({
+   * Resync.logEvent({
    *   eventId: 'evt-cta-click-234r56',
    *   logId: 'click-001',
    *   metadata: { name: 'John Doe', email: 'john.doe@example.com' }
