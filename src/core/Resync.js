@@ -6,6 +6,7 @@ import {
   API_CONFIG,
   ERROR_MESSAGES,
   STORAGE_CONFIG,
+  TIMING_CONFIG,
 } from "../utils/constants.js";
 import AppLogger from "../services/AppLogger.js";
 
@@ -69,6 +70,43 @@ class Resync {
   userVariants = new Map();
 
   /**
+   * Gets the environment
+   * Uses __DEV__ and process.env.NODE_ENV to determine the environment
+   * @returns {'development' | 'production'} - The environment
+   */
+  #getEnvironment() {
+    // React Native / Expo
+    if (typeof __DEV__ !== 'undefined') {
+      return 'development';
+    }
+    
+    // Web with build tools / Node.js
+    if (typeof process !== 'undefined' && 
+        process.env?.NODE_ENV === 'development') {
+      return 'development';
+    }
+    return 'production';
+  }
+
+  #getTTL() {
+    // React Native / Expo
+    if (typeof __DEV__ !== 'undefined') {
+      console.log('React Native / Expo');
+      return __DEV__ ? TIMING_CONFIG.DEVELOPMENT_TTL : TIMING_CONFIG.DEFAULT_TTL;
+    }
+    
+    // Web with build tools / Node.js
+    if (typeof process !== 'undefined' && 
+        process.env?.NODE_ENV === 'development') {
+      console.log('Web with build tools / Node.js');
+      return TIMING_CONFIG.DEVELOPMENT_TTL;
+    }
+    
+    // Default to production (vanilla browser, etc.)
+    return TIMING_CONFIG.DEFAULT_TTL;
+  }
+
+  /**
    * Initializes the Resync class.
    * Api key is required to use the Resync API.
    * @param {InitOptions} options - Initialization options
@@ -78,17 +116,16 @@ class Resync {
    * @description This method initializes the Resync class with the provided API key and optional parameters.
    * It sets the API key, time-to-live for the cache, and subscribes to updates if a callback is provided.
    * It also creates an instance of Resync if it does not already exist.
-   * @returns {Promise<Resync>} - Returns the instance of Resync.
+   * @returns {Promise<void>} - Returns the instance of Resync.
    * @example
    * Resync.init({
    *   key: 'your-api-key',
    *   appId: 'your-app-id',
-   *   ttl: 1800000, // 30 minutes
-   *   callback: (config) => console.log('Config loaded'),
+   *   callback: () => console.log('Config loaded'),
    *   storage: localStorage
    * });
    */
-  async init({ key, appId, ttl = 60 * 60 * 1000, callback, storage }) {
+  async init({ key, appId, callback, storage }) {
     if (!key) {
       throw new Error(ERROR_MESSAGES.API_KEY_REQUIRED);
     }
@@ -96,10 +133,12 @@ class Resync {
       throw new Error(ERROR_MESSAGES.APP_ID_REQUIRED);
     }
 
-    // enforce storage
+    // enforce storage on production
     if (!storage) {
       throw new Error(ERROR_MESSAGES.STORAGE_REQUIRED);
     }
+
+    const ttl = this.#getTTL();
 
     // Update configuration service
     configService.setApiKey(key);
@@ -450,7 +489,7 @@ class Resync {
         content: cache.content || [],
       };
       AbTest.setExperiments(appConfig.experiments);
-      this.#notifySubscribers(appConfig);
+      this.#notifySubscribers();
       return true;
     }
 
@@ -472,11 +511,7 @@ class Resync {
       }
       
       AbTest.setExperiments(config.experiments);
-      this.#notifySubscribers({
-        configs: config.appConfig || {},
-        experiments: config.experiments || [],
-        content: config.content || [],
-      });
+      this.#notifySubscribers();
       return true;
     }
   }
@@ -515,11 +550,10 @@ class Resync {
 
   /**
    * Notifies all subscribers with the provided data.
-   * @param {AppConfig} data - The data to notify subscribers with
    */
-  #notifySubscribers(data) {
+  #notifySubscribers() {
     if (this.subscribers.size > 0) {
-      this.subscribers.forEach((callback) => callback(data));
+      this.subscribers.forEach((callback) => callback());
     }
   }
 

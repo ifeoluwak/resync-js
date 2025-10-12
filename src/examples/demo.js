@@ -17,9 +17,8 @@ if (typeof window !== "undefined") {
  * Demo configuration
  */
 const DEMO_CONFIG = {
-  API_KEY: "your-api-key-here",
-  APP_ID: 7,
-  TTL: 60 * 60 * 1000, // 1 hour
+  API_KEY: "e710dab545f6b78d0a55eb301f7c54a7907ed339",
+  APP_ID: 8,
   USER_ID: "demo-user-456",
   CLIENT: "demo-web-app",
   USER_ATTRIBUTES: {
@@ -38,14 +37,13 @@ const DEMO_CONFIG = {
 /**
  * Initialize ResyncAPI with comprehensive configuration
  */
-function initializeResyncAPI() {
+async function initializeResyncAPI() {
   console.log("🚀 Initializing ResyncAPI with new architecture...");
   
   try {
-    ResyncAPI.init({
+   await ResyncAPI.init({
       key: DEMO_CONFIG.API_KEY,
       appId: DEMO_CONFIG.APP_ID,
-      ttl: DEMO_CONFIG.TTL,
       callback: onConfigLoaded,
       storage: typeof window !== "undefined" ? window.localStorage : null
     });

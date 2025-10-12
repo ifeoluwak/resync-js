@@ -13,11 +13,9 @@ export interface InitOptions {
   key: string;
   /** The application ID */
   appId: number;
-  /** Time-to-live for cache in milliseconds (default: 1 hour) */
-  ttl?: number;
   /** Optional callback function when config is loaded */
-  callback?: (config: AppConfig) => void;
-  /** Optional storage object for caching (e.g., localStorage) */
+  callback?: () => void;
+  /** Required storage object for caching (e.g., localStorage, AsyncStorage) */
   storage?: Storage;
 }
 
@@ -364,6 +362,16 @@ export interface ContentItem {
   order: number;
   /** Item data (styles, properties, etc.) */
   data: ElementProperty | SectionProperty | ListProperty | FormProperty;
+  /** Event */
+  event?: AppEvent;
+  /** Event ID */
+  eventId?: number;
+  /** Event config */
+  eventConfig?: {
+    action?: 'view' | 'click' | 'submit';
+    metadata?: Record<string, any>;
+    logId?: string;
+  };
   /** Content view ID */
   contentViewId: number;
   /** Whether the item is visible */
@@ -402,6 +410,11 @@ export interface AppEvent {
   logId?: string;
   /** Additional metadata */
   metadata?: Record<string, any>;
+  id: number;
+  name: string;
+  description: string;
+  type: string;
+  scope: 'generic' | 'content_view' | 'content_item' | 'campaign';
 }
 
 // ============================================================================
@@ -515,15 +528,13 @@ declare class ResyncAPI {
 
   /**
    * Subscribe to configuration updates
-   * @param callback - Callback function to subscribe
    */
-  subscribe(callback: (config: AppConfig) => void): void;
+  subscribe(callback: () => void): void;
 
   /**
    * Unsubscribe from configuration updates
-   * @param callback - Callback function to unsubscribe
    */
-  unsubscribe(callback: (config: AppConfig) => void): void;
+  unsubscribe(callback: () => void): void;
 }
 
 // Export the ResyncAPI instance as default (matches the actual JavaScript export)

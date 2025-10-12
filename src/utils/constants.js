@@ -37,9 +37,10 @@ export const RETRY_CONFIG = {
 // Timing Configuration
 export const TIMING_CONFIG = {
   FLUSH_INTERVAL: 5000, // 5 seconds
-  DEFAULT_TTL: 60 * 60 * 1000, // 60 minutes in milliseconds
+  DEFAULT_TTL: 60 * 60 * 1000 * 6, // 6 hours in milliseconds
   HASH_MULTIPLIER: 31,
-  HASH_MODULO: 1000000007
+  HASH_MODULO: 1000000007,
+  DEVELOPMENT_TTL: 0,
 };
 
 // Log Types
