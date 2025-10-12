@@ -79,6 +79,7 @@ class ResyncCache {
       sessionId: null,
       userId: null,
       userVariants: new Map(),
+      appId: '',
     };
     if (this.storage) {
       await this.storage.removeItem(STORAGE_KEY);

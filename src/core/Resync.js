@@ -174,6 +174,11 @@ class Resync {
     await this.#loadAppConfig()
       .then(() => {
         this.ready = true;
+        // once the app config is loaded, execute the pending operations
+        for (const operation of this.pendingOperations) {
+          operation.method.apply(this, operation.args);
+        }
+        this.pendingOperations = [];
       })
       .catch((error) => {
         console.error("Error initializing Resync:", error);
@@ -219,9 +224,15 @@ class Resync {
         }
       } else {
         this.userId = `${userId}`;
+        this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
         ResyncCache.saveKeyValue("userId", `${userId}`);
+        ResyncCache.saveKeyValue("sessionId", this.sessionId);
       }
     }
+    this.userId = `${userId}`;
+    this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+    ResyncCache.saveKeyValue("userId", `${userId}`);
+    ResyncCache.saveKeyValue("sessionId", this.sessionId);
     const fetchData = async () => {
       try {
         const response = await fetch(`${API_CONFIG.DEFAULT_URL}${this.#appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
@@ -475,9 +486,13 @@ class Resync {
     const sessionId = cache?.sessionId || `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
 
     ResyncCache.saveKeyValue("sessionId", sessionId);
+    ResyncCache.saveKeyValue("appId", this.#appId);
     this.sessionId = sessionId;
 
+    // check if appId is same as the appId in the cache
+    // and if the last fetch timestamp is less than the ttl
     if (
+      cache?.appId && cache?.appId === this.#appId &&
       cache?.lastFetchTimestamp &&
       Date.now() - new Date(cache.lastFetchTimestamp).getTime() <
         this.#ttl

@@ -225,6 +225,7 @@
  * @property {string} [userId] - Current user ID
  * @property {Map<string, Object>} [userVariants] - User variant assignments
  * @property {Object} [userEvents] - User event assignments
+ * @property {string} [appId] - Application ID
  */
 
 /**
