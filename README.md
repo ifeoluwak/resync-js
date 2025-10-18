@@ -594,7 +594,6 @@ import Resync, {
 const options: InitOptions = {
   key: 'your-api-key',
   appId: 7,
-  ttl: 3600000,
   callback: (config: AppConfig) => {
     console.log(config.appConfig);
   },

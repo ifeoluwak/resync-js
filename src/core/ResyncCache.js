@@ -5,7 +5,7 @@ const STORAGE_KEY = STORAGE_CONFIG.CACHE_KEY;
 /**
  * ResyncCache class for managing application configuration caching.
  * Provides functionality for storing and retrieving configuration data,
- * functions, experiments, and user variants with optional persistence.
+ * functions, campaigns, and user variants with optional persistence.
  * 
  * @class ResyncCache
  * @example
@@ -25,7 +25,7 @@ class ResyncCache {
   /** @type {ResyncCacheData} */
   cache = {
     configs: {},
-    experiments: [],
+    campaigns: [],
     content: [],
     lastFetchTimestamp: null,
     sessionId: null,
@@ -73,12 +73,13 @@ class ResyncCache {
   async clearCache() {
     this.cache = {
       configs: {},
-      experiments: [],
+      campaigns: [],
       content: [],
       lastFetchTimestamp: null,
       sessionId: null,
       userId: null,
       userVariants: new Map(),
+      appId: '',
     };
     if (this.storage) {
       await this.storage.removeItem(STORAGE_KEY);
@@ -144,7 +145,9 @@ class ResyncCache {
           // Restore the cache state from the parsed data
           this.cache = parsedData;
         }
-       } catch (error) {}
+       } catch (error) {
+        console.error("Error loading cache from storage:", error);
+       }
     } else {
       console.warn("No storage available to load cache.");
     }

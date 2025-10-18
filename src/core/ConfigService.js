@@ -4,14 +4,15 @@
  * @class ConfigService
  */
 
-import { API_CONFIG, ERROR_MESSAGES } from '../utils/constants.js';
+import { API_CONFIG, ERROR_MESSAGES, TIMING_CONFIG } from '../utils/constants.js';
 
 class ConfigService {
   constructor() {
     this.apiKey = null;
     this.appId = null;
     this.apiUrl = API_CONFIG.DEFAULT_URL;
-    this.ttl = 60 * 60 * 1000; // 60 minutes in milliseconds
+    this.ttl = TIMING_CONFIG.DEFAULT_TTL;
+    this.environment = 'production';
   }
 
   /**
@@ -50,6 +51,22 @@ class ConfigService {
    */
   setTtl(ttl) {
     this.ttl = ttl;
+  }
+
+  /**
+   * Sets the environment
+   * @param {'sandbox' | 'production'} environment - The environment
+   */
+  setEnvironment(environment) {
+    this.environment = environment;
+  }
+
+  /**
+   * Gets the environment
+   * @returns {'sandbox' | 'production'} The environment
+   */
+  getEnvironment() {
+    return this.environment;
   }
 
   /**

@@ -45,7 +45,8 @@ async function initializeResyncAPI() {
       key: DEMO_CONFIG.API_KEY,
       appId: DEMO_CONFIG.APP_ID,
       callback: onConfigLoaded,
-      storage: typeof window !== "undefined" ? window.localStorage : null
+      storage: typeof window !== "undefined" ? window.localStorage : null,
+      environment: 'sandbox'
     });
     
     console.log("✅ ResyncAPI initialized successfully!");
@@ -56,14 +57,9 @@ async function initializeResyncAPI() {
 
 /**
  * Callback function when configuration is loaded
- * @param {Object} config - The loaded configuration
  */
-async function onConfigLoaded(config) {
-  console.log("📦 Configuration loaded:", {
-    appConfig: config.appConfig,
-    experimentsCount: config.experiments?.length || 0,
-    contentCount: config.content?.length || 0
-  });
+async function onConfigLoaded() {
+  console.log("📦 Configuration loaded:");
   
   // Set user context
   setUserContext();
@@ -122,26 +118,26 @@ function demonstrateConfigAccess() {
 }
 
 /**
- * Demonstrate A/B testing functionality
+ * Demonstrate campaign functionality
  */
 async function demonstrateABTesting() {
-  console.log("🧪 Demonstrating A/B testing...");
+  console.log("🧪 Demonstrating campaign...");
   
   try {
-    // Simulate getting a variant for an experiment
-    const variant = await ResyncAPI.getVariant('pricing-experiment');
+    // Simulate getting a variant for a campaign
+    const variant = await ResyncAPI.getVariant('campaign-1');
     console.log("✅ A/B test variant retrieved:", variant);
     
     // Simulate recording a conversion
-    // ResyncAPI.recordConversion('pricing-experiment', {
+    // ResyncAPI.recordConversion('campaign-1', {
     //   revenue: 99.99,
     //   currency: 'USD',
     //   product: 'premium-plan'
     // });
-    console.log("✅ Conversion recorded for pricing experiment");
+    console.log("✅ Conversion recorded for campaign");
     
   } catch (error) {
-    console.log("ℹ️ A/B testing not available (expected in demo):", error.message);
+    console.log("ℹ️ Campaign not available (expected in demo):", error.message);
   }
 }
 
@@ -175,11 +171,8 @@ function demonstrateSubscriptionSystem() {
   console.log("🔔 Demonstrating subscription system...");
   
   // Subscribe to configuration updates
-  const updateCallback = (config) => {
-    console.log("📡 Configuration update received:", {
-      timestamp: new Date().toISOString(),
-      experimentsCount: config.experiments?.length || 0
-    });
+  const updateCallback = () => {
+    console.log("📡 Configuration update received:");
   };
   
   ResyncAPI.subscribe(updateCallback);

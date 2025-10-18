@@ -10,7 +10,6 @@ import { API_CONFIG, RETRY_CONFIG } from "../utils/constants.js";
  * @example
  * const fetcher = new ConfigFetch();
  * const config = await fetcher.fetchAppConfig();
- * const variants = await fetcher.fetchUserVariants();
  */
 class ConfigFetch {
   /**
@@ -54,16 +53,17 @@ class ConfigFetch {
      */
     const fetchData = async () => {
       try {
+        const environment = configService.getEnvironment();
         const userId = ResyncCache.getKeyValue("userId") // user has been set
         const sessionId = ResyncCache.getKeyValue("sessionId"); // for no user data
-        const fullPath = userId ? `${apiUrl}${path}` : `${apiUrl}${path}?sessionId=${sessionId}`;
-        const response = await fetch(fullPath, {
-          method: userId ? "POST" : "GET",
+        const body = userId ? JSON.stringify({ userId, environment }) : JSON.stringify({ environment, sessionId });
+        const response = await fetch(`${apiUrl}${path}`, {
+          method: "POST",
           headers: {
             "x-api-key": apiKey,
-            "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
+            "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE
           },
-          body: userId ? JSON.stringify({ userId }) : undefined,
+          body,
         });
 
         if (!response.ok) {
@@ -92,71 +92,6 @@ class ConfigFetch {
           }
       }
     }
-  }
-
-  /**
-   * Fetches user variants for A/B test experiments from the Resync API.
-   * 
-   * @returns {Promise<UserVariantResponse>} The user variant assignments
-   * @throws {Error} If the API request fails or no experiments are found
-   * @example
-   * const variants = await fetcher.fetchUserVariants();
-   * console.log('User variants:', variants.variants);
-   */
-  async fetchUserVariants() {
-    const experiments = ResyncCache.getKeyValue("experiments") || [];
-    const experimentIds = experiments.map((experiment) => experiment.id);
-    if (!experimentIds || !Array.isArray(experimentIds) || experimentIds.length === 0) {
-      return;
-    }
-    this.validateEnv();
-    const { appId, apiUrl, apiKey } = configService.getApiConfig();
-    // if userId is not set, use sessionId
-    const userId = ResyncCache.getKeyValue("userId")
-    const sessionId = ResyncCache.getKeyValue("sessionId");
-    let path = `${appId}${API_CONFIG.ENDPOINTS.USER_VARIANTS}`;
-
-    /**
-     * Performs the actual fetch request for user variants.
-     * @returns {Promise<UserVariantResponse>} The API response
-     * @throws {Error} If the request fails
-     * @private
-     */
-    const fetchData = async () => {
-      try {
-        const response = await fetch(`${apiUrl}${path}`, {
-          method: "POST",
-          headers: {
-            "x-api-key": apiKey,
-            "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
-          },
-          body: JSON.stringify({
-            userId,
-            sessionId,
-            experimentIds,
-            appId,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch user variants: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        return data;
-      } catch (error) {
-        throw error; // Re-throw the error to handle it in the retry logic
-      }
-    }
-    try {
-        const data = await fetchData();
-        if (data) {
-          return data;
-        }
-        return null;
-      } catch (error) {
-        return null;
-      }
   }
 }
 
