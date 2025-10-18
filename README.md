@@ -37,6 +37,7 @@ await Resync.init({
     console.log('Resync initialized with config:', config);
   },
   storage: localStorage, // or AsyncStorage for React Native
+  environment: 'production',
 });
 ```
 
