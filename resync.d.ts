@@ -5,10 +5,10 @@
 // PUBLIC API TYPES
 // ============================================================================
 
-export enum Environment {
-  SANDBOX = 'sandbox',
-  PRODUCTION = 'production',
-}
+export const Environment: {
+  SANDBOX: 'sandbox';
+  PRODUCTION: 'production';
+};
 
 /**
  * Configuration options for initializing Resync
@@ -23,7 +23,7 @@ export interface InitOptions {
   /** Required storage object for caching (e.g., localStorage, AsyncStorage) */
   storage?: Storage;
   /** Optional environment object */
-  environment?: Environment;
+  environment: 'sandbox' | 'production';
 }
 
 /**
