@@ -262,11 +262,6 @@
  */
 
 /**
- * @typedef {Object} Environment
- * @property {'sandbox' | 'production'} environment - The environment
- */
-
-/**
  * @typedef {Object} InitOptions
  * @property {string} key - The API key for Resync API
  * @property {number} appId - The application ID
@@ -292,3 +287,8 @@
  * @property {string} client - The client identifier
  * @property {Object} metadata - Additional metadata
  */
+
+export const Environment = {
+    SANDBOX: 'sandbox',
+    PRODUCTION: 'production',
+}

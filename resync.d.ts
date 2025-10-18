@@ -5,11 +5,6 @@
 // PUBLIC API TYPES
 // ============================================================================
 
-export const Environment: {
-  SANDBOX: 'sandbox';
-  PRODUCTION: 'production';
-};
-
 /**
  * Configuration options for initializing Resync
  */
