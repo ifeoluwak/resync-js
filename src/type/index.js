@@ -8,8 +8,8 @@
  */
 
 /**
- * Object representing an experiment variant in A/B testing.
- * @typedef {Object} ExperimentVariant
+ * Object representing a campaign variant.
+ * @typedef {Object} CampaignVariant
  * @property {string} id - The unique identifier for the variant
  * @property {string} name - The name of the variant
  * @property {string} value - The value of the variant
@@ -17,12 +17,12 @@
  */
 
 /**
- * Object representing an A/B test experiment.
- * @typedef {Object} Experiment
- * @property {string} id - The unique identifier for the experiment
- * @property {string} name - The name of the experiment
- * @property {string} type - The type of experiment (e.g., 'system', 'custom')
- * @property {ExperimentVariant[]} variants - Array of possible variants
+ * Object representing a campaign.
+ * @typedef {Object} Campaign
+ * @property {string} id - The unique identifier for the campaign
+ * @property {string} name - The name of the campaign
+ * @property {string} type - The type of campaign (e.g., 'system', 'custom')
+ * @property {CampaignVariant[]} variants - Array of possible variants
  * @property {string} [systemFunctionId] - ID of system function for variant assignment
  */
 
@@ -218,7 +218,7 @@
  * Cache object for storing Resync application configurations.
  * @typedef {Object} ResyncCacheData
  * @property {Object} configs - Application configuration object
- * @property {Experiment[]} experiments - Array of A/B test experiments
+ * @property {Campaign[]} campaigns - Array of campaigns
  * @property {ContentView[]} content - Array of content views
  * @property {string} [lastFetchTimestamp] - ISO timestamp of last fetch
  * @property {string} [sessionId] - Current session ID
@@ -240,7 +240,7 @@
 /**
  * @typedef {Object} AppConfigResponse
  * @property {Object} appConfig - The application configuration
- * @property {Experiment[]} experiments - A/B test experiments
+ * @property {Campaign[]} campaigns - Array of campaigns
  * @property {ContentView[]} content - Content
  * @property {User} [user] - User object
  * @property {UserVariantResponse} [userEvents] - User variant assignments
@@ -250,7 +250,7 @@
  * @typedef {Object} UserVariantRequest
  * @property {string} userId - The user ID
  * @property {string} sessionId - The session ID
- * @property {string[]} experimentIds - Array of experiment IDs
+ * @property {string[]} campaignIds - Array of campaign IDs
  * @property {string} appId - The application ID
  */
 
@@ -262,24 +262,29 @@
  */
 
 /**
+ * @typedef {Object} Environment
+ * @property {'sandbox' | 'production'} environment - The environment
+ */
+
+/**
  * @typedef {Object} InitOptions
  * @property {string} key - The API key for Resync API
  * @property {number} appId - The application ID
- * @property {number} [ttl=3600000] - Time-to-live for cache in milliseconds
  * @property {Function} [callback] - Optional callback function when config is loaded
  * @property {StorageInterface} [storage] - Optional storage object for caching
+ * @property {'sandbox' | 'production'} [environment] - Optional environment object
  */
 
 /**
  * @typedef {Object} AppConfig
  * @property {Object} configs - Application configuration
- * @property {Array} experiments - A/B test experiments
+ * @property {Array} campaigns - Array of campaigns
  * @property {Array} [content] - Content views
  */
 
 /**
  * @typedef {Object} UserVariant
- * @property {string} experimentId - The experiment ID
+ * @property {string} campaignId - The campaign ID
  * @property {Object} variant - The assigned variant
  * @property {string} sessionId - The session ID
  * @property {string} userId - The user ID

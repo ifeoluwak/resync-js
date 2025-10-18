@@ -18,6 +18,8 @@ class AppLogger {
     this.timeoutId = setInterval(() => this.flushLogs(), TIMING_CONFIG.FLUSH_INTERVAL);
   }
 
+  // TODO: Save to storage and send on app load?
+
 
   /**
    * Logs an event.
@@ -44,6 +46,7 @@ class AppLogger {
       timestamp: new Date().toISOString(),
       client: ResyncCache.getKeyValue("client"),
       metadata: metadata || ResyncCache.getKeyValue("attributes"),
+      environment: configService.getEnvironment(),
     };
     // Send the log entry to the backend API
     this.saveLogForLaterUpload([logEntry]);
@@ -142,6 +145,7 @@ class AppLogger {
         ...formData,
         sessionId: ResyncCache.getKeyValue("sessionId"),
         userId: ResyncCache.getKeyValue("userId"),
+        environment: configService.getEnvironment(),
       }),
     })
     .then((response) => {

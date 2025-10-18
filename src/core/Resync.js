@@ -14,7 +14,7 @@ import AppLogger from "../services/AppLogger.js";
 /**
  * Main Resync class for configuration management and A/B testing.
  * Provides functionality for fetching app configurations, executing functions,
- * and managing A/B test experiments.
+ * and managing A/B test campaigns.
  *
  * @class Resync
  * @example
@@ -29,7 +29,7 @@ import AppLogger from "../services/AppLogger.js";
  * const value = Resync.getConfig('feature-flag');
  *
  * // Get A/B test variant
- * const variant = await Resync.getVariant('experiment-name', payload);
+ * const variant = await Resync.getVariant('campaign-name', payload);
  */
 class Resync {
   /**
@@ -46,10 +46,13 @@ class Resync {
   #apiKey = null;
 
   /** @type {number} */
-  #ttl = 60 * 60 * 1000; // 60 minutes in milliseconds
+  #ttl = TIMING_CONFIG.DEFAULT_TTL; // 6 hours in milliseconds
 
   /** @type {boolean} */
   ready = false;
+
+  /** @type {boolean} */
+  isLoading = false;
 
   /** @type {string|null} */
   #appId = null;
@@ -70,43 +73,6 @@ class Resync {
   userVariants = new Map();
 
   /**
-   * Gets the environment
-   * Uses __DEV__ and process.env.NODE_ENV to determine the environment
-   * @returns {'development' | 'production'} - The environment
-   */
-  #getEnvironment() {
-    // React Native / Expo
-    if (typeof __DEV__ !== 'undefined') {
-      return 'development';
-    }
-    
-    // Web with build tools / Node.js
-    if (typeof process !== 'undefined' && 
-        process.env?.NODE_ENV === 'development') {
-      return 'development';
-    }
-    return 'production';
-  }
-
-  #getTTL() {
-    // React Native / Expo
-    if (typeof __DEV__ !== 'undefined') {
-      console.log('React Native / Expo');
-      return __DEV__ ? TIMING_CONFIG.DEVELOPMENT_TTL : TIMING_CONFIG.DEFAULT_TTL;
-    }
-    
-    // Web with build tools / Node.js
-    if (typeof process !== 'undefined' && 
-        process.env?.NODE_ENV === 'development') {
-      console.log('Web with build tools / Node.js');
-      return TIMING_CONFIG.DEVELOPMENT_TTL;
-    }
-    
-    // Default to production (vanilla browser, etc.)
-    return TIMING_CONFIG.DEFAULT_TTL;
-  }
-
-  /**
    * Initializes the Resync class.
    * Api key is required to use the Resync API.
    * @param {InitOptions} options - Initialization options
@@ -123,9 +89,10 @@ class Resync {
    *   appId: 'your-app-id',
    *   callback: () => console.log('Config loaded'),
    *   storage: localStorage
+   *   environment: Environment.SANDBOX
    * });
    */
-  async init({ key, appId, callback, storage }) {
+  async init({ key, appId, callback, storage, environment }) {
     if (!key) {
       throw new Error(ERROR_MESSAGES.API_KEY_REQUIRED);
     }
@@ -133,17 +100,22 @@ class Resync {
       throw new Error(ERROR_MESSAGES.APP_ID_REQUIRED);
     }
 
+    if (!environment || (environment !== 'sandbox' && environment !== 'production')) {
+      throw new Error(ERROR_MESSAGES.ENVIRONMENT_REQUIRED);
+    }
+
     // enforce storage on production
-    if (!storage) {
+    if (!storage && environment === 'production') {
       throw new Error(ERROR_MESSAGES.STORAGE_REQUIRED);
     }
 
-    const ttl = this.#getTTL();
+    const ttl = environment === 'sandbox' ? TIMING_CONFIG.DEVELOPMENT_TTL : TIMING_CONFIG.DEFAULT_TTL;
 
     // Update configuration service
     configService.setApiKey(key);
     configService.setAppId(appId);
     configService.setTtl(ttl);
+    configService.setEnvironment(environment);
 
     this.#apiKey = key;
     this.#appId = `${appId}`;
@@ -159,7 +131,7 @@ class Resync {
     }
 
     // storage must have a getItem, setItem, removeItem and clear methods
-    // wait for the storage to be initialized
+    // wait for the storage to be initialized, if storage is provided
     if (
       storage &&
       STORAGE_CONFIG.REQUIRED_METHODS.every(
@@ -167,23 +139,91 @@ class Resync {
       )
     ) {
       await ResyncCache.init(storage);
-    } else {
-      throw new Error(ERROR_MESSAGES.STORAGE_REQUIRED);
     }
-    // fetch data from api
-    await this.#loadAppConfig()
-      .then(() => {
-        this.ready = true;
-        // once the app config is loaded, execute the pending operations
-        for (const operation of this.pendingOperations) {
-          operation.method.apply(this, operation.args);
-        }
-        this.pendingOperations = [];
-      })
-      .catch((error) => {
-        console.error("Error initializing Resync:", error);
-      });
-    // return this;
+    const cache = ResyncCache.getCache();
+
+    const sessionId = cache?.sessionId || `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+    this.sessionId = sessionId;
+
+    // try to fetch data from api
+    this.#loadAppConfig()
+  }
+
+
+  /**
+   * Fetches the app configuration from the Resync API.
+   * This method retrieves the configuration settings for the Resync application.
+   * @returns {Promise<void>} - Returns a promise that resolves to the app configuration object.
+   * @throws {Error} - Throws an error if the API key is not set or if the request fails.
+   */
+  async #loadAppConfig(isReload = false) {
+    if (!this.#apiKey) {
+      throw new Error(ERROR_MESSAGES.API_KEY_NOT_SET);
+    }
+    this.isLoading = true;
+    const cache = ResyncCache.getCache();
+
+    ResyncCache.saveKeyValue("sessionId", this.sessionId);
+    ResyncCache.saveKeyValue("appId", this.#appId);
+
+    // check if appId is same as the appId in the cache
+    // and if the last fetch timestamp is less than the ttl
+    if (
+      !isReload &&
+      cache?.appId && cache?.appId === this.#appId &&
+      cache?.lastFetchTimestamp &&
+      Date.now() - new Date(cache.lastFetchTimestamp).getTime() <
+        this.#ttl
+    ) {
+      // Create AppConfig-like object from cache
+      const appConfig = {
+        configs: cache.configs || {},
+        campaigns: cache.campaigns || [],
+        content: cache.content || [],
+      };
+      this.ready = true;
+      this.isLoading = false;
+      this.#executePendingOperations();
+      AbTest.setCampaigns(appConfig.campaigns);
+      this.#notifySubscribers();
+    }
+
+    const config = await ConfigFetch.fetchAppConfig();
+    const lastFetchTimestamp = new Date().toISOString();
+
+    if (config) {
+      console.log('Got here §', JSON.stringify(config, null, 2));
+      Promise.all([
+        ResyncCache.saveKeyValue("configs", config.appConfig || {}),
+        ResyncCache.saveKeyValue("content", config.content),
+        ResyncCache.saveKeyValue("campaigns", config.campaigns || []),
+        ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp),
+      ]);
+      if (config.user) {
+        ResyncCache.saveKeyValue("user", config.user);
+      }
+      if (config.userEvents) {
+        this.setUserVariants(config.userEvents);
+      }
+      this.ready = true;
+      this.isLoading = false;
+      this.#executePendingOperations();
+      AbTest.setCampaigns(config.campaigns);
+      this.#notifySubscribers();
+      return
+    }
+    console.error("Error loading app config:", config);
+  }
+
+  /**
+   * Executes the pending operations due to the app config not being loaded yet.
+   * @private
+   */
+  #executePendingOperations() {
+    for (const operation of this.pendingOperations) {
+      operation.method.apply(this, operation.args);
+    }
+    this.pendingOperations = [];
   }
 
   // async reset() {
@@ -206,7 +246,7 @@ class Resync {
    * Resync.setUserId('12345', { email: 'test@test.com', name: 'Test User', phone: '1234567890', language: 'en' });
    */
   setUserId(userId, metadata = null) {
-    return this.#queueMethod(this.#setUserId, userId, metadata);
+    return this.#queueSetMethod(this.#setUserId, userId, metadata);
   }
   #setUserId(userId, metadata = null) {
     if (ResyncCache) {
@@ -233,7 +273,7 @@ class Resync {
     this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     ResyncCache.saveKeyValue("userId", `${userId}`);
     ResyncCache.saveKeyValue("sessionId", this.sessionId);
-    const fetchData = async () => {
+    const postUserData = async () => {
       try {
         const response = await fetch(`${API_CONFIG.DEFAULT_URL}${this.#appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
           method: "POST",
@@ -257,10 +297,10 @@ class Resync {
       }
     }
     if (this.#apiKey && this.#appId) {
-      return fetchData();
+      // post the user data and reload the data
+      return postUserData().then(() => this.#loadAppConfig(true));
     }
     return Promise.resolve(false);
-    // // this.getUserVariants();
   }
 
   /**
@@ -271,7 +311,7 @@ class Resync {
    * Resync.setClient('web-app');
    */
   setClient(client) {
-    return this.#queueMethod(this.#setClient, client);
+    return this.#queueSetMethod(this.#setClient, client);
   }
   #setClient(client) {
     if (typeof client !== "string") {
@@ -298,7 +338,7 @@ class Resync {
    * });
    */
   setUserAttributes({ email, name, phone, language, attributes }) {
-    return this.#queueMethod(this.#setUserAttributes, { email, name, phone, language, attributes });
+    return this.#queueSetMethod(this.#setUserAttributes, { email, name, phone, language, attributes });
   }
   #setUserAttributes({ email, name, phone, language, attributes }) {
     // if (typeof attributes !== "object") {
@@ -354,23 +394,23 @@ class Resync {
 
   /**
    * Gets a variant for an A/B test campaign.
-   * @param {string} experimentName - The campaign name
+   * @param {string} campaignName - The campaign name
    * @returns {Promise<number|null>} The variant content view id or null if not found
    * @throws {Error} If AbTest is not initialized
    * @example
-   * const variant = await Resync.getVariant('pricing-experiment');
+   * const variant = await Resync.getVariant('pricing-campaign');
    */
-  async getVariant(experimentName) {
-    return this.#queueMethod(this.#getVariant, experimentName);
+  async getVariant(campaignName) {
+    return this.#queueGetMethod(this.#getVariant, campaignName);
   }
-  async #getVariant(experimentName) {
+  async #getVariant(campaignName) {
     if (!this.#appId) {
       throw new Error(ERROR_MESSAGES.APP_ID_NOT_SET);
     }
     if (!AbTest) {
       throw new Error(ERROR_MESSAGES.ABTEST_NOT_INITIALIZED);
     }
-    return await AbTest.getVariant(experimentName);
+    return await AbTest.getVariant(campaignName);
   }
 
   /**
@@ -382,7 +422,7 @@ class Resync {
    * const featureFlag = Resync.getConfig('new-feature');
    */
   getConfig(key) {
-    return this.#queueMethod(this.#getConfig, key);
+    return this.#queueGetMethod(this.#getConfig, key);
   }
   #getConfig(key) {
     if (!this.#appId) {
@@ -397,7 +437,7 @@ class Resync {
   }
 
   getContent() {
-    return this.#queueMethod(this.#getContent);
+    return this.#queueGetMethod(this.#getContent);
   }
   #getContent() {
     if (!this.#appId) {
@@ -422,7 +462,7 @@ class Resync {
    * });
    */
   logEvent(event) {
-    return this.#queueMethod(this.#logEvent, event);
+    return this.#queueSetMethod(this.#logEvent, event);
   }
   #logEvent(event) {
     if (!this.#appId) {
@@ -451,84 +491,23 @@ class Resync {
   }
 
   /**
-   * Records a conversion for an A/B test experiment.
-   * @param {string} experimentName - The experiment name
+   * Records a conversion for an A/B test campaign.
+   * @param {string} campaignName - The campaign name
    * @param {Object} [metadata={}] - Additional metadata for the conversion
    * @returns {*} The result of recording the conversion
-   * @throws {Error} If experiment ID is not provided
+   * @throws {Error} If campaign ID is not provided
    * @example
-   * Resync.recordConversion('pricing-experiment', {
+   * Resync.recordConversion('pricing-campaign', {
    *   revenue: 99.99,
    *   currency: 'USD'
    * });
    */
-  recordConversion(experimentName, metadata = {}) {
-    // if (!experimentName) {
-    //   throw new Error(ERROR_MESSAGES.EXPERIMENT_ID_REQUIRED);
+  recordConversion(campaignName, metadata = {}) {
+    // if (!campaignName) {
+    //   throw new Error(ERROR_MESSAGES.CAMPAIGN_ID_REQUIRED);
     // }
     // // Record the conversion event
-    // return AbTest.recordConversion(experimentName, metadata);
-  }
-
-  /**
-   * Fetches the app configuration from the Resync API.
-   * This method retrieves the configuration settings for the Resync application.
-   * @returns {Promise<void>} - Returns a promise that resolves to the app configuration object.
-   * @throws {Error} - Throws an error if the API key is not set or if the request fails.
-   */
-  async #loadAppConfig() {
-    if (!this.#apiKey) {
-      throw new Error(ERROR_MESSAGES.API_KEY_NOT_SET);
-    }
-
-    const cache = ResyncCache.getCache();
-
-    const sessionId = cache?.sessionId || `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
-
-    ResyncCache.saveKeyValue("sessionId", sessionId);
-    ResyncCache.saveKeyValue("appId", this.#appId);
-    this.sessionId = sessionId;
-
-    // check if appId is same as the appId in the cache
-    // and if the last fetch timestamp is less than the ttl
-    if (
-      cache?.appId && cache?.appId === this.#appId &&
-      cache?.lastFetchTimestamp &&
-      Date.now() - new Date(cache.lastFetchTimestamp).getTime() <
-        this.#ttl
-    ) {
-      // Create AppConfig-like object from cache
-      const appConfig = {
-        configs: cache.configs || {},
-        experiments: cache.experiments || [],
-        content: cache.content || [],
-      };
-      AbTest.setExperiments(appConfig.experiments);
-      this.#notifySubscribers();
-      return true;
-    }
-
-    const config = await ConfigFetch.fetchAppConfig();
-    const lastFetchTimestamp = new Date().toISOString();
-
-    if (config) {
-      Promise.all([
-        ResyncCache.saveKeyValue("configs", config.appConfig || {}),
-        ResyncCache.saveKeyValue("content", config.content),
-        ResyncCache.saveKeyValue("experiments", config.experiments || []),
-        ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp),
-      ]);
-      if (config.user) {
-        ResyncCache.saveKeyValue("user", config.user);
-      }
-      if (config.userEvents) {
-        this.setUserVariants(config.userEvents);
-      }
-      
-      AbTest.setExperiments(config.experiments);
-      this.#notifySubscribers();
-      return true;
-    }
+    // return AbTest.recordConversion(campaignName, metadata);
   }
 
   /**
@@ -579,7 +558,6 @@ class Resync {
    */
   async setUserVariants(variants) {
     const userVariants = new Map();
-    // const variants = await ConfigFetch.fetchUserVariants();
     if (variants && Array.isArray(variants)) {
       variants.forEach((variant) => {
         userVariants.set(variant.id, variant);
@@ -588,14 +566,38 @@ class Resync {
     }
   }
 
-    // Generic method queuer
-    #queueMethod(method, ...args) {
+    // Generic get method queuer
+    // get methods require config data
+    // we need to wait for the config data to be loaded
+    #queueGetMethod(method, ...args) {
+      // if ready and not loading
+      if (this.ready && !this.isLoading) {
+        // If ready, execute immediately
+        return method.apply(this, args);
+      }
+  
+      // If not ready or loading, queue the method call
+      return new Promise((resolve, reject) => {
+        this.pendingOperations.push({
+          method,
+          args,
+          resolve,
+          reject
+        });
+      });
+    }
+
+    // Generic set method queuer
+    // set methods don't require config data
+    // once sdk is ready, the set methods will be executed immediately
+    #queueSetMethod(method, ...args) {
+      // if ready
       if (this.ready) {
         // If ready, execute immediately
         return method.apply(this, args);
       }
   
-      // If not ready, queue the method call
+      // If not ready or loading, queue the method call
       return new Promise((resolve, reject) => {
         this.pendingOperations.push({
           method,
@@ -606,9 +608,6 @@ class Resync {
       });
     }
 }
-
-// Export the class as default
-export default Resync;
 
 // Also export an instance for convenience
 export const ResyncAPI = new Resync();
