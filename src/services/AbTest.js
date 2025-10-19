@@ -43,7 +43,6 @@ class AbTest {
 
     if (cachedVariants.has(campaign.id)) {
       const userVariant = cachedVariants.get(campaign.id);
-      console.log("Using cached variant for campaign:", campaignName, userVariant);
       // No need to log again, just return the variant value
       return userVariant.contentViewId;
     }
@@ -51,7 +50,6 @@ class AbTest {
     // check if the function is a system template
     if (campaign.abTestType === "round-robin") {
       // that should be executed in the backend
-      console.log("Calling backend system function for campaign:", campaign);
       try {
         const { apiUrl, appId, apiKey } = configService.getApiConfig();
         const postData = JSON.stringify({
@@ -72,7 +70,6 @@ class AbTest {
         });
         if (response.ok) {
           const data = await response.json();
-          console.log("System function response:", data);
           // store the variant in the cache
           cachedVariants.set(campaign.id, {
             eventType: 'IMPRESSION',
@@ -148,10 +145,8 @@ class AbTest {
           this.saveLogForLaterUpload([logEntry]);
           return;
         }
-        console.log("A/B Log entry sent successfully:", logEntry);
       })
       .catch((error) => {
-        console.error("A/B Failed to send log entry:", error);
         this.saveLogForLaterUpload([logEntry]);
       });
   }
@@ -188,7 +183,6 @@ class AbTest {
       this.logs.pop();
     }
     if (!this.timeoutId) {
-      console.log("No timeout set, setting a new one");
       this.timeoutId = setTimeout(() => this.flushLogs(), TIMING_CONFIG.FLUSH_INTERVAL);
     }
   }

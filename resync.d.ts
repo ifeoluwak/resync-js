@@ -37,8 +37,8 @@ export interface Storage {
 export interface AppConfig {
   /** Application configuration object */
   appConfig: Record<string, any>;
-  /** A/B test experiments */
-  experiments: Experiment[];
+  /** A/B test campaigns */
+  campaigns: Campaign[];
   /** Content views */
   content?: ContentView[];
 }
@@ -46,15 +46,15 @@ export interface AppConfig {
 /**
  * A/B test experiment
  */
-export interface Experiment {
-  /** Unique identifier for the experiment */
+export interface Campaign {
+  /** Unique identifier for the campaign */
   id: string;
-  /** Name of the experiment */
+  /** Name of the campaign */
   name: string;
-  /** Type of experiment ('system' or 'custom') */
+  /** Type of campaign ('system' or 'custom') */
   type: 'system' | 'custom';
   /** Array of possible variants */
-  variants: ExperimentVariant[];
+  variants: CampaignVariant[];
   /** System function ID for variant assignment */
   systemFunctionId?: string;
   /** Rollout percentage for the experiment */
@@ -69,7 +69,7 @@ export interface Experiment {
 /**
  * A/B test experiment variant
  */
-export interface ExperimentVariant {
+export interface CampaignVariant {
   /** Unique identifier for the variant */
   id: string;
   /** Name of the variant */
@@ -93,6 +93,8 @@ export type ElementType =
   | 'text'
   | 'button'
   | 'image'
+  | 'icon'
+  | 'divider'
   | 'input'
   | 'select'
   | 'checkbox'
@@ -125,6 +127,9 @@ export interface ContentView {
     name: string;
     email: string;
   };
+  event: AppEvent;
+  eventId?: string;
+  hasUnpublishedItems: boolean;
   /** Content items array */
   contents: ContentItem[];
   /** Whether this is a full page view */
@@ -250,6 +255,12 @@ export type ElementProperty = {
   clickAction?: ClickAction;
   customProps?: Record<string, any>;
   backgroundImage?: string;
+  icon?: {
+    name?: string;
+    size?: number;
+    color?: string;
+    strokeWidth?: number;
+  };
 };
 export type SectionProperty = {
   styles: ContainerStyles;
@@ -380,14 +391,15 @@ export interface ContentItem {
   isVisible: boolean;
   /** Whether the item is scrollable */
   isScrollable: boolean;
+  environment?: 'sandbox' | 'production'; // Item environment
 }
 
 /**
  * User variant assignment
  */
 export interface UserVariant {
-  /** Experiment ID */
-  experimentId: string;
+  /** Campaign ID */
+  campaignId: string;
   /** Assigned variant */
   variant: any;
   /** Session ID */
@@ -395,7 +407,7 @@ export interface UserVariant {
   /** User ID */
   userId: string;
   /** Timestamp */
-  timestamp: string;
+  createdAt: Date;
   /** Client identifier */
   client: string;
   /** Additional metadata */

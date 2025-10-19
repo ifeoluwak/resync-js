@@ -22,7 +22,7 @@ import AppLogger from "../services/AppLogger.js";
  * Resync.init({
  *   key: 'your-api-key',
  *   appId: 'your-app-id',
- *   callback: (config) => console.log('Config loaded:', config)
+ *   callback: () => console.log('Config loaded:')
  * });
  *
  * // Get configuration value
@@ -192,7 +192,6 @@ class Resync {
     const lastFetchTimestamp = new Date().toISOString();
 
     if (config) {
-      console.log('Got here §', JSON.stringify(config, null, 2));
       Promise.all([
         ResyncCache.saveKeyValue("configs", config.appConfig || {}),
         ResyncCache.saveKeyValue("content", config.content),
@@ -212,7 +211,7 @@ class Resync {
       this.#notifySubscribers();
       return
     }
-    console.error("Error loading app config:", config);
+    console.error("Error loading app config:");
   }
 
   /**
@@ -515,8 +514,8 @@ class Resync {
    * @param {Function} callback - The callback function to subscribe
    * @throws {Error} If callback is not a function
    * @example
-   * this.subscribe((config) => {
-   *   console.log('Configuration updated:', config);
+   * this.subscribe(() => {
+   *   console.log('Configuration updated:');
    * });
    */
   subscribe(callback) {
