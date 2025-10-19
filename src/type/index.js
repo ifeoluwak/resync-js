@@ -226,6 +226,7 @@
  * @property {Map<string, Object>} [userVariants] - User variant assignments
  * @property {Object} [userEvents] - User event assignments
  * @property {string} [appId] - Application ID
+ * @property {User} [user] - User
  */
 
 /**
@@ -287,8 +288,3 @@
  * @property {string} client - The client identifier
  * @property {Object} metadata - Additional metadata
  */
-
-export const Environment = {
-    SANDBOX: 'sandbox',
-    PRODUCTION: 'production',
-}
