@@ -149,6 +149,15 @@ class Resync {
     this.#loadAppConfig()
   }
 
+  async logout() {
+    this.userId = null;
+    this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+    this.userVariants = new Map();
+    this.isLoading = false;
+    await ResyncCache.clearCache();
+    this.#loadAppConfig(true);
+  }
+
 
   /**
    * Fetches the app configuration from the Resync API.

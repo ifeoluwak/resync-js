@@ -31,7 +31,7 @@ class ResyncCache {
     sessionId: null,
     userId: null,
     userVariants: new Map(),
-    userEvents: {},
+    user: null,
   };
 
   /** @type {Map<string, Object>} */
@@ -79,10 +79,13 @@ class ResyncCache {
       sessionId: null,
       userId: null,
       userVariants: new Map(),
-      appId: '',
+      user: null,
+      userEvents: {},
     };
     if (this.storage) {
-      await this.storage.removeItem(STORAGE_KEY);
+      await this.storage.setItem(STORAGE_KEY, JSON.stringify(this.cache));
+    } else {
+      console.warn("No storage available to clear cache.");
     }
   }
 

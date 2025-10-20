@@ -439,7 +439,10 @@ export interface AppEvent {
  * Main Resync class for configuration management and A/B testing
  */
 declare class ResyncAPI {
+  /** Whether the Resync instance is ready */
   ready: boolean;
+  /** Whether data is being loaded */
+  isLoading: boolean;
   /** Current user ID */
   userId: string | null;
   /** Current session ID */
@@ -457,24 +460,6 @@ declare class ResyncAPI {
    * @returns Resync instance
    */
   init(options: InitOptions): ResyncAPI;
-
-  /**
-   * Get the current API key
-   * @returns API key or null if not set
-   */
-  getApiKey(): string | null;
-
-  /**
-   * Get the current App ID
-   * @returns App ID or null if not set
-   */
-  getAppId(): string | null;
-
-  /**
-   * Get the current API URL
-   * @returns API URL
-   */
-  getApiUrl(): string;
 
   /**
    * Set the user ID for tracking and variant assignment
@@ -509,13 +494,13 @@ declare class ResyncAPI {
    * @param key - The configuration key
    * @returns The configuration value
    */
-  getConfig(key: string): any;
+  getConfig(key: string): any | null;
 
   /**
    * Get content views
    * @returns Array of content views
    */
-  getContent(): ContentView[];
+  getContent(): ContentView[] | null;
 
   /**
    * Log a content event
@@ -549,6 +534,12 @@ declare class ResyncAPI {
    * Unsubscribe from configuration updates
    */
   unsubscribe(callback: () => void): void;
+
+  /**
+   * Logout the user and clear the cache
+   * @returns Promise that resolves when the logout is complete
+   */
+  logout(): Promise<void>;
 }
 
 // Export the ResyncAPI instance as default (matches the actual JavaScript export)

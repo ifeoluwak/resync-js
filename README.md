@@ -51,10 +51,10 @@ const apiEndpoint = Resync.getConfig('API_ENDPOINT');
 console.log('Feature enabled:', featureEnabled);
 ```
 
-### 3. A/B Testing
+### 3. Campaign
 
 ```javascript
-// Get variant for an A/B test experiment
+// Get variant for an Campaign experiment
 const variant = await Resync.getVariant('homepage_experiment');
 
 if (variant === 'variant_a') {
@@ -103,12 +103,13 @@ Initialize the Resync SDK. Must be called before using any other methods.
 |-----------|------|----------|-------------|
 | `key` | `string` | ✅ | Your Resync API key |
 | `appId` | `number` | ✅ | Your application ID |
-| `callback` | `(config: AppConfig) => void` | ❌ | Callback function invoked when config is loaded |
+| `callback` | `() => void` | ❌ | Callback function invoked when config is loaded |
 | `storage` | `Storage` | ✅ | Storage object for caching (localStorage, AsyncStorage, etc.) |
+| `environment` | `sandbox` | `production` | ✅ | Environment for your project |
 
 #### Returns
 
-`Promise<Resync>` - Returns the Resync instance
+`Promise<void>` - Returns the Resync instance
 
 #### Example
 
@@ -116,10 +117,11 @@ Initialize the Resync SDK. Must be called before using any other methods.
 await Resync.init({
   key: 'rsk_live_abc123',
   appId: 7,
-  callback: (config) => {
-    console.log('Config loaded:', config.appConfig);
+  callback: () => {
+    console.log('Config loaded:');
   },
   storage: localStorage,
+  environment: 'sandbox'
 });
 ```
 
