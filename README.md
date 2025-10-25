@@ -429,7 +429,7 @@ await Resync.init({
   callback: () => {
     console.log('Initial config loaded:');
   },
-  environment: 'snadbox'
+  environment: 'sandbox'
 });
 
 // Subscribe to future updates
@@ -538,7 +538,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: localStorage, // or sessionStorage
-  environment: 'snadbox'
+  environment: 'sandbox'
 });
 ```
 
@@ -551,7 +551,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: AsyncStorage,
-  environment: 'snadbox'
+  environment: 'sandbox'
 });
 ```
 
@@ -578,7 +578,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: customStorage,
-  environment: 'snadbox'
+  environment: 'sandbox'
 });
 ```
 
@@ -644,7 +644,7 @@ async function initializeApp() {
     key: process.env.RESYNC_API_KEY,
     appId: parseInt(process.env.RESYNC_APP_ID),
     storage: localStorage,
-    environment: 'snadbox'
+    environment: 'sandbox'
   });
 
   // Continue app initialization
@@ -668,7 +668,7 @@ try {
     key: 'your-api-key',
     appId: 7,
     storage: localStorage,
-    environment: 'snadbox'
+    environment: 'sandbox'
   });
 } catch (error) {
   console.error('Failed to initialize Resync:', error);
@@ -685,7 +685,7 @@ await Resync.init({
   key: process.env.RESYNC_API_KEY,
   appId: parseInt(process.env.RESYNC_APP_ID),
   storage: localStorage,
-  environment: 'snadbox'
+  environment: 'sandbox'
 });
 ```
 
@@ -698,7 +698,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: localStorage,
-  environment: 'snadbox'
+  environment: 'sandbox'
 });
 
 // Cache TTL is set automatically:
@@ -739,7 +739,7 @@ await Resync.init({
   key: 'rsk_live_your_api_key', // Make sure this is set
   appId: 7,
   storage: localStorage,
-  environment: 'snadbox'
+  environment: 'sandbox'
 });
 ```
 
@@ -755,7 +755,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: localStorage, // Add storage
-  environment: 'snadbox'
+  environment: 'sandbox'
 });
 
 // React Native
@@ -765,7 +765,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: AsyncStorage, // Add storage
-  environment: 'snadbox'
+  environment: 'sandbox'
 });
 ```
 
