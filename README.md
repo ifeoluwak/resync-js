@@ -429,13 +429,14 @@ await Resync.init({
   callback: () => {
     console.log('Initial config loaded:');
   },
+  environment: 'snadbox'
 });
 
 // Subscribe to future updates
-Resync.subscribe((config) => {
-  console.log('Config updated!', config);
+Resync.subscribe(() => {
+  console.log('Config updated!');
   // Update your app's state or UI
-  updateAppSettings(config.appConfig);
+  updateAppSettings();
 });
 ```
 
@@ -537,6 +538,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: localStorage, // or sessionStorage
+  environment: 'snadbox'
 });
 ```
 
@@ -549,6 +551,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: AsyncStorage,
+  environment: 'snadbox'
 });
 ```
 
@@ -575,6 +578,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: customStorage,
+  environment: 'snadbox'
 });
 ```
 
@@ -597,8 +601,8 @@ import Resync, {
 const options: InitOptions = {
   key: 'your-api-key',
   appId: 7,
-  callback: (config: AppConfig) => {
-    console.log(config.appConfig);
+  callback: () => {
+    console.log('Resync loaded');
   },
   storage: localStorage,
 };
@@ -640,6 +644,7 @@ async function initializeApp() {
     key: process.env.RESYNC_API_KEY,
     appId: parseInt(process.env.RESYNC_APP_ID),
     storage: localStorage,
+    environment: 'snadbox'
   });
 
   // Continue app initialization
@@ -663,6 +668,7 @@ try {
     key: 'your-api-key',
     appId: 7,
     storage: localStorage,
+    environment: 'snadbox'
   });
 } catch (error) {
   console.error('Failed to initialize Resync:', error);
@@ -679,6 +685,7 @@ await Resync.init({
   key: process.env.RESYNC_API_KEY,
   appId: parseInt(process.env.RESYNC_APP_ID),
   storage: localStorage,
+  environment: 'snadbox'
 });
 ```
 
@@ -691,6 +698,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: localStorage,
+  environment: 'snadbox'
 });
 
 // Cache TTL is set automatically:
@@ -731,6 +739,7 @@ await Resync.init({
   key: 'rsk_live_your_api_key', // Make sure this is set
   appId: 7,
   storage: localStorage,
+  environment: 'snadbox'
 });
 ```
 
@@ -746,6 +755,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: localStorage, // Add storage
+  environment: 'snadbox'
 });
 
 // React Native
@@ -755,6 +765,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: AsyncStorage, // Add storage
+  environment: 'snadbox'
 });
 ```
 
@@ -765,20 +776,6 @@ await Resync.init({
 **Solution:** The cache TTL is automatically set based on environment:
 - **Production**: 6 hours cache
 - **Development**: No cache (always fresh)
-
-If you need to force a refresh in production, clear the storage cache:
-
-```javascript
-// Clear cache to force fresh fetch
-await localStorage.removeItem('resync_cache');
-
-// Re-initialize
-await Resync.init({
-  key: 'your-api-key',
-  appId: 7,
-  storage: localStorage,
-});
-```
 
 ## Examples
 
