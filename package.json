@@ -32,12 +32,16 @@
     "javascript",
     "react-native",
     "expo",
-    "cross-platform"
+    "cross-platform",
+    "dynamic-content",
+    "dynamic-banners",
+    "dynamic-forms",
+    "forms"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/ifeoluwak/resync-js.git"
   },
-  "author": "ifeoluwa",
+  "author": "Ifeoluwa King <ifeoluwaking24@gmail.com> (https://github.com/ifeoluwak)",
   "license": "MIT"
 }

@@ -67,8 +67,8 @@ async function onConfigLoaded() {
   // Demonstrate configuration access
   demonstrateConfigAccess();
   
-  // Demonstrate A/B testing
-  await demonstrateABTesting();
+  // Demonstrate campaigns
+  await demonstrateCampaign();
   
   // Demonstrate content logging
   demonstrateContentLogging();
@@ -120,13 +120,13 @@ function demonstrateConfigAccess() {
 /**
  * Demonstrate campaign functionality
  */
-async function demonstrateABTesting() {
+async function demonstrateCampaign() {
   console.log("🧪 Demonstrating campaign...");
   
   try {
     // Simulate getting a variant for a campaign
     const variant = await ResyncAPI.getVariant('campaign-1');
-    console.log("✅ A/B test variant retrieved:", variant);
+    console.log("✅ Campaign variant retrieved:", variant);
     
     // Simulate recording a conversion
     // ResyncAPI.recordConversion('campaign-1', {

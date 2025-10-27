@@ -1,18 +1,18 @@
 # Resync JavaScript
 
-A powerful JavaScript library for dynamic content management, remote configuration, and A/B testing. Resync allows you to manage app configurations, run experiments, and deliver dynamic content without app updates. Works seamlessly across JavaScript, React Native, and Expo applications.
+A powerful JavaScript library for dynamic content management, remote configuration, and in-app campaign. Resync allows you to manage embed dynamic banners, ctas, forms, text, run campaigns into your mobile app. Deliver dynamic content without app updates. Works seamlessly across JavaScript, React Native, and Expo applications.
 
 ## Features
 
 - 🚀 **Remote Configuration** - Manage app configs remotely without code deployments
-- 🧪 **A/B Testing** - Run experiments with automatic variant assignment and tracking
+- 🧪 **In-app Campaigns** - Run campaigns with audiences, automatic variant assignment and tracking
 - 🎨 **Dynamic Content Management** - Fetch and render content views defined in your Resync dashboard
 - 📊 **Event Logging** - Track custom events and user interactions
 - 💾 **Smart Caching** - Automatic environment-based caching (6h production, 0ms development)
 - 🔄 **Real-time Updates** - Subscribe to configuration changes with callback support
 - 📱 **Cross-Platform** - Works with vanilla JavaScript, React Native, and Expo
 - 🔧 **TypeScript Support** - Full TypeScript definitions included
-- 🎯 **User Targeting** - Set user attributes for personalized experiences
+- 🎯 **User Targeting** - Set user attributes for personalized experiences and audience creation.
 
 ## Installation
 
@@ -51,10 +51,10 @@ const apiEndpoint = Resync.getConfig('API_ENDPOINT');
 console.log('Feature enabled:', featureEnabled);
 ```
 
-### 3. A/B Testing
+### 3. Campaign
 
 ```javascript
-// Get variant for an A/B test experiment
+// Get variant for an Campaign experiment
 const variant = await Resync.getVariant('homepage_experiment');
 
 if (variant === 'variant_a') {
@@ -103,12 +103,13 @@ Initialize the Resync SDK. Must be called before using any other methods.
 |-----------|------|----------|-------------|
 | `key` | `string` | ✅ | Your Resync API key |
 | `appId` | `number` | ✅ | Your application ID |
-| `callback` | `(config: AppConfig) => void` | ❌ | Callback function invoked when config is loaded |
+| `callback` | `() => void` | ❌ | Callback function invoked when config is loaded |
 | `storage` | `Storage` | ✅ | Storage object for caching (localStorage, AsyncStorage, etc.) |
+| `environment` | `sandbox` | `production` | ✅ | Environment for your project |
 
 #### Returns
 
-`Promise<Resync>` - Returns the Resync instance
+`Promise<void>` - Returns the Resync instance
 
 #### Example
 
@@ -116,10 +117,11 @@ Initialize the Resync SDK. Must be called before using any other methods.
 await Resync.init({
   key: 'rsk_live_abc123',
   appId: 7,
-  callback: (config) => {
-    console.log('Config loaded:', config.appConfig);
+  callback: () => {
+    console.log('Config loaded:');
   },
   storage: localStorage,
+  environment: 'sandbox'
 });
 ```
 
@@ -154,13 +156,13 @@ console.log('Max retries:', maxRetries);
 
 ### Resync.getVariant(campaignName)
 
-Get the assigned variant for an A/B test experiment.
+Get the assigned variant for a Campaign.
 
 #### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `campaignName` | `string` | ✅ | Name of the A/B test campaign |
+| `campaignName` | `string` | ✅ | Name of the campaign |
 
 #### Returns
 
@@ -427,19 +429,20 @@ await Resync.init({
   callback: () => {
     console.log('Initial config loaded:');
   },
+  environment: 'sandbox'
 });
 
 // Subscribe to future updates
-Resync.subscribe((config) => {
-  console.log('Config updated!', config);
+Resync.subscribe(() => {
+  console.log('Config updated!');
   // Update your app's state or UI
-  updateAppSettings(config.appConfig);
+  updateAppSettings();
 });
 ```
 
-### User Segmentation with A/B Tests
+### User Segmentation with attributes
 
-Combine user attributes with A/B testing for targeted experiments:
+Combine user attributes for targeted campaigns:
 
 ```javascript
 // Set user attributes
@@ -535,6 +538,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: localStorage, // or sessionStorage
+  environment: 'sandbox'
 });
 ```
 
@@ -547,6 +551,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: AsyncStorage,
+  environment: 'sandbox'
 });
 ```
 
@@ -573,6 +578,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: customStorage,
+  environment: 'sandbox'
 });
 ```
 
@@ -595,8 +601,8 @@ import Resync, {
 const options: InitOptions = {
   key: 'your-api-key',
   appId: 7,
-  callback: (config: AppConfig) => {
-    console.log(config.appConfig);
+  callback: () => {
+    console.log('Resync loaded');
   },
   storage: localStorage,
 };
@@ -638,6 +644,7 @@ async function initializeApp() {
     key: process.env.RESYNC_API_KEY,
     appId: parseInt(process.env.RESYNC_APP_ID),
     storage: localStorage,
+    environment: 'sandbox'
   });
 
   // Continue app initialization
@@ -661,6 +668,7 @@ try {
     key: 'your-api-key',
     appId: 7,
     storage: localStorage,
+    environment: 'sandbox'
   });
 } catch (error) {
   console.error('Failed to initialize Resync:', error);
@@ -677,6 +685,7 @@ await Resync.init({
   key: process.env.RESYNC_API_KEY,
   appId: parseInt(process.env.RESYNC_APP_ID),
   storage: localStorage,
+  environment: 'sandbox'
 });
 ```
 
@@ -689,6 +698,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: localStorage,
+  environment: 'sandbox'
 });
 
 // Cache TTL is set automatically:
@@ -729,6 +739,7 @@ await Resync.init({
   key: 'rsk_live_your_api_key', // Make sure this is set
   appId: 7,
   storage: localStorage,
+  environment: 'sandbox'
 });
 ```
 
@@ -744,6 +755,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: localStorage, // Add storage
+  environment: 'sandbox'
 });
 
 // React Native
@@ -753,6 +765,7 @@ await Resync.init({
   key: 'your-api-key',
   appId: 7,
   storage: AsyncStorage, // Add storage
+  environment: 'sandbox'
 });
 ```
 
@@ -763,20 +776,6 @@ await Resync.init({
 **Solution:** The cache TTL is automatically set based on environment:
 - **Production**: 6 hours cache
 - **Development**: No cache (always fresh)
-
-If you need to force a refresh in production, clear the storage cache:
-
-```javascript
-// Clear cache to force fresh fetch
-await localStorage.removeItem('resync_cache');
-
-// Re-initialize
-await Resync.init({
-  key: 'your-api-key',
-  appId: 7,
-  storage: localStorage,
-});
-```
 
 ## Examples
 
