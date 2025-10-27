@@ -1,18 +1,18 @@
 # Resync JavaScript
 
-A powerful JavaScript library for dynamic content management, remote configuration, and A/B testing. Resync allows you to manage app configurations, run experiments, and deliver dynamic content without app updates. Works seamlessly across JavaScript, React Native, and Expo applications.
+A powerful JavaScript library for dynamic content management, remote configuration, and in-app campaign. Resync allows you to manage embed dynamic banners, ctas, forms, text, run campaigns into your mobile app. Deliver dynamic content without app updates. Works seamlessly across JavaScript, React Native, and Expo applications.
 
 ## Features
 
 - 🚀 **Remote Configuration** - Manage app configs remotely without code deployments
-- 🧪 **A/B Testing** - Run experiments with automatic variant assignment and tracking
+- 🧪 **In-app Campaigns** - Run campaigns with audiences, automatic variant assignment and tracking
 - 🎨 **Dynamic Content Management** - Fetch and render content views defined in your Resync dashboard
 - 📊 **Event Logging** - Track custom events and user interactions
 - 💾 **Smart Caching** - Automatic environment-based caching (6h production, 0ms development)
 - 🔄 **Real-time Updates** - Subscribe to configuration changes with callback support
 - 📱 **Cross-Platform** - Works with vanilla JavaScript, React Native, and Expo
 - 🔧 **TypeScript Support** - Full TypeScript definitions included
-- 🎯 **User Targeting** - Set user attributes for personalized experiences
+- 🎯 **User Targeting** - Set user attributes for personalized experiences and audience creation.
 
 ## Installation
 
@@ -156,13 +156,13 @@ console.log('Max retries:', maxRetries);
 
 ### Resync.getVariant(campaignName)
 
-Get the assigned variant for an A/B test experiment.
+Get the assigned variant for a Campaign.
 
 #### Parameters
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `campaignName` | `string` | ✅ | Name of the A/B test campaign |
+| `campaignName` | `string` | ✅ | Name of the campaign |
 
 #### Returns
 
@@ -440,9 +440,9 @@ Resync.subscribe(() => {
 });
 ```
 
-### User Segmentation with A/B Tests
+### User Segmentation with attributes
 
-Combine user attributes with A/B testing for targeted experiments:
+Combine user attributes for targeted campaigns:
 
 ```javascript
 // Set user attributes

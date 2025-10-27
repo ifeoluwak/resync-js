@@ -12,9 +12,7 @@ import AppLogger from "../services/AppLogger.js";
 
 
 /**
- * Main Resync class for configuration management and A/B testing.
- * Provides functionality for fetching app configurations, executing functions,
- * and managing A/B test campaigns.
+ * Main Resync class.
  *
  * @class Resync
  * @example
@@ -23,12 +21,14 @@ import AppLogger from "../services/AppLogger.js";
  *   key: 'your-api-key',
  *   appId: 'your-app-id',
  *   callback: () => console.log('Config loaded:')
+ *   storage: localStorage
+ *   environment: 'production'
  * });
  *
  * // Get configuration value
  * const value = Resync.getConfig('feature-flag');
  *
- * // Get A/B test variant
+ * // Get campaign variant
  * const variant = await Resync.getVariant('campaign-name', payload);
  */
 class Resync {
@@ -401,7 +401,7 @@ class Resync {
   }
 
   /**
-   * Gets a variant for an A/B test campaign.
+   * Gets a variant for a campaign.
    * @param {string} campaignName - The campaign name
    * @returns {Promise<number|null>} The variant content view id or null if not found
    * @throws {Error} If AbTest is not initialized
@@ -499,7 +499,7 @@ class Resync {
   }
 
   /**
-   * Records a conversion for an A/B test campaign.
+   * Records a conversion for an campaign.
    * @param {string} campaignName - The campaign name
    * @param {Object} [metadata={}] - Additional metadata for the conversion
    * @returns {*} The result of recording the conversion

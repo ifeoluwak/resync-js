@@ -37,14 +37,14 @@ export interface Storage {
 export interface AppConfig {
   /** Application configuration object */
   appConfig: Record<string, any>;
-  /** A/B test campaigns */
+  /** Campaigns */
   campaigns: Campaign[];
   /** Content views */
   content?: ContentView[];
 }
 
 /**
- * A/B test experiment
+ * Campaign
  */
 export interface Campaign {
   /** Unique identifier for the campaign */
@@ -57,9 +57,9 @@ export interface Campaign {
   variants: CampaignVariant[];
   /** System function ID for variant assignment */
   systemFunctionId?: string;
-  /** Rollout percentage for the experiment */
+  /** Rollout percentage for the campaign */
   rolloutPercent?: number;
-  /** Date settings for time-based experiments */
+  /** Date settings for time-based campaigns */
   dateSettings?: {
     startDate: string;
     endDate: string;
@@ -67,7 +67,7 @@ export interface Campaign {
 }
 
 /**
- * A/B test experiment variant
+ * Campaign variant
  */
 export interface CampaignVariant {
   /** Unique identifier for the variant */
@@ -436,7 +436,7 @@ export interface AppEvent {
 // ============================================================================
 
 /**
- * Main Resync class for configuration management and A/B testing
+ * Main Resync class
  */
 declare class ResyncAPI {
   /** Whether the Resync instance is ready */
@@ -483,7 +483,7 @@ declare class ResyncAPI {
   setUserAttributes({ email, name, phone, language, attributes }: { email?: string, name?: string, phone?: string, language?: string, attributes?: Record<string, unknown> }): Promise<boolean>;
 
   /**
-   * Get a variant for an A/B test experiment
+   * Get a variant for a campaign
    * @param campaignName - The campaign name
    * @returns Promise that resolves to the variant content view id or null
    */
@@ -516,7 +516,7 @@ declare class ResyncAPI {
   submitForm(formData: { contentViewId: number, data: Record<string, unknown> }): Promise<boolean | Error>;
 
   /**
-   * Record a conversion for an A/B test experiment
+   * Record a conversion for a campaign
    * @param campaignName - The campaign name
    * @param metadata - Additional metadata for the conversion
    */
