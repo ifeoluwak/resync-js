@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * ResyncBase Node.js Demo
+ * Resync Node.js Demo
  * Run with: node demo-node.js
  */
 
 import { runDemo, DEMO_CONFIG } from './src/examples/demo.js';
 
-console.log('🚀 ResyncBase Node.js Demo');
+console.log('🚀 Resync Node.js Demo');
 console.log('==========================');
 console.log('');
 
@@ -33,5 +33,5 @@ setTimeout(() => {
   
   console.log('');
   console.log('🎉 Demo completed successfully!');
-  console.log('The ResyncBase library is working with the new architecture.');
+  console.log('The Resync library is working with the new architecture.');
 }, 5000);
