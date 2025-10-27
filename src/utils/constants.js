@@ -5,7 +5,7 @@
 
 // API Configuration
 export const API_CONFIG = {
-  DEFAULT_URL: "http://localhost:3000/v1/apps-external/",
+  DEFAULT_URL: "https://api-staging.getresync.com/v1/apps-external/",
   ENDPOINTS: {
     APP_DATA: "/app-data",
     USER_VARIANTS: "/user-variants",
