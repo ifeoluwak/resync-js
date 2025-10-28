@@ -17,9 +17,9 @@ A powerful JavaScript library for dynamic content management, remote configurati
 ## Installation
 
 ```sh
-npm install resync
+npm install resync-javascript
 # or
-yarn add resync
+yarn add resync-javascript
 ```
 
 ## Quick Start
@@ -27,7 +27,7 @@ yarn add resync
 ### 1. Initialize Resync
 
 ```javascript
-import Resync from 'resync';
+import Resync from 'resync-javascript';
 
 // Initialize Resync with your API credentials
 await Resync.init({
