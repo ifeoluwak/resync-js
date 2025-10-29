@@ -1,6 +1,6 @@
 {
   "name": "resync-javascript",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Javascript client library for Resync Content Management System",
   "main": "index.js",
   "module": "index.js",
@@ -16,9 +16,10 @@
     }
   },
   "files": [
-    "*.js",
-    "*.json",
-    "*.d.ts"
+    "index.js",
+    "index.d.ts",
+    "src",
+    "README.md"
   ],
   "scripts": {
     "test": "npm test"

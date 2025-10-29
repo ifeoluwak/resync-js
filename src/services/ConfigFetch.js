@@ -83,6 +83,8 @@ class ConfigFetch {
         const data = await fetchData();
         if (data) {
           return data;
+        } else {
+          return null;
         }
       } catch (error) {
         if (i < numOfRetries - 1) {

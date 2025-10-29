@@ -443,6 +443,8 @@ declare class ResyncAPI {
   ready: boolean;
   /** Whether data is being loaded */
   isLoading: boolean;
+  /** Whether the app configuration failed to load */
+  loadFailed: boolean;
   /** Current user ID */
   userId: string | null;
   /** Current session ID */
@@ -460,6 +462,11 @@ declare class ResyncAPI {
    * @returns Resync instance
    */
   init(options: InitOptions): ResyncAPI;
+
+  /**
+   * Reload the app configuration
+   */
+  reload(): void;
 
   /**
    * Set the user ID for tracking and variant assignment

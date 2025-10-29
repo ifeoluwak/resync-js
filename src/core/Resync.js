@@ -54,6 +54,9 @@ class Resync {
   /** @type {boolean} */
   isLoading = false;
 
+  /** @type {boolean} */
+  loadFailed = false;
+
   /** @type {string|null} */
   #appId = null;
 
@@ -197,30 +200,41 @@ class Resync {
       this.#notifySubscribers();
     }
 
-    const config = await ConfigFetch.fetchAppConfig();
-    const lastFetchTimestamp = new Date().toISOString();
-
-    if (config) {
-      Promise.all([
-        ResyncCache.saveKeyValue("configs", config.appConfig || {}),
-        ResyncCache.saveKeyValue("content", config.content),
-        ResyncCache.saveKeyValue("campaigns", config.campaigns || []),
-        ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp),
-      ]);
-      if (config.user) {
-        ResyncCache.saveKeyValue("user", config.user);
-      }
-      if (config.userEvents) {
-        this.setUserVariants(config.userEvents);
+    try {
+      const config = await ConfigFetch.fetchAppConfig();
+      const lastFetchTimestamp = new Date().toISOString();
+  
+      if (config) {
+        Promise.all([
+          ResyncCache.saveKeyValue("configs", config.appConfig || {}),
+          ResyncCache.saveKeyValue("content", config.content),
+          ResyncCache.saveKeyValue("campaigns", config.campaigns || []),
+          ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp),
+        ]);
+        if (config.user) {
+          ResyncCache.saveKeyValue("user", config.user);
+        }
+        if (config.userEvents) {
+          this.setUserVariants(config.userEvents);
+        }
+        if (config.campaigns) {
+          AbTest.setCampaigns(config.campaigns);
+        }
+        this.loadFailed = false;
+      } else {
+        this.loadFailed = true;
       }
       this.ready = true;
       this.isLoading = false;
       this.#executePendingOperations();
-      AbTest.setCampaigns(config.campaigns);
       this.#notifySubscribers();
-      return
+    } catch (error) {
+      this.ready = true;
+      this.loadFailed = true;
+      this.isLoading = false;
+      this.#notifySubscribers();
+      console.error("Error loading app config:");
     }
-    console.error("Error loading app config:");
   }
 
   /**
@@ -232,6 +246,10 @@ class Resync {
       operation.method.apply(this, operation.args);
     }
     this.pendingOperations = [];
+  }
+
+  reload() {
+    this.#loadAppConfig(true);
   }
 
   // async reset() {
