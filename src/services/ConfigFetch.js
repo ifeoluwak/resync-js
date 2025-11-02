@@ -95,6 +95,58 @@ class ConfigFetch {
       }
     }
   }
+  async setUserIdData(body) {
+    try {
+      const { appId, apiKey } = configService.getApiConfig();
+      const response = await fetch(`${API_CONFIG.DEFAULT_URL}${appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
+        },
+        body,
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+  async setUserAttributesData(body) {
+      try {
+        const { appId, apiKey } = configService.getApiConfig();
+        const response = await fetch(`${API_CONFIG.DEFAULT_URL}${appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
+          method: "PATCH",
+          headers: {
+            "x-api-key": apiKey,
+            "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
+          },
+          body,
+        });
+
+        if (!response.ok) {
+          return false;
+        }
+        // update local user
+        const oldUser = ResyncCache.getKeyValue("user");
+        if (oldUser) {
+          const attributes = JSON.parse(body).attributes;
+          ResyncCache.saveKeyValue("user", {
+            ...oldUser,
+            attributes: {
+              ...oldUser.attributes,
+              ...attributes,
+            }
+          });
+        }
+        return true;
+      } catch (error) {
+        return false;
+      }
+  }
 }
 
 export default new ConfigFetch();
