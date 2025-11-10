@@ -42,6 +42,9 @@ class Resync {
   /** @type {Array<{method: Function, args: Array, resolve: Function, reject: Function}>} */
   pendingOperations = [];
 
+  /** @type {Array<{method: Function, args: Array, resolve: Function, reject: Function}>} */
+  pendingUserOperations = [];
+
   /** @type {string|null} */
   #apiKey = null;
 
@@ -92,7 +95,7 @@ class Resync {
    *   appId: 'your-app-id',
    *   callback: () => console.log('Config loaded'),
    *   storage: localStorage
-   *   environment: Environment.SANDBOX
+   *   environment: 'sandbox'
    * });
    */
   async init({ key, appId, callback, storage, environment }) {
@@ -239,13 +242,22 @@ class Resync {
 
   /**
    * Executes the pending operations due to the app config not being loaded yet.
-   * @private
    */
   #executePendingOperations() {
     for (const operation of this.pendingOperations) {
       operation.method.apply(this, operation.args);
     }
     this.pendingOperations = [];
+  }
+
+  /**
+   * Executes the pending user operations due to the user ID not being set yet.
+   */
+  #executePendingUserOperations() {
+    for (const operation of this.pendingUserOperations) {
+      operation.method.apply(this, operation.args);
+    }
+    this.pendingUserOperations = [];
   }
 
   reload() {
@@ -263,9 +275,17 @@ class Resync {
   // }
 
   /**
-   * Sets the user ID for tracking and variant assignment.
+   * Sets the user ID for tracking.
    * @param {string|number} userId - The user ID to set
-   * @param {{ email: string, name: string, phone: string, language: string }} metadata - The metadata to set
+   * @param {{
+   * email: string,
+   * name: string,
+   * phone: string,
+   * language: string
+   * age: number
+   * gender: string
+   * country: string
+   * }} metadata - The metadata to set
    * @returns {Promise<boolean>} - Returns true if the user ID is set successfully, false otherwise.
    * @example
    * Resync.setUserId('user123');
@@ -276,55 +296,27 @@ class Resync {
   }
   #setUserId(userId, metadata = null) {
     if (ResyncCache) {
-      const existingUserId = ResyncCache.getKeyValue("userId");
-      if (existingUserId) {
+      const existingUser = ResyncCache.getKeyValue("user");
         // check if userId is same as existing userId
-        if (existingUserId === `${userId}`) {
-          return true;
-        } else {
-          // reset the cache
+        if (existingUser?.userId === `${userId}` && existingUser?.appId === Number(this.#appId)) {
           this.userId = `${userId}`;
-          this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
-          ResyncCache.saveKeyValue("userId", `${userId}`);
-          ResyncCache.saveKeyValue("sessionId", this.sessionId);
+          this.#executePendingUserOperations();
+          return true;
         }
-      } else {
-        this.userId = `${userId}`;
-        this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
-        ResyncCache.saveKeyValue("userId", `${userId}`);
-        ResyncCache.saveKeyValue("sessionId", this.sessionId);
-      }
     }
     this.userId = `${userId}`;
     this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     ResyncCache.saveKeyValue("userId", `${userId}`);
     ResyncCache.saveKeyValue("sessionId", this.sessionId);
-    const postUserData = async () => {
-      try {
-        const response = await fetch(`${API_CONFIG.DEFAULT_URL}${this.#appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
-          method: "POST",
-          headers: {
-            "x-api-key": this.#apiKey,
-            "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
-          },
-          body: JSON.stringify({
-            userId,
-            appId: Number(this.#appId),
-            ...metadata,
-          }),
-        });
-
-        if (!response.ok) {
-          return false;
-        }
-        return true;
-      } catch (error) {
-        return false;
-      }
-    }
+    this.#executePendingUserOperations();
     if (this.#apiKey && this.#appId) {
+      const body = JSON.stringify({
+        userId,
+        appId: Number(this.#appId),
+        ...metadata,
+      })
       // post the user data and reload the data
-      return postUserData().then(() => this.#loadAppConfig(true));
+      return ConfigFetch.setUserIdData(body).then(() => this.#loadAppConfig(true));
     }
     return Promise.resolve(false);
   }
@@ -347,73 +339,61 @@ class Resync {
   }
 
   /**
-   * Sets user attributes for tracking and targeting.
-   * @param {{ email: string, name: string, phone: string, language: string, attributes: Object }} attributes - User attributes object
+   * Sets user attributes for tracking, audience grouping and targeting.
+   * @param {{
+   * email: string,
+   * name: string,
+   * phone: string,
+   * language: string,
+   * age: number,
+   * gender: string,
+   * country: string,
+   * attributes: Record<string, any>
+   * }} attributes - User attributes object
    * @returns {Promise<boolean>} - Returns true if the attributes are set successfully, false otherwise.
    * @example
    * Resync.setUserAttributes({
-   *   email: 'test@test.com',
-   *   name: 'Test User',
-   *   phone: '1234567890',
    *   language: 'en',
+   *   age: 25,
+   *   gender: 'male',
+   *   country: 'US',
    *   attributes: {
-   *     country: 'US',
+   *     height: 180,
    *     plan: 'premium',
-   *     age: 25
+   *     planType: 'monthly',
+   *     favoriteColor: 'blue',
    *   }
    * });
    */
-  setUserAttributes({ email, name, phone, language, attributes }) {
-    return this.#queueSetMethod(this.#setUserAttributes, { email, name, phone, language, attributes });
-  }
-  #setUserAttributes({ email, name, phone, language, attributes }) {
-    // if (typeof attributes !== "object") {
-    //   throw new Error(ERROR_MESSAGES.ATTRIBUTES_MUST_BE_OBJECT);
-    // }
+  setUserAttributes({ email, name, phone, language, age, gender, country, attributes }) {
     if (!this.userId) {
-      throw new Error(ERROR_MESSAGES.USER_ID_NOT_SET);
-    }
-    this.attributes = JSON.stringify(attributes);
-    const fetchData = async () => {
-      try {
-        const response = await fetch(`${API_CONFIG.DEFAULT_URL}${this.#appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {
-          method: "PATCH",
-          headers: {
-            "x-api-key": this.#apiKey,
-            "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
-          },
-          body: JSON.stringify({
-            userId: this.userId,
-            appId: Number(this.#appId),
-            email,
-            name,
-            phone,
-            language,
-            attributes,
-          }),
+      return new Promise((resolve, reject) => {
+        this.pendingUserOperations.push({
+          method: this.#setUserAttributes,
+          args: [{ email, name, phone, language, age, gender, country, attributes }],
+          resolve,
+          reject
         });
-
-        if (!response.ok) {
-          return false;
-        }
-        // update local user
-        const oldUser = ResyncCache.getKeyValue("user");
-        if (oldUser) {
-          ResyncCache.saveKeyValue("user", {
-            ...oldUser,
-            attributes: {
-              ...oldUser.attributes,
-              ...attributes,
-            }
-          });
-        }
-        return true;
-      } catch (error) {
-        return false;
-      }
+      });
     }
+    return this.#queueSetMethod(this.#setUserAttributes, { email, name, phone, language, age, gender, country, attributes });
+  }
+  #setUserAttributes({ email, name, phone, language, age, gender, country, attributes }) {
+    this.attributes = JSON.stringify(attributes);
     if (this.#apiKey && this.#appId) {
-      return fetchData();
+      const body = JSON.stringify({
+        userId: this.userId,
+        appId: Number(this.#appId),
+        email,
+        name,
+        phone,
+        language,
+        age,
+        gender,
+        country,
+        attributes,
+      });
+      return ConfigFetch.setUserAttributesData(body);
     }
     return Promise.resolve(false);
   }
