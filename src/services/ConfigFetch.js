@@ -95,7 +95,7 @@ class ConfigFetch {
       }
     }
   }
-  async setUserIdData(body) {
+  async logInUser(body) {
     try {
       const { appId, apiKey } = configService.getApiConfig();
       const response = await fetch(`${API_CONFIG.DEFAULT_URL}${appId}${API_CONFIG.ENDPOINTS.CUSTOMER}`, {

@@ -8,22 +8,18 @@
  */
 
 /**
- * Object representing a campaign variant.
- * @typedef {Object} CampaignVariant
- * @property {string} id - The unique identifier for the variant
- * @property {string} name - The name of the variant
- * @property {string} value - The value of the variant
- * @property {number} weight - The weight/percentage for this variant
- */
-
-/**
  * Object representing a campaign.
  * @typedef {Object} Campaign
  * @property {string} id - The unique identifier for the campaign
  * @property {string} name - The name of the campaign
  * @property {string} type - The type of campaign (e.g., 'system', 'custom')
- * @property {CampaignVariant[]} variants - Array of possible variants
- * @property {string} [systemFunctionId] - ID of system function for variant assignment
+ * @property {number} controlContentId - The content view id of the control variant
+ * @property {number} variantAContentId - The content view id of the variant A
+ * @property {number} variantBContentId - The content view id of the variant B
+ * @property {number} controlWeight - The weight of the control variant
+ * @property {number} variantAWeight - The weight of the variant A
+ * @property {number} variantBWeight - The weight of the variant B
+ * @property {string} abTestType - The type of A/B test (e.g., 'weighted-rollout', 'round-robin')
  */
 
 /**

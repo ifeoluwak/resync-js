@@ -1,14 +1,35 @@
 import ResyncCache from "../core/ResyncCache.js";
 import { TIMING_CONFIG } from "../utils/constants.js";
 
+/**
+ * Hash a userId using DJB2 algorithm with salting for better distribution.
+ * Ensures uniform distribution regardless of userId format (numeric strings, UUIDs, etc.)
+ * @param {string} userId - The user identifier (always a string)
+ * @returns {number} Hash value between 0 and HASH_MODULO-1
+ */
 function hashUserId(userId) {
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = (hash * TIMING_CONFIG.HASH_MULTIPLIER + userId.charCodeAt(i)) % TIMING_CONFIG.HASH_MODULO;
+  // Add salt prefix for better distribution, especially for short numeric IDs like "1", "2", "3"
+  const saltedUserId = `resync_${userId}_salt`;
+  
+  // DJB2 hash algorithm - provides excellent distribution
+  let hash = 5381; // Magic number for DJB2
+  
+  for (let i = 0; i < saltedUserId.length; i++) {
+    const char = saltedUserId.charCodeAt(i);
+    // hash * 33 + char (bit shift is faster than multiplication)
+    hash = ((hash << 5) + hash) + char;
   }
-  return hash;
+  
+  // Ensure positive value and modulo to range
+  return Math.abs(hash) % TIMING_CONFIG.HASH_MODULO;
 }
 
+/**
+ * Assigns a variant to a user based on the weighted rollout algorithm.
+ * @param {string} userId - The user identifier (always a string)
+ * @param {Array<{weight: number, contentViewId: number}>} variants - The variants to assign to the user
+ * @returns {number|null} The content view id of the assigned variant or null if no variants are provided
+ */
 function assignVariant(userId, variants) {
   if (variants.length === 0) {
     return null;
@@ -17,34 +38,48 @@ function assignVariant(userId, variants) {
   if (totalWeight <= 0) {
     throw new Error('Total weight must be greater than 0');
   }
+  
+  // Normalize weights to sum to 1
   const normalizedVariants = variants.map(v => ({
-    variant: v.variant,
+    contentViewId: v.contentViewId,
     weight: v.weight / totalWeight,
-  })).filter(v => v.variant !== null);
+  })).filter(v => v.contentViewId !== null);
+  
+  // Hash the userId and normalize to 0-1 range
   const hashValue = hashUserId(userId);
+  const normalizedHash = hashValue / TIMING_CONFIG.HASH_MODULO;
+  
+  // Find which bucket the normalized hash falls into
   let cumulative = 0;
   for (const v of normalizedVariants) {
     cumulative += v.weight;
-    if (hashValue < cumulative) {
-      return v.variant;
+    if (normalizedHash < cumulative) {
+      return v.contentViewId;
     }
   }
-  return normalizedVariants[normalizedVariants.length - 1].variant;
+  
+  // Fallback (shouldn't happen with proper normalization)
+  return normalizedVariants[normalizedVariants.length - 1].contentViewId;
 }
 
-// Weighted rollout: supports even or uneven splits
-export const weightedRolloutTemplate = (experiment) => {
+/**
+ * Assigns a variant (content view id) to a user based on the weighted rollout algorithm.
+ * This is a template for the weighted rollout algorithm.
+ * @param {Campaign} campaign - The campaign to assign a variant to.
+ * @returns {number|null} The content view id of the assigned variant or null if no variants are provided
+ */
+export const weightedRolloutTemplate = (campaign) => {
   let variants = [{
-    weight: experiment.controlWeight,
-    variant: experiment.controlContentId,
+    weight: campaign.controlWeight,
+    contentViewId: campaign.controlContentId,
   }, {
-    weight: experiment.variantAWeight,
-    variant: experiment.variantAContentId,
+    weight: campaign.variantAWeight,
+    contentViewId: campaign.variantAContentId,
   }];
-  if (experiment?.variantBWeight && experiment.variantBContentId) {
+  if (campaign?.variantBWeight && campaign.variantBContentId) {
     variants.push({
-      weight: experiment.variantBWeight,
-      variant: experiment.variantBContentId,
+      weight: campaign.variantBWeight,
+      contentViewId: campaign.variantBContentId,
     });
   }
   const userId = ResyncCache.getKeyValue("userId") || ResyncCache.getKeyValue("sessionId");
@@ -57,53 +92,9 @@ export const weightedRolloutTemplate = (experiment) => {
   return assignVariant(userId, variants);
 };
 
-// Feature flag rollout: simple on/off (control/treatment)
-export const featureFlagRolloutTemplate = (experiment) => {
-  const { variants, rolloutPercent } = experiment;
-  const userId = ResyncCache.getKeyValue("userId") || ResyncCache.getKeyValue("sessionId");
-  const treatmentValue = variants.find(v => v.default)?.value;
-  const controlValue = variants.find(v => !v.default)?.value;
-  const hash = hashUserId(userId);
-  return hash < rolloutPercent ? treatmentValue : controlValue;
-};
-
-// Stateless: Does NOT require event history
-export const weightedRandom = (experiment) => {
-  const { variants } = experiment;
-  const totalWeight = variants.reduce((acc, variant) => {
-    return acc + variant.weight;
-  }, 0);
-  const random = Math.random() * totalWeight;
-  let cumulativeWeight = 0;
-  for (const variant of variants) {
-    cumulativeWeight += variant.weight;
-    if (random <= cumulativeWeight) {
-      return variant.value;
-    }
-  }
-  return variants.find((variant) => variant.default)?.value;
-};
-
-// Stateless: Does NOT require event history
-// For seasonal campaigns
-export const getTimeVariant = (experiment) => {
-  const { variants, dateSettings } = experiment;
-  const mainVariant = variants.find(v => v.default);
-  const defaultVariant = variants.find(v => !v.default);
-
-  const now = new Date();
-  const startDate = new Date(dateSettings.startDate);
-  const endDate = new Date(dateSettings.endDate);
-
-  return now >= startDate && now <= endDate
-    ? mainVariant.value
-    : defaultVariant.value;
-};
-
 // Map of system template IDs to their respective functions to be called locally
 export const systemTemplatesIdMap = {
   "weighted-rollout": 'weightedRolloutTemplate',
-  "weighted-random": 'weightedRandom',
 };
 
 // Require api calls to determine variant

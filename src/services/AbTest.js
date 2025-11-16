@@ -17,6 +17,9 @@ const LogType = LOG_TYPES;
  */
 class AbTest {
   constructor(campaigns) {
+    /**
+     * @type {Array<Campaign>}
+     */
     this.campaigns = campaigns || [];
     this.logs = [];
     this.retryCount = 0;
@@ -26,7 +29,7 @@ class AbTest {
   /**
    * Return the variant value and logs the execution of an campaign
    * @param {string} campaignName - The name of the campaign.
-   * @returns {Promise<number|null>} - The variant value or null if the campaign is not found.
+   * @returns {Promise<number>} - The content view id of the assigned variant or null if no variants are provided
    * @description This method returns the variant value for the given campaign and logs the execution.
    * It uses the campaign's assignment function if available, otherwise it uses a random assignment based on the input string.
    */
@@ -69,11 +72,12 @@ class AbTest {
           body: postData,
         });
         if (response.ok) {
-          const data = await response.json();
+          // data should be a content view id
+          const contentViewId = await response.json();
           // store the variant in the cache
           cachedVariants.set(campaign.id, {
             eventType: 'IMPRESSION',
-            contentViewId: data.id,
+            contentViewId,
             campaignId: campaign.id,
             sessionId: ResyncCache.getKeyValue("sessionId"),
             userId: ResyncCache.getKeyValue("userId"),
@@ -81,7 +85,8 @@ class AbTest {
             environment: configService.getEnvironment(),
           });
           ResyncCache.saveKeyValue("userVariants", cachedVariants);
-          return data;
+          // return the content view id
+          return contentViewId;
         } else {
           console.error("Failed to fetch system variant:", response.statusText);
           return campaign.controlContentId;
@@ -91,7 +96,7 @@ class AbTest {
         return campaign.controlContentId;
       }
     } else {
-      return this.handleSystemFunction(campaign);
+      return this.handleWeightedRollout(campaign);
     }
   }
 
@@ -102,7 +107,7 @@ class AbTest {
   /**
    * Logs an campaign exposure.
    * @param {string} campaignId - The ID of the campaign.
-   * @param {string} contentViewId - The ID of the content view.
+   * @param {number} contentViewId - The ID of the content view.
    * @param {string} eventType - The type of event (e.g., "IMPRESSION", "CONVERSION").
    * @returns {void}
    * @description This method logs the exposure of an campaign variant.
@@ -110,7 +115,7 @@ class AbTest {
    * If the backend API is unreachable or returns an error, it saves the log for later upload.
    * @example
    * // Log an campaign exposure
-   * logCampaign("camp123", { value: "variantA" }, "IMPRESSION");
+   * logCampaign("camp123", 123, "IMPRESSION");
    */
   logCampaign(campaignId, contentViewId, eventType, metadata = null) {
     const { apiKey, appId, apiUrl } = configService.getApiConfig();
@@ -132,7 +137,8 @@ class AbTest {
     }
     // return;
     // Send the log entry to the backend API
-    fetch(`${apiUrl}${appId}/${campaignId}${API_CONFIG.ENDPOINTS.LOG_CAMPAIGN_EVENT}ss`, {
+    fetch(`${apiUrl}${appId}/${campaignId}${API_CONFIG.ENDPOINTS.LOG_CAMPAIGN_EVENT}
+      `, {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
@@ -151,25 +157,25 @@ class AbTest {
       });
   }
 
-  recordConversion(campaignName, metadata = {}) {
-    // get the variant from userVariants
-    const userVariants = ResyncCache.getKeyValue("userVariants")
-    const campaignId = this.campaigns.find(
-      (camp) => camp.name === campaignName
-    )?.id;
-    if (!campaignId) {
-      throw new Error(ERROR_MESSAGES.CAMPAIGN_NOT_FOUND(campaignName));
-    }
-    if (!userVariants) {
-      throw new Error(ERROR_MESSAGES.NO_IMPRESSION_LOGGED(campaignName));
-    }
-    const variant = userVariants.get(campaignId);
-    if (!variant) {
-      throw new Error(ERROR_MESSAGES.NO_VARIANT_FOUND(campaignId));
-    }
-    // Log the conversion
-    this.logCampaign(campaignId, variant.contentViewId, LogType.CONVERSION, metadata);
-  }
+  // recordConversion(campaignName, metadata = {}) {
+  //   // get the variant from userVariants
+  //   const userVariants = ResyncCache.getKeyValue("userVariants")
+  //   const campaignId = this.campaigns.find(
+  //     (camp) => camp.name === campaignName
+  //   )?.id;
+  //   if (!campaignId) {
+  //     throw new Error(ERROR_MESSAGES.CAMPAIGN_NOT_FOUND(campaignName));
+  //   }
+  //   if (!userVariants) {
+  //     throw new Error(ERROR_MESSAGES.NO_IMPRESSION_LOGGED(campaignName));
+  //   }
+  //   const variant = userVariants.get(campaignId);
+  //   if (!variant) {
+  //     throw new Error(ERROR_MESSAGES.NO_VARIANT_FOUND(campaignId));
+  //   }
+  //   // Log the conversion
+  //   this.logCampaign(campaignId, variant.contentViewId, LogType.CONVERSION, metadata);
+  // }
 
   /** * Saves log entries for later upload.
    * @param {Array} logEntrys - The log entries to save.
@@ -246,18 +252,17 @@ class AbTest {
       });
   }
 
-  handleSystemFunction(campaign) {
-    switch (campaign.abTestType) {
-      case "weighted-rollout":
-        const variant = weightedRolloutTemplate(campaign);
-        this.logCampaign(campaign.id, variant, LogType.IMPRESSION, {
-          timestamp: new Date().toISOString(),
-        });
-        return variant;
-      default:
-        console.warn(`No handler for system function ID: ${campaign.systemFunctionId}`);
-        throw new Error(ERROR_MESSAGES.UNKNOWN_SYSTEM_FUNCTION(campaign.systemFunctionId));
-    }
+  /**
+   * Handles the system function for the campaign.
+   * @param {Campaign} campaign - The campaign to handle.
+   * @returns {number|null} The content view id of the assigned variant or null if no variants are provided
+   */
+  handleWeightedRollout(campaign) {
+    const contentViewId = weightedRolloutTemplate(campaign);
+    this.logCampaign(campaign.id, contentViewId, LogType.IMPRESSION, {
+      timestamp: new Date().toISOString(),
+    });
+    return contentViewId;
   }
 }
 

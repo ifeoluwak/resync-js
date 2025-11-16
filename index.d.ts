@@ -469,12 +469,12 @@ declare class ResyncAPI {
   reload(): void;
 
   /**
-   * Set the user ID for tracking and variant assignment
+   * Log in the user for tracking and variant assignment
    * @param userId - The user ID to set
-   * @param {{ email?: string, name?: string, phone?: string, language?: string }} metadata - The metadata to set
+   * @param {{ email?: string, name?: string, phone?: string, language?: string; age?: number; gender?: string; }} attributes - The attributes to set
    * @returns {Promise<boolean>} - Returns true if the user ID is set successfully, false otherwise.
    */
-  setUserId(userId: string | number, metadata?: { email?: string, name?: string, phone?: string, language?: string }): Promise<boolean>;
+  logInUser(userId: string | number, attributes?: { email?: string, name?: string, phone?: string, language?: string; age?: number; gender?: string; }): Promise<boolean>;
 
   /**
    * Set the client identifier for tracking
@@ -484,10 +484,10 @@ declare class ResyncAPI {
 
   /**
    * Set user attributes for tracking and targeting
-   * @param {{ email?: string, name?: string, phone?: string, language?: string, attributes?: Record<string, unknown> }} attributes - User attributes object
+   * @param {{ email?: string, name?: string, phone?: string, language?: string, age?: number, gender?: string, attributes?: Record<string, unknown> }} attributes - User attributes object
    * @returns {Promise<boolean>} - Returns true if the user attributes are set successfully, false otherwise.
    */
-  setUserAttributes({ email, name, phone, language, attributes }: { email?: string, name?: string, phone?: string, language?: string, attributes?: Record<string, unknown> }): Promise<boolean>;
+  setUserAttributes({ email, name, phone, language, age, gender, attributes }: { email?: string, name?: string, phone?: string, language?: string, age?: number, gender?: string, attributes?: Record<string, unknown> }): Promise<boolean>;
 
   /**
    * Get a variant for a campaign

@@ -147,6 +147,7 @@ class Resync {
       await ResyncCache.init(storage);
     }
     const cache = ResyncCache.getCache();
+    this.userId = cache?.userId || null;
 
     const sessionId = cache?.sessionId || `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     this.sessionId = sessionId;
@@ -155,7 +156,17 @@ class Resync {
     this.#loadAppConfig()
   }
 
+  /**
+   * Logs out the user and clears the cache.
+   * @returns {Promise<void>} - Returns a promise that resolves when the logout is complete
+   * @example
+   * Resync.logout();
+   */
   async logout() {
+    if (!this.userId) {
+      // no user to logout
+      return Promise.resolve();
+    }
     this.userId = null;
     this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     this.userVariants = new Map();
@@ -190,16 +201,10 @@ class Resync {
       Date.now() - new Date(cache.lastFetchTimestamp).getTime() <
         this.#ttl
     ) {
-      // Create AppConfig-like object from cache
-      const appConfig = {
-        configs: cache.configs || {},
-        campaigns: cache.campaigns || [],
-        content: cache.content || [],
-      };
       this.ready = true;
       this.isLoading = false;
+      AbTest.setCampaigns(cache?.campaigns || []);
       this.#executePendingOperations();
-      AbTest.setCampaigns(appConfig.campaigns);
       this.#notifySubscribers();
     }
 
@@ -285,29 +290,26 @@ class Resync {
    * age: number
    * gender: string
    * country: string
-   * }} metadata - The metadata to set
+   * }} attributes - The attributes to set
    * @returns {Promise<boolean>} - Returns true if the user ID is set successfully, false otherwise.
    * @example
-   * Resync.setUserId('user123');
-   * Resync.setUserId('12345', { email: 'test@test.com', name: 'Test User', phone: '1234567890', language: 'en' });
+   * Resync.logInUser('user123');
+   * Resync.logInUser('12345', { email: 'test@test.com', name: 'Test User', phone: '1234567890', language: 'en' });
    */
-  setUserId(userId, metadata = null) {
-    return this.#queueSetMethod(this.#setUserId, userId, metadata);
-  }
-  #setUserId(userId, metadata = null) {
-    if (ResyncCache) {
-      const existingUser = ResyncCache.getKeyValue("user");
-        // check if userId is same as existing userId
-        if (existingUser?.userId === `${userId}` && existingUser?.appId === Number(this.#appId)) {
-          this.userId = `${userId}`;
-          this.#executePendingUserOperations();
-          return true;
-        }
+  logInUser(userId, attributes = null) {
+    if (this.userId) {
+      this.#executePendingUserOperations();
+      return Promise.resolve(true);
     }
+    return this.#queueSetMethod(this.#logInUser, userId, attributes);
+  }
+  #logInUser(userId, metadata = null) {
     this.userId = `${userId}`;
     this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     ResyncCache.saveKeyValue("userId", `${userId}`);
     ResyncCache.saveKeyValue("sessionId", this.sessionId);
+    ResyncCache.saveKeyValue("user", null);
+    ResyncCache.saveKeyValue("userVariants", new Map());
     this.#executePendingUserOperations();
     if (this.#apiKey && this.#appId) {
       const body = JSON.stringify({
@@ -316,7 +318,7 @@ class Resync {
         ...metadata,
       })
       // post the user data and reload the data
-      return ConfigFetch.setUserIdData(body).then(() => this.#loadAppConfig(true));
+      return ConfigFetch.logInUser(body).then(() => this.#loadAppConfig(true));
     }
     return Promise.resolve(false);
   }

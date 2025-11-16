@@ -83,7 +83,7 @@ async function onConfigLoaded() {
 function setUserContext() {
   console.log("👤 Setting user context...");
   
-  ResyncAPI.setUserId(DEMO_CONFIG.USER_ID);
+  ResyncAPI.logInUser(DEMO_CONFIG.USER_ID);
   ResyncAPI.setClient(DEMO_CONFIG.CLIENT);
   ResyncAPI.setUserAttributes(DEMO_CONFIG.USER_ATTRIBUTES);
   
