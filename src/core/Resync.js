@@ -75,9 +75,6 @@ class Resync {
   /** @type {string|null} */
   attributes = null;
 
-  /** @type {Map<string, UserVariant>} */
-  userVariants = new Map();
-
   /**
    * Initializes the Resync class.
    * Api key is required to use the Resync API.
@@ -169,7 +166,6 @@ class Resync {
     }
     this.userId = null;
     this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
-    this.userVariants = new Map();
     this.isLoading = false;
     await ResyncCache.clearCache();
     this.#loadAppConfig(true);
@@ -215,16 +211,12 @@ class Resync {
       if (config) {
         Promise.all([
           ResyncCache.saveKeyValue("configs", config.appConfig || {}),
-          ResyncCache.saveKeyValue("content", config.content),
+          ResyncCache.saveKeyValue("content", config.content || []),
           ResyncCache.saveKeyValue("campaigns", config.campaigns || []),
+          ResyncCache.saveKeyValue("campaignAssignments", config.campaignAssignments || {}),
+          ResyncCache.saveKeyValue("user", config.user || null),
           ResyncCache.saveKeyValue("lastFetchTimestamp", lastFetchTimestamp),
         ]);
-        if (config.user) {
-          ResyncCache.saveKeyValue("user", config.user);
-        }
-        if (config.userEvents) {
-          this.setUserVariants(config.userEvents);
-        }
         if (config.campaigns) {
           AbTest.setCampaigns(config.campaigns);
         }
@@ -277,16 +269,6 @@ class Resync {
     this.#loadAppConfig(true);
   }
 
-  // async reset() {
-  //   this.userId = null;
-  //   this.sessionId = null;
-  //   this.userVariants = new Map();
-  //   this.ready = false;
-  //   await ResyncCache.clearCache();
-  //   // we need to reload the app config
-  //   await this.#loadAppConfig();
-  // }
-
   /**
    * Sets the user ID for tracking.
    * @param {string|number} userId - The user ID to set
@@ -317,7 +299,7 @@ class Resync {
     ResyncCache.saveKeyValue("userId", `${userId}`);
     ResyncCache.saveKeyValue("sessionId", this.sessionId);
     ResyncCache.saveKeyValue("user", null);
-    ResyncCache.saveKeyValue("userVariants", new Map());
+    ResyncCache.saveKeyValue("campaignAssignments", {});
     this.#executePendingUserOperations();
     if (this.#apiKey && this.#appId) {
       const body = JSON.stringify({
@@ -507,26 +489,6 @@ class Resync {
   }
 
   /**
-   * Records a conversion for an campaign.
-   * @param {string} campaignName - The campaign name
-   * @param {Object} [metadata={}] - Additional metadata for the conversion
-   * @returns {*} The result of recording the conversion
-   * @throws {Error} If campaign ID is not provided
-   * @example
-   * Resync.recordConversion('pricing-campaign', {
-   *   revenue: 99.99,
-   *   currency: 'USD'
-   * });
-   */
-  recordConversion(campaignName, metadata = {}) {
-    // if (!campaignName) {
-    //   throw new Error(ERROR_MESSAGES.CAMPAIGN_ID_REQUIRED);
-    // }
-    // // Record the conversion event
-    // return AbTest.recordConversion(campaignName, metadata);
-  }
-
-  /**
    * Subscribes a callback function to configuration updates.
    * @param {Function} callback - The callback function to subscribe
    * @throws {Error} If callback is not a function
@@ -567,41 +529,26 @@ class Resync {
     }
   }
 
-  /**
-   * Gets user variants from the cache or fetches them from the API.
-   * @param {UserVariantResponse} variants - The user variants to set
-   * @returns {Promise<void>} - Returns a promise that resolves when the user variants are set
-   */
-  async setUserVariants(variants) {
-    const userVariants = new Map();
-    if (variants && Array.isArray(variants)) {
-      variants.forEach((variant) => {
-        userVariants.set(variant.id, variant);
-      });
-      ResyncCache.saveKeyValue("userVariants", userVariants);
+  // Generic get method queuer
+  // get methods require config data
+  // we need to wait for the config data to be loaded
+  #queueGetMethod(method, ...args) {
+    // if ready and not loading
+    if (this.ready && !this.isLoading) {
+      // If ready, execute immediately
+      return method.apply(this, args);
     }
-  }
 
-    // Generic get method queuer
-    // get methods require config data
-    // we need to wait for the config data to be loaded
-    #queueGetMethod(method, ...args) {
-      // if ready and not loading
-      if (this.ready && !this.isLoading) {
-        // If ready, execute immediately
-        return method.apply(this, args);
-      }
-  
-      // If not ready or loading, queue the method call
-      return new Promise((resolve, reject) => {
-        this.pendingOperations.push({
-          method,
-          args,
-          resolve,
-          reject
-        });
+    // If not ready or loading, queue the method call
+    return new Promise((resolve, reject) => {
+      this.pendingOperations.push({
+        method,
+        args,
+        resolve,
+        reject
       });
-    }
+    });
+  }
 
     // Generic set method queuer
     // set methods don't require config data

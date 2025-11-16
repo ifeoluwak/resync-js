@@ -219,8 +219,7 @@
  * @property {string} [lastFetchTimestamp] - ISO timestamp of last fetch
  * @property {string} [sessionId] - Current session ID
  * @property {string} [userId] - Current user ID
- * @property {Map<string, Object>} [userVariants] - User variant assignments
- * @property {Object} [userEvents] - User event assignments
+ * @property {{[campaignId: number]: CampaignAssignment}} [campaignAssignments] - User campaign assignments
  * @property {string} [appId] - Application ID
  * @property {User} [user] - User
  */
@@ -240,22 +239,13 @@
  * @property {Campaign[]} campaigns - Array of campaigns
  * @property {ContentView[]} content - Content
  * @property {User} [user] - User object
- * @property {UserVariantResponse} [userEvents] - User variant assignments
+ * @property {{[campaignId: number]: CampaignAssignment}} [campaignAssignments] - User campaign assignments
  */
 
 /**
- * @typedef {Object} UserVariantRequest
- * @property {string} userId - The user ID
- * @property {string} sessionId - The session ID
- * @property {string[]} campaignIds - Array of campaign IDs
- * @property {string} appId - The application ID
- */
-
-/**
- * @typedef {Object} UserVariantResponse
- * @property {Object} variants - User variant assignments
- * @property {string} userId - The user ID
- * @property {string} sessionId - The session ID
+ * @typedef {Object} CampaignAssignment
+ * @property {number} contentViewId - Content view ID
+ * @property {number} campaignId - Campaign ID
  */
 
 /**
@@ -272,15 +262,4 @@
  * @property {Object} configs - Application configuration
  * @property {Array} campaigns - Array of campaigns
  * @property {Array} [content] - Content views
- */
-
-/**
- * @typedef {Object} UserVariant
- * @property {string} campaignId - The campaign ID
- * @property {Object} variant - The assigned variant
- * @property {string} sessionId - The session ID
- * @property {string} userId - The user ID
- * @property {string} timestamp - ISO timestamp
- * @property {string} client - The client identifier
- * @property {Object} metadata - Additional metadata
  */

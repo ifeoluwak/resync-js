@@ -30,12 +30,9 @@ class ResyncCache {
     lastFetchTimestamp: null,
     sessionId: null,
     userId: null,
-    userVariants: new Map(),
+    campaignAssignments: {},
     user: null,
   };
-
-  /** @type {Map<string, Object>} */
-  userVariants = new Map();
 
   /**
    * Initializes the ResyncCache with optional storage.
@@ -78,9 +75,8 @@ class ResyncCache {
       lastFetchTimestamp: null,
       sessionId: null,
       userId: null,
-      userVariants: new Map(),
+      campaignAssignments: {},
       user: null,
-      userEvents: {},
     };
     if (this.storage) {
       await this.storage.setItem(STORAGE_KEY, JSON.stringify(this.cache));
@@ -146,6 +142,7 @@ class ResyncCache {
         if (data) {
           const parsedData = JSON.parse(data);
           // Restore the cache state from the parsed data
+          console.log('parsedData ==================\n\n', JSON.stringify(parsedData, null, 2));
           this.cache = parsedData;
         }
        } catch (error) {

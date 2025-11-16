@@ -397,21 +397,11 @@ export interface ContentItem {
 /**
  * User variant assignment
  */
-export interface UserVariant {
+export interface CampaignAssignment {
   /** Campaign ID */
-  campaignId: string;
-  /** Assigned variant */
-  variant: any;
-  /** Session ID */
-  sessionId: string;
-  /** User ID */
-  userId: string;
-  /** Timestamp */
-  createdAt: Date;
-  /** Client identifier */
-  client: string;
-  /** Additional metadata */
-  metadata: any;
+  campaignId: number;
+  /** Content view ID */
+  contentViewId: number;
 }
 
 /**
@@ -453,8 +443,8 @@ declare class ResyncAPI {
   client: string | null;
   /** Current user attributes */
   attributes: string | null;
-  /** User variant assignments */
-  userVariants: Map<string, UserVariant>;
+  /** Campaign assignments */
+  campaignAssignments: { [campaignId: number]: CampaignAssignment };
 
   /**
    * Initialize Resync

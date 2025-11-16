@@ -42,17 +42,17 @@ class AbTest {
     }
 
     // check if user already has a variant for this campaign
-    const cachedVariants = ResyncCache.getKeyValue("userVariants") || new Map();
+    let cachedAssignments = ResyncCache.getKeyValue("campaignAssignments") || {};
 
-    if (cachedVariants.has(campaign.id)) {
-      const userVariant = cachedVariants.get(campaign.id);
+    if (cachedAssignments[campaign.id]) {
+      const assignment = cachedAssignments[campaign.id];
       // No need to log again, just return the variant value
-      return userVariant.contentViewId;
+      return assignment.contentViewId;
     }
 
     // check if the function is a system template
     if (campaign.abTestType === "round-robin") {
-      // that should be executed and logged in the backend
+      // that should be executed in the backend
       try {
         const { apiUrl, appId, apiKey } = configService.getApiConfig();
         const postData = JSON.stringify({
@@ -75,24 +75,29 @@ class AbTest {
           // data should be a content view id
           const contentViewId = await response.json();
           // store the variant in the cache
-          cachedVariants.set(campaign.id, {
-            eventType: 'IMPRESSION',
+          cachedAssignments[campaign.id] = {
             contentViewId,
             campaignId: campaign.id,
-            sessionId: ResyncCache.getKeyValue("sessionId"),
-            userId: ResyncCache.getKeyValue("userId"),
-            client: ResyncCache.getKeyValue("client"),
-            environment: configService.getEnvironment(),
-          });
-          ResyncCache.saveKeyValue("userVariants", cachedVariants);
+          };
+          ResyncCache.saveKeyValue("campaignAssignments", cachedAssignments);
           // return the content view id
           return contentViewId;
         } else {
           console.error("Failed to fetch system variant:", response.statusText);
+          cachedAssignments[campaign.id] = {
+            contentViewId: campaign.controlContentId,
+            campaignId: campaign.id,
+          };
+          ResyncCache.saveKeyValue("campaignAssignments", cachedAssignments);
           return campaign.controlContentId;
         }
       } catch (error) {
         console.error("Failed to fetch system variant:", error);
+        cachedAssignments[campaign.id] = {
+          contentViewId: campaign.controlContentId,
+          campaignId: campaign.id,
+        };
+        ResyncCache.saveKeyValue("campaignAssignments", cachedAssignments);
         return campaign.controlContentId;
       }
     } else {
@@ -130,12 +135,6 @@ class AbTest {
       metadata: metadata || ResyncCache.getKeyValue("attributes"),
       environment: configService.getEnvironment(),
     };
-    if (eventType === LogType.IMPRESSION) {
-      const variantCaches = ResyncCache.getKeyValue("userVariants") || new Map();
-      variantCaches.set(campaignId, logEntry);
-      ResyncCache.saveKeyValue("userVariants", variantCaches);
-    }
-    // return;
     // Send the log entry to the backend API
     fetch(`${apiUrl}${appId}/${campaignId}${API_CONFIG.ENDPOINTS.LOG_CAMPAIGN_EVENT}
       `, {
@@ -242,6 +241,12 @@ class AbTest {
     this.logCampaign(campaign.id, contentViewId, LogType.IMPRESSION, {
       timestamp: new Date().toISOString(),
     });
+    let cachedAssignments = ResyncCache.getKeyValue("campaignAssignments") || {};
+    cachedAssignments[campaign.id] = {
+      contentViewId,
+      campaignId: campaign.id,
+    };
+    ResyncCache.saveKeyValue("campaignAssignments", cachedAssignments);
     return contentViewId;
   }
 }
