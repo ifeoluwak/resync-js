@@ -52,7 +52,7 @@ class AbTest {
 
     // check if the function is a system template
     if (campaign.abTestType === "round-robin") {
-      // that should be executed in the backend
+      // that should be executed and logged in the backend
       try {
         const { apiUrl, appId, apiKey } = configService.getApiConfig();
         const postData = JSON.stringify({
@@ -156,26 +156,6 @@ class AbTest {
         this.saveLogForLaterUpload([logEntry]);
       });
   }
-
-  // recordConversion(campaignName, metadata = {}) {
-  //   // get the variant from userVariants
-  //   const userVariants = ResyncCache.getKeyValue("userVariants")
-  //   const campaignId = this.campaigns.find(
-  //     (camp) => camp.name === campaignName
-  //   )?.id;
-  //   if (!campaignId) {
-  //     throw new Error(ERROR_MESSAGES.CAMPAIGN_NOT_FOUND(campaignName));
-  //   }
-  //   if (!userVariants) {
-  //     throw new Error(ERROR_MESSAGES.NO_IMPRESSION_LOGGED(campaignName));
-  //   }
-  //   const variant = userVariants.get(campaignId);
-  //   if (!variant) {
-  //     throw new Error(ERROR_MESSAGES.NO_VARIANT_FOUND(campaignId));
-  //   }
-  //   // Log the conversion
-  //   this.logCampaign(campaignId, variant.contentViewId, LogType.CONVERSION, metadata);
-  // }
 
   /** * Saves log entries for later upload.
    * @param {Array} logEntrys - The log entries to save.

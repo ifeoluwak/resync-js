@@ -29,7 +29,7 @@ export const API_CONFIG = {
 
 // Retry Configuration
 export const RETRY_CONFIG = {
-  MAX_RETRIES: 5,
+  MAX_RETRIES: 3,
   RETRY_DELAY: 2000, // 2 seconds
   BATCH_SIZE: 100,
   MAX_LOG_BUFFER: 1000

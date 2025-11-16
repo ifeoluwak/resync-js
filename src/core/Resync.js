@@ -230,7 +230,11 @@ class Resync {
         }
         this.loadFailed = false;
       } else {
-        this.loadFailed = true;
+        // fallback to cache
+        // only fail if content is not available in cache
+        if (cache?.content?.length === 0) {
+          this.loadFailed =  true;
+        }
       }
       this.ready = true;
       this.isLoading = false;
@@ -238,10 +242,14 @@ class Resync {
       this.#notifySubscribers();
     } catch (error) {
       this.ready = true;
-      this.loadFailed = true;
       this.isLoading = false;
+      // fallback to cache
+      // only fail if content is not available in cache
+      if (cache?.content?.length === 0) {
+        this.loadFailed =  true;
+      }
       this.#notifySubscribers();
-      console.error("Error loading app config:");
+      console.error("Error loading app data. Falling back to cache if available.");
     }
   }
 
