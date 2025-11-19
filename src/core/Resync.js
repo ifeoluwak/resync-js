@@ -156,19 +156,21 @@ class Resync {
 
   /**
    * Logs out the user and clears the cache.
+   * Creates a new session regardless of whether a user is logged in.
+   * This ensures fresh variant assignments for A/B tests.
    * @returns Promise that resolves when the logout is complete
    * @example
    * Resync.logout();
    */
   async logout() {
-    if (!this.userId) {
-      // no user to logout
-      return Promise.resolve();
-    }
+    // Always create a new session, even for anonymous users
+    // This ensures fresh variant assignments for A/B tests
     this.userId = null;
     this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     this.isLoading = false;
     await ResyncCache.clearCache();
+    // Save the new sessionId AFTER clearing cache but BEFORE loading config
+    ResyncCache.saveKeyValue("sessionId", this.sessionId);
     await this.#loadAppConfig(true);
   }
 
