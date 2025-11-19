@@ -455,8 +455,9 @@ declare class ResyncAPI {
 
   /**
    * Reload the app configuration
+   * @returns Promise that resolves when the reload is complete
    */
-  reload(): void;
+  reload(): Promise<void>;
 
   /**
    * Log in the user for tracking and variant assignment

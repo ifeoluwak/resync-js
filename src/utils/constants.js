@@ -98,7 +98,8 @@ export const ERROR_MESSAGES = {
   FAILED_FETCH_SYSTEM_VARIANT: "Failed to fetch system variant:",
   FAILED_SEND_LOG: "Failed to send log entry:",
   LOGGING_FAILED: "Logging failed:",
-  TOO_MANY_RETRIES: "Too many retries, stopping flush"
+  TOO_MANY_RETRIES: "Too many retries, stopping flush",
+  USER_ALREADY_LOGGED_IN: 'A user is already logged in. Call logout() first to switch users.'
 };
 
 // Hash Algorithm Constants

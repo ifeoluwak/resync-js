@@ -153,9 +153,10 @@ class Resync {
     this.#loadAppConfig()
   }
 
+
   /**
    * Logs out the user and clears the cache.
-   * @returns {Promise<void>} - Returns a promise that resolves when the logout is complete
+   * @returns Promise that resolves when the logout is complete
    * @example
    * Resync.logout();
    */
@@ -168,7 +169,7 @@ class Resync {
     this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
     this.isLoading = false;
     await ResyncCache.clearCache();
-    this.#loadAppConfig(true);
+    await this.#loadAppConfig(true);
   }
 
 
@@ -265,8 +266,8 @@ class Resync {
     this.pendingUserOperations = [];
   }
 
-  reload() {
-    this.#loadAppConfig(true);
+  async reload() {
+    await this.#loadAppConfig(true);
   }
 
   /**
@@ -289,15 +290,16 @@ class Resync {
   logInUser(userId, attributes = null) {
     if (this.userId) {
       this.#executePendingUserOperations();
-      return Promise.resolve(true);
+      console.warn(ERROR_MESSAGES.USER_ALREADY_LOGGED_IN);
+      return Promise.reject(new Error(ERROR_MESSAGES.USER_ALREADY_LOGGED_IN));
     }
     return this.#queueSetMethod(this.#logInUser, userId, attributes);
   }
   #logInUser(userId, metadata = null) {
     this.userId = `${userId}`;
-    this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`;
+    // this.sessionId = `${Math.random().toString(36).substring(2, 15)}-${Date.now()}`; keep the same session id that already exists
     ResyncCache.saveKeyValue("userId", `${userId}`);
-    ResyncCache.saveKeyValue("sessionId", this.sessionId);
+    // ResyncCache.saveKeyValue("sessionId", this.sessionId); keep the same session id that already exists
     ResyncCache.saveKeyValue("user", null);
     ResyncCache.saveKeyValue("campaignAssignments", {});
     this.#executePendingUserOperations();
