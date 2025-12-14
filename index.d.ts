@@ -39,7 +39,7 @@ export interface AppConfig {
   appConfig: Record<string, any>;
   /** Campaigns */
   campaigns: Campaign[];
-  /** Content views */
+  /** Content blocks */
   content?: ContentView[];
 }
 
@@ -397,21 +397,11 @@ export interface ContentItem {
 /**
  * User variant assignment
  */
-export interface UserVariant {
+export interface CampaignAssignment {
   /** Campaign ID */
-  campaignId: string;
-  /** Assigned variant */
-  variant: any;
-  /** Session ID */
-  sessionId: string;
-  /** User ID */
-  userId: string;
-  /** Timestamp */
-  createdAt: Date;
-  /** Client identifier */
-  client: string;
-  /** Additional metadata */
-  metadata: any;
+  campaignId: number;
+  /** Content view ID */
+  contentViewId: number;
 }
 
 /**
@@ -453,8 +443,8 @@ declare class ResyncAPI {
   client: string | null;
   /** Current user attributes */
   attributes: string | null;
-  /** User variant assignments */
-  userVariants: Map<string, UserVariant>;
+  /** Campaign assignments */
+  campaignAssignments: { [campaignId: number]: CampaignAssignment };
 
   /**
    * Initialize Resync
@@ -465,16 +455,17 @@ declare class ResyncAPI {
 
   /**
    * Reload the app configuration
+   * @returns Promise that resolves when the reload is complete
    */
-  reload(): void;
+  reload(): Promise<void>;
 
   /**
-   * Set the user ID for tracking and variant assignment
+   * Log in the user for tracking and variant assignment
    * @param userId - The user ID to set
-   * @param {{ email?: string, name?: string, phone?: string, language?: string }} metadata - The metadata to set
+   * @param {{ email?: string, name?: string, phone?: string, language?: string; age?: number; gender?: string; }} attributes - The attributes to set
    * @returns {Promise<boolean>} - Returns true if the user ID is set successfully, false otherwise.
    */
-  setUserId(userId: string | number, metadata?: { email?: string, name?: string, phone?: string, language?: string }): Promise<boolean>;
+  logInUser(userId: string | number, attributes?: { email?: string, name?: string, phone?: string, language?: string; age?: number; gender?: string; }): Promise<boolean>;
 
   /**
    * Set the client identifier for tracking
@@ -484,10 +475,10 @@ declare class ResyncAPI {
 
   /**
    * Set user attributes for tracking and targeting
-   * @param {{ email?: string, name?: string, phone?: string, language?: string, attributes?: Record<string, unknown> }} attributes - User attributes object
+   * @param {{ email?: string, name?: string, phone?: string, language?: string, age?: number, gender?: string, attributes?: Record<string, unknown> }} attributes - User attributes object
    * @returns {Promise<boolean>} - Returns true if the user attributes are set successfully, false otherwise.
    */
-  setUserAttributes({ email, name, phone, language, attributes }: { email?: string, name?: string, phone?: string, language?: string, attributes?: Record<string, unknown> }): Promise<boolean>;
+  setUserAttributes({ email, name, phone, language, age, gender, attributes }: { email?: string, name?: string, phone?: string, language?: string, age?: number, gender?: string, attributes?: Record<string, unknown> }): Promise<boolean>;
 
   /**
    * Get a variant for a campaign
@@ -504,8 +495,8 @@ declare class ResyncAPI {
   getConfig(key: string): any | null;
 
   /**
-   * Get content views
-   * @returns Array of content views
+   * Get content blocks
+   * @returns Array of content blocks
    */
   getContent(): ContentView[] | null;
 

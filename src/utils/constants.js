@@ -5,7 +5,7 @@
 
 // API Configuration
 export const API_CONFIG = {
-  DEFAULT_URL: "https://api-staging.getresync.com/v1/apps-external/",
+  DEFAULT_URL: "https://api.getresync.com/v1/apps-external/",
   ENDPOINTS: {
     APP_DATA: "/app-data",
     USER_VARIANTS: "/user-variants",
@@ -28,7 +28,7 @@ export const API_CONFIG = {
 
 // Retry Configuration
 export const RETRY_CONFIG = {
-  MAX_RETRIES: 5,
+  MAX_RETRIES: 3,
   RETRY_DELAY: 2000, // 2 seconds
   BATCH_SIZE: 100,
   MAX_LOG_BUFFER: 1000
@@ -97,7 +97,8 @@ export const ERROR_MESSAGES = {
   FAILED_FETCH_SYSTEM_VARIANT: "Failed to fetch system variant:",
   FAILED_SEND_LOG: "Failed to send log entry:",
   LOGGING_FAILED: "Logging failed:",
-  TOO_MANY_RETRIES: "Too many retries, stopping flush"
+  TOO_MANY_RETRIES: "Too many retries, stopping flush",
+  USER_ALREADY_LOGGED_IN: 'A user is already logged in. Call logout() first to switch users.'
 };
 
 // Hash Algorithm Constants

@@ -8,22 +8,19 @@
  */
 
 /**
- * Object representing a campaign variant.
- * @typedef {Object} CampaignVariant
- * @property {string} id - The unique identifier for the variant
- * @property {string} name - The name of the variant
- * @property {string} value - The value of the variant
- * @property {number} weight - The weight/percentage for this variant
- */
-
-/**
  * Object representing a campaign.
  * @typedef {Object} Campaign
  * @property {string} id - The unique identifier for the campaign
  * @property {string} name - The name of the campaign
  * @property {string} type - The type of campaign (e.g., 'system', 'custom')
- * @property {CampaignVariant[]} variants - Array of possible variants
- * @property {string} [systemFunctionId] - ID of system function for variant assignment
+ * @property {number} controlContentId - The content view id of the control variant
+ * @property {number} variantAContentId - The content view id of the variant A
+ * @property {number} variantBContentId - The content view id of the variant B
+ * @property {number} controlWeight - The weight of the control variant
+ * @property {number} variantAWeight - The weight of the variant A
+ * @property {number} variantBWeight - The weight of the variant B
+ * @property {string} abTestType - The type of A/B test (e.g., 'weighted-rollout', 'round-robin')
+ * @property {number} winningContentId - The content view id of the winning variant
  */
 
 /**
@@ -219,12 +216,11 @@
  * @typedef {Object} ResyncCacheData
  * @property {Object} configs - Application configuration object
  * @property {Campaign[]} campaigns - Array of campaigns
- * @property {ContentView[]} content - Array of content views
+ * @property {ContentView[]} content - Array of content blocks
  * @property {string} [lastFetchTimestamp] - ISO timestamp of last fetch
  * @property {string} [sessionId] - Current session ID
  * @property {string} [userId] - Current user ID
- * @property {Map<string, Object>} [userVariants] - User variant assignments
- * @property {Object} [userEvents] - User event assignments
+ * @property {{[campaignId: number]: CampaignAssignment}} [campaignAssignments] - User campaign assignments
  * @property {string} [appId] - Application ID
  * @property {User} [user] - User
  */
@@ -242,24 +238,15 @@
  * @typedef {Object} AppConfigResponse
  * @property {Object} appConfig - The application configuration
  * @property {Campaign[]} campaigns - Array of campaigns
- * @property {ContentView[]} content - Content
+ * @property {ContentView[]} content - Content blocks
  * @property {User} [user] - User object
- * @property {UserVariantResponse} [userEvents] - User variant assignments
+ * @property {{[campaignId: number]: CampaignAssignment}} [campaignAssignments] - User campaign assignments
  */
 
 /**
- * @typedef {Object} UserVariantRequest
- * @property {string} userId - The user ID
- * @property {string} sessionId - The session ID
- * @property {string[]} campaignIds - Array of campaign IDs
- * @property {string} appId - The application ID
- */
-
-/**
- * @typedef {Object} UserVariantResponse
- * @property {Object} variants - User variant assignments
- * @property {string} userId - The user ID
- * @property {string} sessionId - The session ID
+ * @typedef {Object} CampaignAssignment
+ * @property {number} contentViewId - Content block ID
+ * @property {number} campaignId - Campaign ID
  */
 
 /**
@@ -275,16 +262,5 @@
  * @typedef {Object} AppConfig
  * @property {Object} configs - Application configuration
  * @property {Array} campaigns - Array of campaigns
- * @property {Array} [content] - Content views
- */
-
-/**
- * @typedef {Object} UserVariant
- * @property {string} campaignId - The campaign ID
- * @property {Object} variant - The assigned variant
- * @property {string} sessionId - The session ID
- * @property {string} userId - The user ID
- * @property {string} timestamp - ISO timestamp
- * @property {string} client - The client identifier
- * @property {Object} metadata - Additional metadata
+ * @property {Array} [content] - Content blocks
  */

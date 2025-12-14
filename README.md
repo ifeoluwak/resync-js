@@ -6,7 +6,7 @@ A powerful JavaScript library for dynamic content management, remote configurati
 
 - 🚀 **Remote Configuration** - Manage app configs remotely without code deployments
 - 🧪 **In-app Campaigns** - Run campaigns with audiences, automatic variant assignment and tracking
-- 🎨 **Dynamic Content Management** - Fetch and render content views defined in your Resync dashboard
+- 🎨 **Dynamic Content Management** - Fetch and render content blocks defined in your Resync dashboard
 - 📊 **Event Logging** - Track custom events and user interactions
 - 💾 **Smart Caching** - Automatic environment-based caching (6h production, 0ms development)
 - 🔄 **Real-time Updates** - Subscribe to configuration changes with callback support
@@ -77,14 +77,14 @@ Resync.logEvent({
 });
 ```
 
-### 5. Get Content Views
+### 5. Get Content Blocks
 
 ```javascript
-// Fetch all content views
-const contentViews = Resync.getContent();
+// Fetch all content blocks
+const contentBlocks = Resync.getContent();
 
 // Find a specific content view by name
-const welcomeCard = contentViews.find(
+const welcomeCard = contentBlocks.find(
   (view) => view.name === 'HomeWelcomeCard'
 );
 
@@ -186,24 +186,24 @@ if (variant === 123) {
 
 ### Resync.getContent()
 
-Get all content views from the current configuration.
+Get all content blocks from the current configuration.
 
 #### Returns
 
-`ContentView[]` - Array of content views
+`ContentView[]` - Array of content blocks
 
 #### Example
 
 ```javascript
-const contentViews = Resync.getContent();
+const contentBlocks = Resync.getContent();
 
 // Find specific content view
-const bannerContent = contentViews.find(
+const bannerContent = contentBlocks.find(
   (view) => view.name === 'PromoAnnouncement'
 );
 
 // Iterate through all published content
-contentViews
+contentBlocks
   .filter((view) => view.status === 'published')
   .forEach((view) => {
     console.log(`Content view: ${view.name}`);
@@ -212,7 +212,7 @@ contentViews
 
 ---
 
-### Resync.setUserId(userId, metadata)
+### Resync.loginUser(userId, metadata)
 
 Set the user ID for tracking and personalized variant assignment.
 
@@ -231,10 +231,10 @@ Set the user ID for tracking and personalized variant assignment.
 
 ```javascript
 // Simple user ID
-await Resync.setUserId('user_12345');
+await Resync.loginUser('user_12345');
 
 // With metadata
-await Resync.setUserId('user_12345', {
+await Resync.loginUser('user_12345', {
   email: 'user@example.com',
   name: 'John Doe',
   phone: '+1234567890',
@@ -446,7 +446,7 @@ Combine user attributes for targeted campaigns:
 
 ```javascript
 // Set user attributes
-await Resync.setUserId('user_123', {
+await Resync.loginUser('user_123', {
   email: 'user@example.com',
   name: 'Alice',
 });
