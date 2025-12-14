@@ -50,6 +50,11 @@ class AbTest {
       return assignment.contentViewId;
     }
 
+    // check if the campaign has a winning content id
+    if (campaign.winningContentId) {
+      return campaign.winningContentId;
+    }
+
     // check if the function is a system template
     if (campaign.abTestType === "round-robin") {
       // that should be executed in the backend
@@ -122,7 +127,7 @@ class AbTest {
    * // Log an campaign exposure
    * logCampaign("camp123", 123, "IMPRESSION");
    */
-  logCampaign(campaignId, contentViewId, eventType, metadata = null) {
+  async logCampaign(campaignId, contentViewId, eventType, metadata = null) {
     const { apiKey, appId, apiUrl } = configService.getApiConfig();
     const logEntry = {
       eventType,
@@ -135,25 +140,22 @@ class AbTest {
       metadata: metadata || ResyncCache.getKeyValue("attributes"),
       environment: configService.getEnvironment(),
     };
-    // Send the log entry to the backend API
-    fetch(`${apiUrl}${appId}/${campaignId}${API_CONFIG.ENDPOINTS.LOG_CAMPAIGN_EVENT}
-      `, {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
-      },
-      body: JSON.stringify(logEntry),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          this.saveLogForLaterUpload([logEntry]);
-          return;
-        }
+    try {
+      // Send the log entry to the backend API
+      const response = await fetch(`${apiUrl}${appId}/${campaignId}${API_CONFIG.ENDPOINTS.LOG_CAMPAIGN_EVENT}`, {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "Content-Type": API_CONFIG.HEADERS.CONTENT_TYPE,
+        },
+        body: JSON.stringify(logEntry),
       })
-      .catch((error) => {
+      if (!response.ok) {
         this.saveLogForLaterUpload([logEntry]);
-      });
+      }
+    } catch (error) {
+      this.saveLogForLaterUpload([logEntry]);
+    }
   }
 
   /** * Saves log entries for later upload.

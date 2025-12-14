@@ -142,7 +142,6 @@ class ResyncCache {
         if (data) {
           const parsedData = JSON.parse(data);
           // Restore the cache state from the parsed data
-          console.log('parsedData ==================\n\n', JSON.stringify(parsedData, null, 2));
           this.cache = parsedData;
         }
        } catch (error) {

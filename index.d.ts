@@ -39,7 +39,7 @@ export interface AppConfig {
   appConfig: Record<string, any>;
   /** Campaigns */
   campaigns: Campaign[];
-  /** Content views */
+  /** Content blocks */
   content?: ContentView[];
 }
 
@@ -495,8 +495,8 @@ declare class ResyncAPI {
   getConfig(key: string): any | null;
 
   /**
-   * Get content views
-   * @returns Array of content views
+   * Get content blocks
+   * @returns Array of content blocks
    */
   getContent(): ContentView[] | null;
 

@@ -20,6 +20,7 @@
  * @property {number} variantAWeight - The weight of the variant A
  * @property {number} variantBWeight - The weight of the variant B
  * @property {string} abTestType - The type of A/B test (e.g., 'weighted-rollout', 'round-robin')
+ * @property {number} winningContentId - The content view id of the winning variant
  */
 
 /**
@@ -215,7 +216,7 @@
  * @typedef {Object} ResyncCacheData
  * @property {Object} configs - Application configuration object
  * @property {Campaign[]} campaigns - Array of campaigns
- * @property {ContentView[]} content - Array of content views
+ * @property {ContentView[]} content - Array of content blocks
  * @property {string} [lastFetchTimestamp] - ISO timestamp of last fetch
  * @property {string} [sessionId] - Current session ID
  * @property {string} [userId] - Current user ID
@@ -237,14 +238,14 @@
  * @typedef {Object} AppConfigResponse
  * @property {Object} appConfig - The application configuration
  * @property {Campaign[]} campaigns - Array of campaigns
- * @property {ContentView[]} content - Content
+ * @property {ContentView[]} content - Content blocks
  * @property {User} [user] - User object
  * @property {{[campaignId: number]: CampaignAssignment}} [campaignAssignments] - User campaign assignments
  */
 
 /**
  * @typedef {Object} CampaignAssignment
- * @property {number} contentViewId - Content view ID
+ * @property {number} contentViewId - Content block ID
  * @property {number} campaignId - Campaign ID
  */
 
@@ -261,5 +262,5 @@
  * @typedef {Object} AppConfig
  * @property {Object} configs - Application configuration
  * @property {Array} campaigns - Array of campaigns
- * @property {Array} [content] - Content views
+ * @property {Array} [content] - Content blocks
  */
