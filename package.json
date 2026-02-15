@@ -1,6 +1,6 @@
 {
   "name": "resync-javascript",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Javascript client library for Resync Content Management System",
   "main": "index.js",
   "module": "index.js",
@@ -26,6 +26,9 @@
   },
   "keywords": [
     "resync",
+    "in-app-campaigns",
+    "mobile-app-campaigns",
+    "remote-config",
     "content-management",
     "cms",
     "config",

@@ -160,6 +160,7 @@
  * @property {string} status - Form status
  * @property {boolean} isActive - Is active
  * @property {boolean} requiresCaptcha - Requires captcha
+ * @property {boolean} [hideAfterSubmission] - Hide after submission
  * @property {Object} [customProps] - Custom properties
  */
 

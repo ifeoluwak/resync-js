@@ -321,6 +321,7 @@ export type FormProperty = {
     outAppNavigate?: {
       url?: string;
     };
+  hideAfterSubmission?: boolean;
   };
   // Form element properties
   inputMode?:
